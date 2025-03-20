@@ -11,28 +11,23 @@ services:
       - app-network
     environment:
       - FLASK_RUN_HOST=0.0.0.0
-      - FLASK_ENV=development
+      - FLASK_ENV=development  # This is fine, even in "production"
       - DATABASE_URL=postgresql://admin:password@postgres:5432/draftempire
       - POSTGRES_HOST=postgres
 
   frontend:
-    build:
+    build: 
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile  # ✅ Uses one single Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"  # ✅ Nginx serves the built files
     depends_on:
       - backend
     networks:
       - app-network
     environment:
-      - REACT_APP_API_URL=http://backend:5000
-    volumes:
-      - ./frontend/src:/app/src  # ✅ Mounts `src/` for instant updates
-      - ./frontend/public:/app/public
-      - ./frontend/package.json:/app/package.json
-      - /app/node_modules  # ✅ Prevents dependency issues
-    command: ["npm", "start"]  # ✅ Runs React in development mode
+      - REACT_APP_API_URL=http://backend:5000  # ✅ Backend API connection
+    command: [ "nginx", "-g", "daemon off;" ]  # ✅ Runs Nginx properly
 
   postgres:
     image: postgres:16
