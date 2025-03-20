@@ -1,15 +1,19 @@
 version: "3.8"
 
 services:
+
   backend:
     build: ./backend
     ports:
       - "5000:5000"
+    depends_on:
+      - postgres
     networks:
       - app-network
     environment:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_ENV=development  # Optional, helps debug
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/draftempire
 
   frontend:
     build: ./frontend
@@ -19,6 +23,41 @@ services:
       - backend
     networks:
       - app-network
+    environment:
+      - REACT_APP_API_URL=http://backend:5000  # Fix for backend connection
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: draftempire
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - app-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin 
+
+volumes:
+  postgres_data:
+  pgadmin_data:
 
 networks:
   app-network:
