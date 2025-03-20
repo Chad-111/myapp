@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-
   backend:
     build: ./backend
     ports:
@@ -12,19 +11,28 @@ services:
       - app-network
     environment:
       - FLASK_RUN_HOST=0.0.0.0
-      - FLASK_ENV=development  # Optional, helps debug
+      - FLASK_ENV=development
       - DATABASE_URL=postgresql://admin:password@postgres:5432/draftempire
+      - POSTGRES_HOST=postgres
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:3000"
     depends_on:
       - backend
     networks:
       - app-network
     environment:
-      - REACT_APP_API_URL=http://backend:5000  # Fix for backend connection
+      - REACT_APP_API_URL=http://backend:5000
+    volumes:
+      - ./frontend/src:/app/src  # ✅ Mounts `src/` for instant updates
+      - ./frontend/public:/app/public
+      - ./frontend/package.json:/app/package.json
+      - /app/node_modules  # ✅ Prevents dependency issues
+    command: ["npm", "start"]  # ✅ Runs React in development mode
 
   postgres:
     image: postgres:16
