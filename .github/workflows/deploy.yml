@@ -1,5 +1,6 @@
-name: Auto Deploy
+name: Auto Deploy Frontend and Backend via Portainer
 
+# This workflow runs automatically when code is pushed to the "main" branch
 on:
   push:
     branches:
@@ -7,14 +8,36 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # GitHub-hosted runner to execute deployment
 
     steps:
+      # Step 1: SSH into the server and run deployment commands
       - name: SSH into Server and Deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          host: ${{ secrets.SERVER_IP }}  # The public IP of your server (set in GitHub Secrets)
+          username: ${{ secrets.SERVER_USER }}  # The SSH username for your server (set in GitHub Secrets)
+          key: ${{ secrets.SSH_PRIVATE_KEY }}  # The SSH private key for authentication (set in GitHub Secrets)
           script: |
-            ~/deploy.sh
+            # Navigate to the project directory
+            cd ~/myapp
+
+            git fetch --all
+
+            # Ensures local code matches GitHub
+            git reset --hard origin/main
+
+            # Pull the latest code from the "main" branch
+            git pull origin main
+
+            # Stop and remove any running containers
+            docker-compose down
+
+            # Build and restart containers in detached mode (-d)
+            docker-compose up -d --build
+
+            # Remove unused Docker images to free up space
+            docker system prune -f
+
+            # List running containers to confirm deployment success
+            docker ps
