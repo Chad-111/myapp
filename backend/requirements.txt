@@ -1,2 +1,6 @@
 Flask
 Flask-CORS
+bcrypt
+flask-sqlalchemy
+psycopg2-binary
+Flask-Migrate
