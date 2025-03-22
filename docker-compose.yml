@@ -1,8 +1,9 @@
 version: "3.8"
 
 services:
-  backend:
+  flask-backend:
     build: ./backend
+    container_name: flask-backend
     ports:
       - "5000:5000"
     depends_on:
@@ -15,19 +16,26 @@ services:
       - DATABASE_URL=postgresql://admin:password@postgres:5432/draftempire
       - POSTGRES_HOST=postgres
 
-  frontend:
-    build: 
-      context: ./frontend
-      dockerfile: Dockerfile  # ✅ Uses one single Dockerfile
+  react-frontend:
+    build: ./frontend
+    container_name: react-frontend
+    dockerfile: Dockerfile  # ✅ Uses one single Dockerfile
     ports:
       - "3000:80"  # ✅ Nginx serves the built files
     depends_on:
       - backend
     networks:
-      - app-network
-    environment:
-      - REACT_APP_API_URL=http://backend:5000  # ✅ Backend API connection
+      - app-network    
     command: [ "nginx", "-g", "daemon off;" ]  # ✅ Runs Nginx properly
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - flask-backend
+      - react-frontend
 
   postgres:
     image: postgres:16

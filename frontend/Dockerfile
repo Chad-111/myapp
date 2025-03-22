@@ -1,18 +1,25 @@
-# Build React App
-FROM node:20 AS build
-# ✅ This creates the `/app` directory
-WORKDIR /app 
+# Stage 1: Build
+FROM node:18 AS build
+
+WORKDIR /app
+
+# Only copy the necessary files first
 COPY package.json package-lock.json ./
-RUN npm install
-# ✅ Copies all frontend files into `/app`
-COPY . . 
-# ✅ Ensures React builds properly
-RUN npm run build 
 
+# Install dependencies with root permissions
+RUN npm install --unsafe-perm
 
-# Serve with Nginx
+# Now copy the rest (after node_modules is installed)
+COPY . .
+
+# Ensure react-scripts has the correct permissions
+RUN chmod +x node_modules/.bin/react-scripts
+
+RUN npm run build
+
+# Stage 2: Serve
 FROM nginx:alpine
-# ✅ Copies built files to Nginx
+
 COPY --from=build /app/build /usr/share/nginx/html
+
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
