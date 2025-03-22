@@ -23,31 +23,36 @@ migrate = Migrate(app, db)  # Add Migrate
 
 # 👤 User Model
 class User(db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)  # Hashed password
 
 class League(db.Model):
+    __tablename__ = 'leagues'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
-    commissioner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    commissioner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     users = db.relationship('User', secondary='league_user', backref=db.backref('leagues', lazy='dynamic'))
 
 class Team(db.Model):
+    __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
-    league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=False)
+    league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'), nullable=False)
     wins = db.Column(db.Integer, default=0)
     losses = db.Column(db.Integer, default=0)
 
 class TeamPlayer(db.Model):
+    __tablename__ = 'team_players'
     player_id = db.Column(db.Integer, db.ForeignKey("players.id"), primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
     team_id = db.Column(db.Integer, db.ForeignKey("teams.id"))
     starting_position = db.Column(db.String(3), default="BEN")  # bench default
 
 class Matchup(db.Model):
+    __tablename__ = 'matchups'
     id = db.Column(db.Integer, primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"))
     week_num = db.Column(db.Integer, default=1)
@@ -57,6 +62,7 @@ class Matchup(db.Model):
     home_team_score = db.Column(db.Float, default=0)
 
 class Ruleset(db.Model):
+    __tablename__ = 'rulesets'
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
     points_passtd = db.Column(db.Float, default=4.0)  # Passing TD
     points_passyd = db.Column(db.Float, default=0.04)  # Passing yard
@@ -90,6 +96,7 @@ class Ruleset(db.Model):
     points_xp_miss = db.Column(db.Float, default=-1.0)  # Missed extra point
 
 class Player(db.Model):
+    __tablename__ = 'players'
     id = db.Column(db.Integer, primary_key=True)
     position = db.Column(db.String(3), nullable=False)
     team_name = db.Column(db.String, default="FA")
@@ -97,6 +104,7 @@ class Player(db.Model):
     first_name = db.Column(db.String, nullable=False)
 
 class WeeklyStats(db.Model):
+    __tablename__ = 'weekly_stats'
     week_num = db.Column(db.Integer, nullable=False, primary_key=True)
     player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
     passing_tds = db.Column(db.Integer, default=0)
@@ -125,6 +133,7 @@ class WeeklyStats(db.Model):
     xp_missed = db.Column(db.Integer, default=0)
 
 class TeamPlayerPerformance(db.Model):
+    __tablename__ = 'team_player_performances'
     week_num = db.Column(db.Integer, nullable=False, primary_key=True)
     player_id = db.Column(db.Integer, db.ForeignKey("players.id"), primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
