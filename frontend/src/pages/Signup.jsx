@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Signup.scss';
 
 function Form({ option }) {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [repeatPassword, setRepeatPassword] = useState('');
@@ -20,7 +21,7 @@ function Form({ option }) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ username, email, password }),
             });
 
             const data = await response.json();
@@ -37,6 +38,17 @@ function Form({ option }) {
     return (
         <form className='account-form' onSubmit={handleSubmit}>
             <div className={'account-form-fields ' + (option === 1 ? 'sign-in' : (option === 2 ? 'sign-up' : 'forgot'))}>
+                {option === 2 && (
+                    <input
+                        id='username'
+                        name='username'
+                        type='text'
+                        placeholder='Username'
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required={option === 2}
+                    />
+                )}
                 <input
                     id='email'
                     name='email'
@@ -56,16 +68,17 @@ function Form({ option }) {
                     required={option === 1 || option === 2}
                     disabled={option === 3}
                 />
-                <input
-                    id='repeat-password'
-                    name='repeat-password'
-                    type='password'
-                    placeholder='Repeat password'
-                    value={repeatPassword}
-                    onChange={(e) => setRepeatPassword(e.target.value)}
-                    required={option === 2}
-                    disabled={option === 1 || option === 3}
-                />
+                {option === 2 && (
+                    <input
+                        id='repeat-password'
+                        name='repeat-password'
+                        type='password'
+                        placeholder='Repeat password'
+                        value={repeatPassword}
+                        onChange={(e) => setRepeatPassword(e.target.value)}
+                        required={option === 2}
+                    />
+                )}
             </div>
             <button className='btn-submit-form' type='submit'>
                 {option === 1 ? 'Sign in' : (option === 2 ? 'Sign up' : 'Reset password')}
