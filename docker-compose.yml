@@ -19,14 +19,13 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend
-    dockerfile: Dockerfile  # ✅ Uses one single Dockerfile
     ports:
       - "3000:80"  # ✅ Nginx serves the built files
     depends_on:
       - backend
     networks:
       - app-network    
-    command: [ "nginx", "-g", "daemon off;" ]  # ✅ Runs Nginx properly
+    # command: [ "nginx", "-g", "daemon off;" ]  # ✅ Runs Nginx properly
 
   nginx:
     build: ./nginx
