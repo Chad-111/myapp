@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  flask-backend:
+  backend:
     build: ./backend
-    container_name: flask-backend
+    container_name: backend
     ports:
       - "5000:5000"
     depends_on:
@@ -16,9 +16,9 @@ services:
       - DATABASE_URL=postgresql://admin:password@postgres:5432/draftempire
       - POSTGRES_HOST=postgres
 
-  react-frontend:
+  frontend:
     build: ./frontend
-    container_name: react-frontend
+    container_name: frontend
     dockerfile: Dockerfile  # ✅ Uses one single Dockerfile
     ports:
       - "3000:80"  # ✅ Nginx serves the built files
@@ -34,8 +34,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - flask-backend
-      - react-frontend
+      - backend
+      - frontend
 
   postgres:
     image: postgres:16
