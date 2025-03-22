@@ -1,0 +1,171 @@
+$primary: #5689f8;
+
+.Signup {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-top: 100px;
+
+	> header {
+		font-size: 1.3rem;
+		font-weight: 700;
+		margin: 0 auto 60px auto;
+		position: relative;
+		height: 25px;
+		width: 250px;
+		overflow: hidden;
+	}
+
+}
+
+.header-headings {
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	width: 100%;
+	transition: all .4s cubic-bezier(.785,.135,.15,.86);
+
+	> span {
+		margin: 3px 0;
+	}
+
+	&.sign-in {
+		transform: translateY(-7px);
+	}
+	
+	&.sign-up {
+		transform: translateY(-40px);
+	}
+	
+	&.forgot {
+		transform: translateY(-75px);
+	}
+}
+
+.options {
+	display: inline-flex;
+	align-items: center;
+	width: 350px;
+	
+
+	@media screen and (max-width: 380px) {
+		width: 100%;
+	}
+
+	> li {
+		cursor: pointer;
+		opacity: .5;
+		transition: all .2s ease;
+		list-style: none;
+		
+		&:hover {
+			opacity: 1;
+		}
+		
+		&.active {
+			opacity: 1;
+		}
+		
+		&:nth-of-type(2) {
+			margin-left: 15px;
+		}
+	
+		&:last-of-type {
+			margin-left: auto;
+		}
+	}
+}
+
+.account-form {
+	display: flex;
+	flex-direction: column;
+	margin-top: 30px;
+}
+
+.account-form-fields {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	transition: all .4s cubic-bezier(.785,.135,.15,.86);
+
+	&.sign-in {
+		max-height: 123px;
+	}
+	
+	&.sign-up {
+		max-height: 250px;
+	}
+	
+	&.forgot {
+		max-height: 61px;
+	}
+
+	> input {
+		border: 0;
+		margin-bottom: 10px;
+		padding: 15px;
+		font-size: 1rem;
+		font-family: Nunito, sans-serif;
+		color: #000;
+		border-radius: 5px;
+	
+		&::placeholder {
+			color: #aaa;
+		}
+	
+		&::-webkit-input-placeholder {
+			color: #aaa;
+		}
+	
+		&:-ms-input-placeholder {
+			color: #aaa;
+		}
+	
+		&:focus {
+			outline: none;
+		}
+	}
+}
+
+.btn-submit-form {
+	border: 0;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	cursor: pointer;
+	padding: 15px 0;
+	border-radius: 5px;
+	color: #fff;
+	font-size: 1rem;
+	font-family: Nunito, sans-serif;
+	background: lighten($primary, 5%);
+	box-shadow: 0px 1px 2px rgba(0,0,0,.13);
+	transition: all .2s ease;
+
+	&:hover {
+		background: darken($primary, 2%);
+	}
+
+	&:active, &:focus {
+		outline: none;
+		background: darken($primary, 7%);
+	}
+}
+
+footer {
+	position: fixed;
+	width: 100%;
+	bottom: 0;
+	left: 0;
+	padding: 30px 0;
+	text-align: center;
+
+	> a {
+		color: #fff;
+		font-weight: 700;
+	}
+}

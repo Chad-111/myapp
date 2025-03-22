@@ -5,6 +5,7 @@ import "./App.css";
 import Navbar from "./components/navbar"; // Import your Navbar component
 import Home from "./pages/Home"; // Import your Home component
 import Login from "./pages/Login"; // Import your Login component
+import Signup from "./pages/Signup";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} /> {/* Home route */}
           <Route path="/login" element={<Login />} /> {/* Login route */}
+          <Route path="/signup" element={<Signup />} /> {/* Signup route */}
         </Routes>
       </div>
     </Router>
