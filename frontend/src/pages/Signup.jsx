@@ -14,24 +14,44 @@ function Form({ option }) {
             setMessage('Passwords do not match');
             return;
         }
+        if (option == 2) {
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, email, password }),
+                });
 
-        try {
-            const response = await fetch('/api/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, email, password }),
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                setMessage(data.message);
-            } else {
-                setMessage(data.error);
+                const data = await response.json();
+                if (response.ok) {
+                    setMessage(data.message);
+                } else {
+                    setMessage(data.error);
+                }
+            } catch (error) {
+                setMessage('An error occurred. Please try again.');
             }
-        } catch (error) {
-            setMessage('An error occurred. Please try again.');
+        } else if (option == 1) {
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    setMessage(data.message);
+                } else {
+                    setMessage(data.error);
+                }
+            } catch (error) {
+                setMessage('An error occurred. Please try again.');
+            }
         }
     };
 
