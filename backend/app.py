@@ -175,10 +175,12 @@ def signup():
         return jsonify({"error": "User already exists"}), 400
 
     # ✅ Hash the password before saving
+    
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
+    
     # Create new user
     new_user = User(username=username, email=email, password=hashed_password)
+    return jsonify({"error" : "Caught"}), 418
     db.session.add(new_user)
     db.session.commit()
 
@@ -210,7 +212,8 @@ def login():
     # Save user in session
     session["user"] = user.id
 
-    return jsonify({"message": "Login successful"})
+    return jsonify({"message": "Login successful"}), 201
 
 if __name__ == '__main__':
+
     app.run(host='0.0.0.0', port=5000)
