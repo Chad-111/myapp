@@ -13,8 +13,8 @@ function Navbar() {
   return (
     <nav className={`Navbar ${isDropdownOpen ? "translate-up" : ""}`}>
       <ul>
-        <li><Link to="/">Home</Link></li>
-        <li><Link to="/my-team">My Team</Link></li>
+        <li><Link to="/">Leagues</Link></li>
+        <li><Link to="/roster">Roster</Link></li>
         {/* League Dropdown */}
         <li
           className="dropdown"
@@ -30,10 +30,10 @@ function Navbar() {
             <li><Link to="/league/schedule" onClick={closeDropdown}>Schedule</Link></li>
           </ul>
         </li>
-        <li><Link to="/players">Players</Link></li>
-        <li><Link to="/standings">Standings</Link></li>
-        <li><Link to="/about">About</Link></li>
-        <li><Link to="/contact">Contact</Link></li>
+        <li><Link to="/portal">Trade Portal</Link></li>
+        <li><Link to="/matchups">Matchups</Link></li>
+        <li><Link to="/rankings">Rankings</Link></li>
+        <li><Link to="/draft">Live Draft</Link></li>
       </ul>
     </nav>
   );
