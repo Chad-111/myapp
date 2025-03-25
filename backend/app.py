@@ -34,7 +34,7 @@ class League(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     commissioner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    users = db.relationship('User', secondary='league_user', backref=db.backref('leagues', lazy='dynamic'))
+    users = db.relationship('User', backref=db.backref('leagues', lazy='dynamic'))
 
 class Team(db.Model):
     __tablename__ = 'teams'
@@ -158,7 +158,6 @@ def api_test():
 @app.route("/api/signup", methods=["POST"])
 @cross_origin(origin='*')
 def signup():
-    return jsonify({"error" : "Caught"}), 418
     data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
