@@ -11,7 +11,7 @@ function Navbar() {
   };
 
   return (
-    <nav className={`Navbar ${isDropdownOpen ? "translate-up" : ""}`}>
+    <nav className="Navbar"> {/* Removed the conditional class assignment for translating up    -Emir*/}
       <ul>
         <li><Link to="/">Leagues</Link></li>
         <li><Link to="/roster">Roster</Link></li>
