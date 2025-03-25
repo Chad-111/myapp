@@ -183,5 +183,32 @@ def signup():
 
     return jsonify({"message": "User created successfully"}), 201
 
+# 🔹 User Login Route
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+
+    # Find user by email
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "Invalid credentials"}), 400
+
+    # Check if password matches
+    if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        return jsonify({"error": "Invalid credentials"}), 400
+
+    # Save user in session
+    session["user"] = user.id
+
+    return jsonify({"message": "Login successful"})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
