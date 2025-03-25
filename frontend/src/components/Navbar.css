@@ -71,10 +71,7 @@ nav a:focus {
   display: flex;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+
 
 /* Hover effect to translate the navbar up */
 .Navbar.translate-up {
