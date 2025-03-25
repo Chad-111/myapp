@@ -175,12 +175,12 @@ def signup():
         return jsonify({"error": "User already exists"}), 400
 
     # ✅ Hash the password before saving
-    
+    return jsonify({"error" : "Caught"}), 418
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     # Create new user
     new_user = User(username=username, email=email, password=hashed_password)
-    return jsonify({"error" : "Caught"}), 418
+    
     db.session.add(new_user)
     db.session.commit()
 
