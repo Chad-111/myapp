@@ -71,8 +71,6 @@ nav a:focus {
   display: flex;
 }
 
-
-
 /* Hover effect to translate the navbar up */
 .Navbar.translate-up {
   transform: translateY(-100%);
