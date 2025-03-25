@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, session
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
@@ -156,6 +156,7 @@ def api_test():
 
 # 🔹 User Signup Route (Improved)
 @app.route("/api/signup", methods=["POST"])
+@cross_origin(origin='*')
 def signup():
     data = request.json
     if not data:
@@ -185,6 +186,7 @@ def signup():
 
 # 🔹 User Login Route
 @app.route("/api/login", methods=["POST"])
+@cross_origin(origin='*')
 def login():
     data = request.json
     if not data:
