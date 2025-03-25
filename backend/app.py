@@ -158,6 +158,7 @@ def api_test():
 @app.route("/api/signup", methods=["POST"])
 @cross_origin(origin='*')
 def signup():
+    return jsonify({"error" : "Caught"}), 418
     data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -175,7 +176,6 @@ def signup():
         return jsonify({"error": "User already exists"}), 400
 
     # ✅ Hash the password before saving
-    return jsonify({"error" : "Caught"}), 418
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     # Create new user
