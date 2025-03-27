@@ -18,7 +18,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             rm -rf ~/myapp  # delete old files completely
-            git clone https://github.com/Chad-111/myapp.git ~/myapp
+            git clone git@github.com:Chad-111/myapp.git ~/myapp
             cd ~/myapp
             docker-compose down
             docker-compose up -d --build
