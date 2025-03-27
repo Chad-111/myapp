@@ -12,7 +12,7 @@ function Login() {
     e.preventDefault();
     // Handle login logic here
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,6 +65,9 @@ function Login() {
           />
         </div>
         <button type="submit" className="login-button">Login</button>
+        <button type="button" className="register-button" onClick={() => navigate("/signup")}>
+          Register
+        </button>
       </form>
     </div>
   );

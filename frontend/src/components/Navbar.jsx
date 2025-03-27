@@ -13,18 +13,19 @@ function Navbar() {
   return (
     <div className="layout-wrapper">
       <nav className={`Navbar ${isFantasyRoute ? 'compact' : ''}`}>
-        <div className="navbar-wrapper">
+        <div className="navbar-wrapper-left">
           <div className="navbar-logo">DraftEmpire</div>
           <div className="navbar-spacer" />
         </div>
         <ul className="navbar-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/league/home">Fantasy</Link></li>
-          <li><Link to="/portal">Trade Portal</Link></li>
-          <li><Link to="/matchups">Matchups</Link></li>
-          <li><Link to="/rankings">Rankings</Link></li>
-          <li><Link to="/draft">Live Draft</Link></li>
         </ul>
+        <div className="navbar-wrapper-right">
+          <div className="navbar-spacer" />
+          <Link to="/login" className="btn btn-outline-light">Get Started</Link>
+
+        </div>
       </nav>
 
 
@@ -39,6 +40,10 @@ function Navbar() {
             <li><Link to="/league/members">Members</Link></li>
             <li><Link to="/league/rosters">Rosters</Link></li>
             <li><Link to="/league/schedule">Schedule</Link></li>
+            <li><Link to="/portal">Trade Portal</Link></li>
+            <li><Link to="/matchups">Matchups</Link></li>
+            <li><Link to="/rankings">Rankings</Link></li>
+            <li><Link to="/draft">Live Draft</Link></li>
           </ul>
           <hr />
           <Link to="/" className="btn btn-outline-light">Return</Link>

@@ -34,7 +34,7 @@ function Layout() {
     <>
       <Navbar />
       <button
-        className="btn btn-sm btn-outline-secondary position-fixed bottom-0 end-0 m-3 z-3"
+        className="btn btn-lg btn-outline-secondary position-fixed bottom-0 end-0 m-3 z-3"
         onClick={() => setTheme(prev => (prev === "light" ? "dark" : "light"))}
       >
         Toggle {theme === "light" ? "Dark" : "Light"} Mode
