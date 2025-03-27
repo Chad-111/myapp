@@ -18,7 +18,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/myapp
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fdx
             docker-compose down
             docker-compose up -d --build
-            docker system prune -f  # Cleans up old images
+            docker system prune -f
