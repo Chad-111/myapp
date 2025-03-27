@@ -1,3 +1,4 @@
+// src/pages/Signup.jsx
 import React, { useState } from 'react';
 import './Signup.scss';
 
@@ -14,7 +15,7 @@ function Form({ option }) {
             setMessage('Passwords do not match');
             return;
         }
-        if (option == 2) {
+        if (option === 2) {
             try {
                 const response = await fetch('/api/signup', {
                     method: 'POST',
@@ -25,15 +26,11 @@ function Form({ option }) {
                 });
 
                 const data = await response.json();
-                if (response.ok) {
-                    setMessage(data.message);
-                } else {
-                    setMessage(data.error);
-                }
+                setMessage(response.ok ? data.message : data.error);
             } catch (error) {
                 setMessage('An error occurred. Please try again.');
             }
-        } else if (option == 1) {
+        } else if (option === 1) {
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
@@ -44,11 +41,7 @@ function Form({ option }) {
                 });
 
                 const data = await response.json();
-                if (response.ok) {
-                    setMessage(data.message);
-                } else {
-                    setMessage(data.error);
-                }
+                setMessage(response.ok ? data.message : data.error);
             } catch (error) {
                 setMessage('An error occurred. Please try again.');
             }
@@ -57,7 +50,7 @@ function Form({ option }) {
 
     return (
         <form className='account-form' onSubmit={handleSubmit}>
-            <div className={'account-form-fields ' + (option === 1 ? 'sign-in' : (option === 2 ? 'sign-up' : 'forgot'))}>
+            <div className={`account-form-fields ${option === 1 ? 'sign-in' : option === 2 ? 'sign-up' : 'forgot'}`}>
                 {option === 2 && (
                     <input
                         id='username'
@@ -66,7 +59,7 @@ function Form({ option }) {
                         placeholder='Username'
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        required={option === 2}
+                        required
                     />
                 )}
                 <input
@@ -96,12 +89,12 @@ function Form({ option }) {
                         placeholder='Repeat password'
                         value={repeatPassword}
                         onChange={(e) => setRepeatPassword(e.target.value)}
-                        required={option === 2}
+                        required
                     />
                 )}
             </div>
             <button className='btn-submit-form' type='submit'>
-                {option === 1 ? 'Sign in' : (option === 2 ? 'Sign up' : 'Reset password')}
+                {option === 1 ? 'Sign in' : option === 2 ? 'Sign up' : 'Reset password'}
             </button>
             {message && <p>{message}</p>}
         </form>
@@ -114,7 +107,7 @@ function Signup() {
     return (
         <div className='Signup'>
             <header>
-                <div className={'header-headings ' + (option === 1 ? 'sign-in' : (option === 2 ? 'sign-up' : 'forgot'))}>
+                <div className={`header-headings ${option === 1 ? 'sign-in' : option === 2 ? 'sign-up' : 'forgot'}`}>
                     <span>Sign in to your account</span>
                     <span>Create an account</span>
                     <span>Reset your password</span>

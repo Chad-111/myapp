@@ -1,41 +1,50 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import "./Navbar.css"; // Import the CSS for your Navbar
+// src/components/Navbar.jsx
+import { Link, useLocation } from "react-router-dom";
+import "./Navbar.css";
+import { NavLink } from "react-router-dom";
+
+<NavLink to="/league/home" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
+
 
 function Navbar() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // Function to close dropdown when clicking a link
-  const closeDropdown = () => {
-    setIsDropdownOpen(false);
-  };
+  const location = useLocation();
+  const isFantasyRoute = location.pathname.startsWith("/league/");
 
   return (
-    <nav className="Navbar"> {/* Removed the conditional class assignment for translating up    -Emir*/}
-      <ul>
-        <li><Link to="/">Leagues</Link></li>
-        <li><Link to="/roster">Roster</Link></li>
-        {/* League Dropdown */}
-        <li
-          className="dropdown"
-          onMouseEnter={() => setIsDropdownOpen(true)}
-          onMouseLeave={() => setIsDropdownOpen(false)}
-        >
-          <Link to="/League/Home" onClick={closeDropdown} className="dropbtn">League ▾</Link>
-          <ul className={`dropdown-content ${isDropdownOpen ? "show" : ""}`}>
-            <li><Link to="/league/home" onClick={closeDropdown}>League Home</Link></li>
-            <li><Link to="/league/settings" onClick={closeDropdown}>Settings</Link></li>
-            <li><Link to="/league/members" onClick={closeDropdown}>Members</Link></li>
-            <li><Link to="/league/rosters" onClick={closeDropdown}>Rosters</Link></li>
-            <li><Link to="/league/schedule" onClick={closeDropdown}>Schedule</Link></li>
+    <div className="layout-wrapper">
+      <nav className={`Navbar ${isFantasyRoute ? 'compact' : ''}`}>
+        <div className="navbar-wrapper">
+          <div className="navbar-logo">DraftEmpire</div>
+          <div className="navbar-spacer" />
+        </div>
+        <ul className="navbar-links">
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/league/home">Fantasy</Link></li>
+          <li><Link to="/portal">Trade Portal</Link></li>
+          <li><Link to="/matchups">Matchups</Link></li>
+          <li><Link to="/rankings">Rankings</Link></li>
+          <li><Link to="/draft">Live Draft</Link></li>
+        </ul>
+      </nav>
+
+
+
+      {/* Sidebar for League sub-routes */}
+      {isFantasyRoute && (
+        <aside className="FantasySidebar">
+          <h5 className="sidebar-heading">DraftEmpire Fantasy</h5>
+          <ul className="sidebar-links">
+            <li><Link to="/league/home">Home</Link></li>
+            <li><Link to="/league/settings">Settings</Link></li>
+            <li><Link to="/league/members">Members</Link></li>
+            <li><Link to="/league/rosters">Rosters</Link></li>
+            <li><Link to="/league/schedule">Schedule</Link></li>
           </ul>
-        </li>
-        <li><Link to="/portal">Trade Portal</Link></li>
-        <li><Link to="/matchups">Matchups</Link></li>
-        <li><Link to="/rankings">Rankings</Link></li>
-        <li><Link to="/draft">Live Draft</Link></li>
-      </ul>
-    </nav>
+          <hr />
+          <Link to="/" className="btn btn-outline-light">Return</Link>
+        </aside>
+      )}
+    </div>
   );
 }
 

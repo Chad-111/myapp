@@ -1,46 +1,72 @@
-// filepath: c:\Users\chadb\Desktop\webapp\frontend\src\App.jsx
-import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
-import Navbar from "./components/navbar"; // Import your Navbar component
-import Home from "./pages/leagues"; // Import your Home component
-import Login from "./pages/Login"; // Import your Login component
-import Signup from "./pages/Signup";
-import Roster from "./pages/roster";
-import Matchups from "./pages/matchups";
-import Rankings from "./pages/rankings";
-import Draft from "./pages/draft";
-import TradePortal from "./pages/portal";
-import Leagues from "./pages/leagues";
-import LeagueHome from "./pages/League/LeagueHome";
-  import LeagueSettings from "./pages/League/LeagueSettings";
-  import LeagueMembers from "./pages/League/LeagueMembers";
-  import LeagueRosters from "./pages/League/LeagueRosters";
-import LeagueSchedule from "./pages/League/LeagueSchedule";
 
+import Navbar from "./components/Navbar";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import Signup from './pages/Signup';
+import Roster from "./pages/Roster";
+import Matchups from "./pages/Matchups";
+import Rankings from "./pages/Rankings";
+import Draft from "./pages/Draft";
+import TradePortal from "./pages/Portal";
+import Leagues from "./pages/Leagues";
+import LeagueHome from "./pages/League/Home";
+import LeagueSettings from "./pages/League/Settings";
+import LeagueMembers from "./pages/League/Members";
+import LeagueRosters from "./pages/League/Rosters";
+import LeagueSchedule from "./pages/League/Schedule";
 
-function App() {
+// Wrap routes in a layout-aware component
+function Layout() {
+  const location = useLocation();
+  const [theme, setTheme] = useState("light");
+
+  const isFantasyRoute = location.pathname.startsWith("/league");
+
+  useEffect(() => {
+    document.body.setAttribute("data-bs-theme", theme);
+  }, [theme]);
+
   return (
-    <Router>
-      <div className="App">
-        <Navbar /> {/* Include the Navbar component */}
+    <>
+      <Navbar />
+      <button
+        className="btn btn-sm btn-outline-secondary position-fixed bottom-0 end-0 m-3 z-3"
+        onClick={() => setTheme(prev => (prev === "light" ? "dark" : "light"))}
+      >
+        Toggle {theme === "light" ? "Dark" : "Light"} Mode
+      </button>
+
+      <main className={`container-fluid ${isFantasyRoute ? 'pt-3 ps-md-5' : 'px-2 px-md-4 py-4'}`}>
         <Routes>
-          <Route path="/" element={<Home />} /> {/* Home route */}
-          <Route path="/login" element={<Login />} /> {/* Login route */}
-          <Route path="/signup" element={<Signup />} /> {/* Signup route */}
-          <Route path="/roster" element={<Roster />} /> {/* Roster route */}
-          <Route path="/matchups" element={<Matchups />} /> {/* Matchups route */}
-          <Route path="/rankings" element={<Rankings />} /> {/* Rankings route */}
-          <Route path="/draft" element={<Draft />} /> {/* Draft route */}
-          <Route path="/portal" element={<TradePortal />} /> {/* Trade Portal route */}
-          <Route path="/leagues" element={<Leagues />} /> {/* Leagues route */}          
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/roster" element={<Roster />} />
+          <Route path="/matchups" element={<Matchups />} />
+          <Route path="/rankings" element={<Rankings />} />
+          <Route path="/draft" element={<Draft />} />
+          <Route path="/portal" element={<TradePortal />} />
+          <Route path="/leagues" element={<Leagues />} />
           <Route path="/league/home" element={<LeagueHome />} />
           <Route path="/league/settings" element={<LeagueSettings />} />
           <Route path="/league/members" element={<LeagueMembers />} />
           <Route path="/league/rosters" element={<LeagueRosters />} />
           <Route path="/league/schedule" element={<LeagueSchedule />} />
-          {/* Add more routes as needed */}
         </Routes>
+      </main>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        <Layout />
       </div>
     </Router>
   );
