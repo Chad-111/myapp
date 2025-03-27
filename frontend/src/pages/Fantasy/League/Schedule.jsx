@@ -4,7 +4,8 @@ function LeagueSchedule() {
   return (
     <div>
       <h1>League Schedule</h1>
-      <p>See the game schedule.</p>
+      <p>See the league schedule.</p>
+      <p>Based on League ID</p>
     </div>
   );
 }

@@ -3,21 +3,25 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from "react-route
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 
+// Components
 import Navbar from "./components/Navbar";
+// Base Website Pages
 import Dashboard from "./pages/Dashboard";
+import Leagues from "./pages/Leagues";
 import Login from "./pages/Login";
 import Signup from './pages/Signup';
-import Roster from "./pages/Roster";
-import Matchups from "./pages/Matchups";
-import Rankings from "./pages/Rankings";
-import Draft from "./pages/Draft";
-import TradePortal from "./pages/Portal";
-import Leagues from "./pages/Leagues";
-import LeagueHome from "./pages/League/Home";
-import LeagueSettings from "./pages/League/Settings";
-import LeagueMembers from "./pages/League/Members";
-import LeagueRosters from "./pages/League/Rosters";
-import LeagueSchedule from "./pages/League/Schedule";
+// !User Specific! -> Overall Fantasy Pages
+import FantasyDashboard from "./pages/Fantasy/Dashboard";
+import Draft from "./pages/Fantasy/Draft";
+import MyTeams from "./pages/Fantasy/MyTeam";
+// !League Specific! -> Fantasy League Pages
+import LeagueHome from "./pages/Fantasy/League/Home";
+import Matchups from "./pages/Fantasy/League/Matchups";
+import LeagueMembers from "./pages/Fantasy/League/Members";
+import TradePortal from "./pages/Fantasy/League/Portal";
+import LeagueRoster from "./pages/Fantasy/League/Rosters";
+import LeagueSchedule from "./pages/Fantasy/League/Schedule";
+import LeagueSettings from "./pages/Fantasy/League/Settings";
 
 // Wrap routes in a layout-aware component
 function Layout() {
@@ -40,22 +44,27 @@ function Layout() {
         Toggle {theme === "light" ? "Dark" : "Light"} Mode
       </button>
 
-      <main className={`container-fluid ${isFantasyRoute ? 'pt-3 ps-md-5' : 'px-2 px-md-4 py-4'}`}>
+      <main className={`container-fluid ${isFantasyRoute ? 'with-sidebar' : 'standard-padding'}`}>
         <Routes>
+          {/* Base Pages */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/roster" element={<Roster />} />
-          <Route path="/matchups" element={<Matchups />} />
-          <Route path="/rankings" element={<Rankings />} />
-          <Route path="/draft" element={<Draft />} />
-          <Route path="/portal" element={<TradePortal />} />
           <Route path="/leagues" element={<Leagues />} />
+
+          {/* Overall Fantasy Pages */}
+          <Route path="/fantasy/dashboard" element={<FantasyDashboard />} />
+          <Route path="/fantasy/draft" element={<Draft />} />
+          <Route path="/fantasy/myteam" element={<MyTeams />} />
+
+          {/* League Specific Pages */}
           <Route path="/league/home" element={<LeagueHome />} />
-          <Route path="/league/settings" element={<LeagueSettings />} />
+          <Route path="/league/matchups" element={<Matchups />} />
           <Route path="/league/members" element={<LeagueMembers />} />
-          <Route path="/league/rosters" element={<LeagueRosters />} />
+          <Route path="/league/portal" element={<TradePortal />} />
+          <Route path="/league/rosters" element={<LeagueRoster />} />
           <Route path="/league/schedule" element={<LeagueSchedule />} />
+          <Route path="/league/settings" element={<LeagueSettings />} />
         </Routes>
       </main>
     </>

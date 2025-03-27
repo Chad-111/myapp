@@ -1,14 +1,10 @@
 // src/components/Navbar.jsx
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import "./Navbar.css";
-import { NavLink } from "react-router-dom";
-
-<NavLink to="/league/home" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
-
 
 function Navbar() {
   const location = useLocation();
-  const isFantasyRoute = location.pathname.startsWith("/league/");
+  const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
 
   return (
     <div className="layout-wrapper">
@@ -18,35 +14,51 @@ function Navbar() {
           <div className="navbar-spacer" />
         </div>
         <ul className="navbar-links">
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/league/home">Fantasy</Link></li>
+          <li>
+            <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
+          </li>
+          <li>
+            <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Fantasy</NavLink>
+          </li>
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
-          <Link to="/login" className="btn btn-outline-light">Get Started</Link>
-
+          <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
         </div>
       </nav>
-
-
 
       {/* Sidebar for League sub-routes */}
       {isFantasyRoute && (
         <aside className="FantasySidebar">
           <h5 className="sidebar-heading">DraftEmpire Fantasy</h5>
           <ul className="sidebar-links">
-            <li><Link to="/league/home">Home</Link></li>
-            <li><Link to="/league/settings">Settings</Link></li>
-            <li><Link to="/league/members">Members</Link></li>
-            <li><Link to="/league/rosters">Rosters</Link></li>
-            <li><Link to="/league/schedule">Schedule</Link></li>
-            <li><Link to="/portal">Trade Portal</Link></li>
-            <li><Link to="/matchups">Matchups</Link></li>
-            <li><Link to="/rankings">Rankings</Link></li>
-            <li><Link to="/draft">Live Draft</Link></li>
+            <li>
+              <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/settings" className={({ isActive }) => isActive ? "active" : ""}>Settings</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/members" className={({ isActive }) => isActive ? "active" : ""}>Members</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/rosters" className={({ isActive }) => isActive ? "active" : ""}>Rosters</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/schedule" className={({ isActive }) => isActive ? "active" : ""}>Schedule</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/matchups" className={({ isActive }) => isActive ? "active" : ""}>Matchups</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/portal" className={({ isActive }) => isActive ? "active" : ""}>Trade Portal</NavLink>
+            </li>
+            <li>
+              <NavLink to="/league/draft" className={({ isActive }) => isActive ? "active" : ""}>Live Draft</NavLink>
+            </li>
           </ul>
           <hr />
-          <Link to="/" className="btn btn-outline-light">Return</Link>
+          <NavLink to="/" className="btn btn-outline-light">Return</NavLink>
         </aside>
       )}
     </div>

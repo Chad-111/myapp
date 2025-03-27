@@ -18,7 +18,7 @@
 }
 .navbar-wrapper-right {
   position: absolute;
-  right: 0;
+  left: 0;
   display: flex;
   align-items: center;
   height: 100%;
@@ -223,4 +223,16 @@
   .sidebar-links li a {
     padding: 0.5rem 0.75rem;
   }
+}
+
+/* For non-fantasy routes */
+.standard-padding {
+  padding: 1.5rem 2rem;
+}
+
+/* When sidebar is present */
+.with-sidebar {
+  padding-top: 1rem;
+  padding-left: 250px; /* Matches sidebar width */
+  padding-right: 1.5rem;
 }
