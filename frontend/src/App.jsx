@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from "react-route
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 
-import Navbar from "./components/navbar";
+import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Signup from './pages/Signup';
