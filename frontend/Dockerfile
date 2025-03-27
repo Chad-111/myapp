@@ -4,7 +4,7 @@ FROM node:18 AS build
 WORKDIR /app
 
 # Only copy the necessary files first
-COPY package.json package-lock.json ./
+COPY package*.json ./
 
 # Install dependencies with root permissions
 RUN npm install --unsafe-perm

@@ -17,10 +17,12 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            rm -rf ~/myapp  # <-- make sure everything is gone
-            git clone --depth=1 git@github.com:Chad-111/myapp.git ~/myapp
+            sudo rm -rf ~/myapp
+            git clone git@github.com:Chad-111/myapp.git ~/myapp
             cd ~/myapp
+            git reset --hard origin/main
+            git clean -fdx  # 🚨 Wipes all untracked files
             docker-compose down
-            docker-compose up -d --build
-            docker system prune -f
-
+            docker-compose build --no-cache  # 🚨 No Docker cache
+            docker-compose up -d
+            docker system prune -f -a --volumes
