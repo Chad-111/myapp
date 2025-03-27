@@ -17,7 +17,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo rm -rf ~/myapp  # <-- make sure everything is gone
+            rm -rf ~/myapp  # <-- make sure everything is gone
             git clone --depth=1 git@github.com:Chad-111/myapp.git ~/myapp
             cd ~/myapp
             docker-compose down
