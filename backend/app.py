@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
+                               unset_jwt_cookies, jwt_required, JWTManager
+
 import os
 import bcrypt
 
@@ -17,9 +20,16 @@ app.config["SESSION_COOKIE_SECURE"] = False  # Set to False if testing locally, 
 # 🔗 Database configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres:5432/draftempire")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = "please-remember-to-change-me"
 
 db = SQLAlchemy(app)
+
 migrate = Migrate(app, db)  # Add Migrate
+
+jwt = JWTManager(app)
+
+
+
 
 # 👤 User Model
 class User(db.Model):
@@ -208,10 +218,18 @@ def login():
     if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         return jsonify({"error": "Invalid credentials"}), 400
 
-    # Save user in session
-    session["user"] = user.id
+    # Give validated user token
+    access_token = create_access_token(identity=email)
+    response = {"access_token" : access_token, "message": "Login successful"}
 
-    return jsonify({"message": "Login successful"}), 201
+    return response, 201
+
+@app.route("/api/logout", methods = ["POST"])
+@cross_origin(origin="*")
+def logout():
+    response = jsonify({"message": "Logout successful."})
+    unset_jwt_cookies(response)
+    return response, 201
 
 if __name__ == '__main__':
 

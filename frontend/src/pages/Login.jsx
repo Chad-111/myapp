@@ -27,8 +27,8 @@ function Login() {
       const data = await response.json();
       console.log("Login successful:", data);
 
-      // Store user information in local storage
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Store access token in local storage
+      localStorage.setItem("access_token", JSON.stringify(data.access_token));
 
       // Redirect to the home page or another page
       navigate("/");
