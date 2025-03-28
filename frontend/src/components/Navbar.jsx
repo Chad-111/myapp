@@ -44,7 +44,7 @@ function Navbar() {
   if (!isLoggedIn) {
     loginLogoutButton = <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
   } else {
-    loginLogoutButton = <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
+    loginLogoutButton = <><button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button></>
   }
 
   return (

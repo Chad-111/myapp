@@ -243,12 +243,21 @@ def login():
 
     return response, 201
 
+# user logout route
 @app.route("/api/logout", methods = ["POST"])
 @cross_origin(origin="*")
+@jwt_required()
 def logout():
     response = jsonify({"message": "Logout successful."})
     unset_jwt_cookies(response)
     return response, 201
+
+# user search for league root
+@app.route("/api/league/search", methods = ["GET"])
+@cross_origin(origin="*")
+@jwt_required()
+def league_search():
+    pass
 
 if __name__ == '__main__':
 

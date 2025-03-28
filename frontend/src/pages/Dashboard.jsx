@@ -20,7 +20,7 @@ export default function Dashboard() {
     const [news, setNews] = useState([]);
     const [activeTab, setActiveTab] = useState('scores');
     const [selectedArticle, setSelectedArticle] = useState(null);
-
+        
     const dropdownRef = useRef(null);
     const sportPath = SPORTS[selectedSport].path;
 
