@@ -12,13 +12,13 @@ function Navbar() {
   // handle logout
   const handleLogout = async (e) => {
     e.preventDefault();
-    // Handle logout logic here
+    // Handle logout logic here, trim access token.
     try {
       const response = await fetch("/api/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": 'Bearer ' + localStorage.getItem("access_token")
+          "Authorization": 'Bearer ' + localStorage.getItem("access_token").replace('"', '')
         },
         body: JSON.stringify({"access_token" : localStorage.getItem("access_token")}),
       });
@@ -39,7 +39,7 @@ function Navbar() {
 
     } catch (error) {
       console.error("Error: Log out failed. Please check your credentials and try again.");
-      console.error(error.message);
+      console.error(response.message);
     }
   };
 
