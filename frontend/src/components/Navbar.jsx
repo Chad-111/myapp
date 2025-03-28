@@ -49,6 +49,8 @@ function Navbar() {
       setIsLoggedIn(localStorage.getItem("access_token") !== null);
     };
 
+    checkAuth();
+
     window.addEventListener("storage", checkAuth);
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
