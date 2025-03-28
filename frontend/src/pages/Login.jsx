@@ -28,7 +28,7 @@ function Login() {
       console.log("Login successful:", data);
 
       // Store access token in local storage
-      localStorage.setItem("access_token", JSON.stringify(data.access_token));
+      localStorage.setItem("access_token", data.access_token);
 
       // Redirect to the home page or another page
       navigate("/");
