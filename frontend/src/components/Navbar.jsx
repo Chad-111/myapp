@@ -5,12 +5,12 @@ import "./Navbar.css";
 function Navbar() {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
-  const isLoggedIn = ((localStorage.getItem("access_token") === null) ? false : true)
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("access_token") !== null)
 
   // handle logout
   const handleLogout = async (e) => {
     e.preventDefault();
-    // Handle login logic here
+    // Handle logout logic here
     try {
       const response = await fetch("/api/logout", {
         method: "POST",
@@ -29,6 +29,7 @@ function Navbar() {
 
       // Remove access token from local storage
       localStorage.removeItem("access_token");
+      setIsLoggedIn(false); // Ensure UI updates
 
       // Redirect to the home page or another page
       navigate("/");
@@ -41,10 +42,11 @@ function Navbar() {
 
   // Make Get Started button dissapear on login, replaced with logout button
   let loginLogoutButton;
+  console.log("isLoggedIn:", isLoggedIn);
   if (!isLoggedIn) {
     loginLogoutButton = <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
   } else {
-    loginLogoutButton = <><button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button></>
+    loginLogoutButton = <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
   }
 
   return (
