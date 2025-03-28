@@ -7,14 +7,46 @@ function Navbar() {
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
   const isLoggedIn = ((localStorage.getItem("access_token") === null) ? false : true)
 
+  // handle logout
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    // Handle login logic here
+    try {
+      const response = await fetch("/api/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
 
-  // Make Get Started button dissapear on login
-  let getStartedButton;
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
+
+      const data = await response.json();
+      console.log("Logout successful:", data);
+
+      // Remove access token from local storage
+      localStorage.removeItem("access_token");
+
+      // Redirect to the home page or another page
+      navigate("/");
+
+    } catch (error) {
+      console.error("Error:", error);
+      setError("Log out failed. Please check your credentials and try again.");
+    }
+  };
+
+  // Make Get Started button dissapear on login, replaced with logout button
+  let loginLogoutButton;
   if (!isLoggedIn) {
-    getStartedButton = <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
+    loginLogoutButton = <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
   } else {
-    getStartedButton = <></>
+    loginLogoutButton = <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
   }
+
   return (
     <div className="layout-wrapper">
       <nav className={`Navbar ${isFantasyRoute ? 'compact' : ''}`}>
@@ -32,7 +64,7 @@ function Navbar() {
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
-          {getStartedButton}
+          {loginLogoutButton}
         </div>
       </nav>
 
