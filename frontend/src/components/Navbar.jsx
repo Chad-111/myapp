@@ -7,7 +7,7 @@ function Navbar() {
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("access_token") !== null)
 
-  console.log(isLoggedIn);
+
   useEffect(() => {
     // Update state whenever localStorage changes
     const checkAuth = () => {
