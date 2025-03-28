@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import "./Navbar.css";
 
 function Navbar() {
@@ -43,6 +43,15 @@ function Navbar() {
     }
   };
 
+  useEffect(() => {
+    // Update state whenever localStorage changes
+    const checkAuth = () => {
+      setIsLoggedIn(localStorage.getItem("access_token") !== null);
+    };
+
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
 
   return (
     <div className="layout-wrapper">
