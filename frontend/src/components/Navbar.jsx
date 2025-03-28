@@ -13,7 +13,8 @@ function Navbar() {
     const checkAuth = () => {
       setIsLoggedIn(localStorage.getItem("access_token") !== null);
     };
-
+    
+    console.log("State has changed.");
     window.addEventListener("storage", checkAuth);
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
@@ -69,7 +70,7 @@ function Navbar() {
           </li>
         </ul>
         <div className="navbar-wrapper-right">
-          <div className="navbar-spacer" />
+          <div className="navbar-spacer"/>
           <button type="button" className={`btn btn-outline-light ${isLoggedIn ? "active" : ""}`} onClick={handleLogout}>Log out</button>
           <NavLink to="/login" className={`btn btn-outline-light ${isLoggedIn ? "" : "active"}`}>Get Started</NavLink>
         </div>
