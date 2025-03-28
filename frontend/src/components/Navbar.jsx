@@ -7,18 +7,6 @@ function Navbar() {
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("access_token") !== null)
 
-
-  useEffect(() => {
-    // Update state whenever localStorage changes
-    const checkAuth = () => {
-      setIsLoggedIn(localStorage.getItem("access_token") !== null);
-    };
-
-    window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
-  }, []);
-
-
   // handle logout
   const handleLogout = async (e) => {
     e.preventDefault();
