@@ -23,6 +23,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "postgresql://
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "please-remember-to-change-me"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1) # can edit at will
+app.config['JWT_VERIFY_SUB'] = False # to fix problems w logout
 
 db = SQLAlchemy(app)   
 

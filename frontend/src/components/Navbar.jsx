@@ -24,7 +24,7 @@ function Navbar() {
       });
 
       if (!response.ok) {
-        throw new Error("Logout failed: " + response.message);
+        throw new Error("Logout failed: " + response.json().msg);
       }
 
       const data = await response.json();
