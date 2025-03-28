@@ -40,14 +40,6 @@ function Navbar() {
     }
   };
 
-  // Make Get Started button dissapear on login, replaced with logout button
-  let loginLogoutButton;
-  console.log("isLoggedIn:", isLoggedIn);
-  if (!isLoggedIn) {
-    loginLogoutButton = <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
-  } else {
-    loginLogoutButton = <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
-  }
 
   return (
     <div className="layout-wrapper">
@@ -66,7 +58,7 @@ function Navbar() {
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
-          {loginLogoutButton}
+          {(isLoggedIn) ? <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button> : <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>}
         </div>
       </nav>
 
