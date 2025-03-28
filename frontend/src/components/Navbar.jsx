@@ -24,7 +24,7 @@ function Navbar() {
       });
 
       if (!response.ok) {
-        throw new Error("Login failed");
+        throw new Error("Logout failed");
       }
 
       const data = await response.json();
@@ -39,6 +39,7 @@ function Navbar() {
 
     } catch (error) {
       console.error("Error: Log out failed. Please check your credentials and try again.");
+      console.error(error.message);
     }
   };
 
