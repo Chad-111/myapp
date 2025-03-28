@@ -19,7 +19,7 @@ function Navbar() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({"access_token" : localStorage.getItem("access_token")}),
       });
 
       if (!response.ok) {
@@ -59,8 +59,11 @@ function Navbar() {
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
-          <button type="button" className={`btn btn-outline-light ${isLoggedIn ? "active" : ""}`} onClick={handleLogout}>Log out</button>
-          <NavLink to="/login" className={`btn btn-outline-light ${isLoggedIn ? "" : "active"}`}>Get Started</NavLink>
+          {
+            isLoggedIn ?
+            (<button type="button" className={`btn btn-outline-light`} onClick={handleLogout}>Log out</button>) :
+            (<NavLink to="/login" className={`btn btn-outline-light`}>Get Started</NavLink>)
+          }
         </div>
       </nav>
 
