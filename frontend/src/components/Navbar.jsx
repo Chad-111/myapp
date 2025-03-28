@@ -1,11 +1,13 @@
 // src/components/Navbar.jsx
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react"
 import "./Navbar.css";
 
 function Navbar() {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("access_token") !== null)
+  const navigate = useNavigate();
 
   // handle logout
   const handleLogout = async (e) => {
@@ -35,8 +37,7 @@ function Navbar() {
       navigate("/");
 
     } catch (error) {
-      console.error("Error:", error);
-      setError("Log out failed. Please check your credentials and try again.");
+      console.error("Error: Log out failed. Please check your credentials and try again.");
     }
   };
 
