@@ -5,7 +5,16 @@ import "./Navbar.css";
 function Navbar() {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
+  const isLoggedIn = ((localStorage.getItem("access_token") === null) ? false : true)
 
+
+  // Make Get Started button dissapear on login
+  let getStartedButton;
+  if (!isLoggedIn) {
+    getStartedButton = <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
+  } else {
+    getStartedButton = <></>
+  }
   return (
     <div className="layout-wrapper">
       <nav className={`Navbar ${isFantasyRoute ? 'compact' : ''}`}>
@@ -23,7 +32,7 @@ function Navbar() {
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
-          <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>
+          {getStartedButton}
         </div>
       </nav>
 

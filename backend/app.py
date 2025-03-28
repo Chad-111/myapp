@@ -1,10 +1,11 @@
+import json
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
                                unset_jwt_cookies, jwt_required, JWTManager
-
+from datetime import datetime, timedelta, timezone
 import os
 import bcrypt
 
@@ -21,8 +22,9 @@ app.config["SESSION_COOKIE_SECURE"] = False  # Set to False if testing locally, 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres:5432/draftempire")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "please-remember-to-change-me"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1) # can edit at will
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app)   
 
 migrate = Migrate(app, db)  # Add Migrate
 
@@ -195,6 +197,23 @@ def signup():
 
     return jsonify({"message": "User created successfully"}), 201
 
+@app.after_request
+def refresh_expiring_jwts(response):
+    try:
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            data = response.get_json()
+            if type(data) is dict:
+                data["access_token"] = access_token 
+                response.data = json.dumps(data)
+        return response
+    except (RuntimeError, KeyError):
+        # Case where there is not a valid JWT. Just return the original respone
+        return response
+
 # 🔹 User Login Route
 @app.route("/api/login", methods=["POST"])
 @cross_origin(origin='*')
@@ -219,7 +238,7 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 400
 
     # Give validated user token
-    access_token = create_access_token(identity=email)
+    access_token = create_access_token(identity=user.id)
     response = {"access_token" : access_token, "message": "Login successful"}
 
     return response, 201
