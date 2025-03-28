@@ -18,7 +18,7 @@ function Navbar() {
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
-  
+
   // handle logout
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -70,7 +70,8 @@ function Navbar() {
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
-          {(isLoggedIn) ? <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button> : <NavLink to="/login" className="btn btn-outline-light">Get Started</NavLink>}
+          <button type="button" className={`btn btn-outline-light ${isLoggedIn ? "active" : ""}`} onClick={handleLogout}>Log out</button>
+          <NavLink to="/login" className={`btn btn-outline-light ${isLoggedIn ? "" : "active"}`}>Get Started</NavLink>
         </div>
       </nav>
 
