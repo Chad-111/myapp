@@ -20,7 +20,7 @@ function Navbar() {
           "Content-Type": "application/json",
           "Authorization": 'Bearer ' + localStorage.getItem("access_token")
         },
-        body: JSON.stringify({"access_token" : localStorage.getItem("access_token")}),
+        body: JSON.stringify({ "access_token": localStorage.getItem("access_token") }),
       });
 
       if (!response.ok) {
@@ -56,7 +56,7 @@ function Navbar() {
   }, []);
 
   return (
-    <div className="layout-wrapper">
+    <div className="sticky-top layout-wrapper">
       <nav className={`Navbar ${isFantasyRoute ? 'compact' : ''}`}>
         <div className="navbar-wrapper-left">
           <div className="navbar-logo">DraftEmpire</div>
@@ -74,8 +74,8 @@ function Navbar() {
           <div className="navbar-spacer" />
           {
             isLoggedIn ?
-            (<button type="button" className={`btn btn-outline-light`} onClick={handleLogout}>Log out</button>) :
-            (<NavLink to="/login" className={`btn btn-outline-light`}>Get Started</NavLink>)
+              (<button type="button" className={`btn btn-outline-light`} onClick={handleLogout}>Log out</button>) :
+              (<NavLink to="/login" className={`btn btn-outline-light`}>Get Started</NavLink>)
           }
         </div>
       </nav>

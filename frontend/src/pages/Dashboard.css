@@ -3,10 +3,10 @@
 
 .Dashboard {
   background: #f5f7fa;
-  min-height: 100vh; /* Ensures full screen background */
+  min-height: 100vh;
+  /* Ensures full screen background */
   padding: 2rem;
 }
-
 
 .Dashboard h1 {
   text-align: center;
@@ -65,15 +65,26 @@
   width: 100%;
 }
 
-.nav-pills .nav-link.active {
-  background-color: #0d6efd;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
+/* Dashboard.css */
 .nav-pills .nav-link {
-  color: #0d6efd;
-  background-color: #f8f9fa;
-  transition: all 0.2s ease;
+  color: #555;
+  /* inactive text color */
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link.active {
+  color: #ffffff !important;
+  /* active text color */
+  background-color: #12c3e6d3 !important;
+  /* custom active bg (blue-ish) */
+  border: none;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: #12c3e641;
+  /* optional hover color */
+  color: #000;
 }
 
 .sticky-top {
@@ -82,8 +93,62 @@
   z-index: 1030;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
+
+/* Override Bootstrap dropdown hover using CSS variables */
 .dropdown-menu {
-  max-height: 60vh;
-  overflow-y: auto;
+  --bs-dropdown-link-hover-bg: #12c3e641;
+  /* custom hover background */
+  --bs-dropdown-link-hover-color: #000000;
+  /* custom hover text color */
 }
 
+/* Active item styling */
+.dropdown-item.active {
+  background-color: #12c3e6d3 !important;
+  color: #fff !important;
+  border-radius: 5%;
+}
+
+/* Toggle button base */
+.dropdown .dropdown-toggle {
+  background-color: transparent;
+  color: #555;
+  border: 1px solid #ccc;
+  transition: all 0.3s ease;
+}
+
+/* Hover */
+.dropdown .dropdown-toggle:hover {
+  color: #000;
+}
+
+/* Open (active) */
+.dropdown .dropdown-toggle.active {
+  background-color: #b6b6b670;
+  color: #000;
+  border-color: #bbb;
+}
+
+/* Glowing red pulse */
+.live-badge {
+  background-color: #dc3545;
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}

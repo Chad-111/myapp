@@ -1,4 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import LiveGameCard from '../components/LiveGameCard';
+import UpcomingGameCard from '../components/UpcomingGameCard';
+import PostGameCard from '../components/PostGameCard';
+
 import './Dashboard.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
@@ -13,14 +17,13 @@ const SPORTS = {
 };
 
 export default function Dashboard() {
-    const [selectedSport, setSelectedSport] = useState(() => {
-        return localStorage.getItem("selectedSport") || "ncaa_mbb";
-    });
+    const [selectedSport, setSelectedSport] = useState(() => localStorage.getItem("selectedSport") || "ncaa_mbb");
     const [scores, setScores] = useState([]);
+    const [leagues, setLeagues] = useState([]);
     const [news, setNews] = useState([]);
     const [activeTab, setActiveTab] = useState('scores');
     const [selectedArticle, setSelectedArticle] = useState(null);
-        
+
     const dropdownRef = useRef(null);
     const sportPath = SPORTS[selectedSport].path;
 
@@ -38,9 +41,9 @@ export default function Dashboard() {
 
                 const [scoresData, newsData] = await Promise.all([
                     scoresRes.json(),
-                    newsRes.json(),
+                    newsRes.json()
                 ]);
-
+                setLeagues(scoresData.leagues || []);
                 setScores(scoresData.events || []);
                 setNews(newsData.articles || []);
             } catch (err) {
@@ -49,7 +52,7 @@ export default function Dashboard() {
         };
 
         fetchData();
-        const interval = setInterval(fetchData, 60000);
+        const interval = setInterval(fetchData, 10000);
         return () => clearInterval(interval);
     }, [selectedSport]);
 
@@ -66,7 +69,9 @@ export default function Dashboard() {
 
     const toggleDropdown = () => {
         const menu = document.getElementById("dropdownMenu");
-        menu?.classList.toggle("show");
+        const button = dropdownRef.current?.querySelector("button");
+        const isOpen = menu?.classList.toggle("show");
+        if (button) button.classList.toggle("active", isOpen);
     };
 
     const handleSportSelect = (key) => {
@@ -75,42 +80,30 @@ export default function Dashboard() {
         menu?.classList.remove("show");
     };
 
+    const liveGames = scores.filter(event => event.status?.type?.state === 'in');
+    const upcomingGames = scores.filter(event => event.status?.type?.state === 'pre');
+    const finalGames = scores.filter(event => event.status?.type?.state === 'post');
+    const liveFormatName = leagues.filter(league => league.id === liveGames[0]?.leagues?.[0]?.id)[0]?.name || 'Live Games';
+
+    const hasSideColumnGames = liveGames.length > 0 || finalGames.length > 0;
+
     return (
-        <div className="vh-100 d-flex flex-column overflow-hidden">
-            <div className="border-bottom pb-2 ">
+        <div className="d-flex flex-column">
+            <div className="border-bottom pb-2">
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
                     <h1 className="mb-0 fs-3 fw-bold">Sports Dashboard</h1>
-
                     <div className="dropdown" ref={dropdownRef} style={{ minWidth: '180px' }}>
-                        <button
-                            className="btn btn-outline-primary dropdown-toggle w-100 d-flex align-items-center justify-content-between"
-                            type="button"
-                            onClick={toggleDropdown}
-                            style={{ minHeight: '38px' }}
-                        >
+                        <button className="btn dropdown-toggle w-100 d-flex align-items-center justify-content-between" type="button" onClick={toggleDropdown} style={{ minHeight: '38px' }}>
                             <div className="d-flex align-items-center gap-2">
-                                <img
-                                    src={SPORTS[selectedSport].logo}
-                                    alt={SPORTS[selectedSport].name}
-                                    style={{ height: '24px', width: '24px' }}
-                                    onError={(e) => (e.target.style.display = 'none')}
-                                />
+                                <img src={SPORTS[selectedSport].logo} alt={SPORTS[selectedSport].name} style={{ height: '24px', width: '24px' }} onError={(e) => (e.target.style.display = 'none')} />
                                 <span>{SPORTS[selectedSport].name}</span>
                             </div>
                         </button>
                         <ul className="dropdown-menu w-100" id="dropdownMenu">
                             {Object.entries(SPORTS).map(([key, sport]) => (
                                 <li key={key}>
-                                    <button
-                                        className={`dropdown-item d-flex align-items-center gap-2 ${key === selectedSport ? 'active' : ''}`}
-                                        onClick={() => handleSportSelect(key)}
-                                    >
-                                        <img
-                                            src={sport.logo}
-                                            alt={sport.name}
-                                            style={{ height: '20px', width: '20px' }}
-                                            onError={(e) => (e.target.style.display = 'none')}
-                                        />
+                                    <button className={`dropdown-item d-flex align-items-center gap-2 ${key === selectedSport ? 'active' : ''}`} onClick={() => handleSportSelect(key)}>
+                                        <img src={sport.logo} alt={sport.name} style={{ height: '20px', width: '20px' }} onError={(e) => (e.target.style.display = 'none')} />
                                         {sport.name}
                                     </button>
                                 </li>
@@ -118,14 +111,10 @@ export default function Dashboard() {
                         </ul>
                     </div>
                 </div>
-
                 <ul className="nav nav-pills gap-2 justify-content-center border-top pt-2">
                     {['scores', 'news'].map(tab => (
                         <li className="nav-item" key={tab}>
-                            <button
-                                className={`nav-link rounded-pill px-4 fw-semibold ${activeTab === tab ? 'active' : ''}`}
-                                onClick={() => setActiveTab(tab)}
-                            >
+                            <button className={`nav-link rounded-pill px-4 fw-semibold ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </button>
                         </li>
@@ -133,148 +122,52 @@ export default function Dashboard() {
                 </ul>
             </div>
 
-            <div className="flex-grow-1 overflow-auto">
-                {/* Scores Tab */}
-                {
-                    activeTab === 'scores' && (
-                        <section className="container py-3">
-                            <h2>Upcoming Matchups</h2>
-                            <div className="row">
-                                {scores.map(event => {
-                                    const competition = event.competitions?.[0];
-                                    const home = competition?.competitors?.find(c => c.homeAway === 'home');
-                                    const away = competition?.competitors?.find(c => c.homeAway === 'away');
-                                    const odds = competition?.odds?.[0];
-                                    return (
-                                        <div className="col-md-4 mb-4" key={event.id}>
-                                            <div className="card w-100 h-100 p-3 d-flex flex-column justify-content-between">
-                                                <div>
-                                                    <h5 className="text-center">{home?.team?.displayName} vs {away?.team?.displayName}</h5>
-                                                    <p className="text-center">{event.date && new Date(event.date).toLocaleString()}</p>
-                                                    <div className="row justify-content-center align-items-center mb-3">
-                                                        <div className="col-4 text-center">
-                                                            <img src={home?.team?.logo} alt={home?.team?.displayName} style={{ maxWidth: '50px' }} />
-                                                        </div>
-                                                        <div className="col-4 text-center fw-bold">VS</div>
-                                                        <div className="col-4 text-center">
-                                                            <img src={away?.team?.logo} alt={away?.team?.displayName} style={{ maxWidth: '50px' }} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {odds && (
-                                                    <div className="card-footer text-muted text-center">
-                                                        <div className="fw-semibold">{odds.details}</div>
-                                                        <small>Odds by <span className="fw-bold">{odds.provider?.name}</span></small>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    )
-                }
-
-                {/* News Tab */}
-                {
-                    activeTab === 'news' && (
-                        <section className="container py-3">
-                            <h2>News</h2>
-                            <div className="row">
-                                {news.map(article => {
-                                    const previewImage = article.images?.find(img => ['16x9', '5x2'].includes(img.ratio)) || article.images?.[0];
-                                    const isMediaClip = article?.type === 'Media';
-                                    const clipId = article?.links?.web?.href?.split('id=')[1];
-
-                                    return (
-                                        <div className="col-md-3 mb-4" key={article.id}>
-                                            <div
-                                                className="card w-100 h-100 p-0 overflow-hidden"
-                                                onClick={() => setSelectedArticle(article)}
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#newsModal"
-                                                style={{ cursor: 'pointer' }}
-                                            >
-                                                <div className="position-relative">
-                                                    {isMediaClip && clipId ? (
-                                                        <div className="ratio ratio-16x9">
-                                                            <iframe
-                                                                src={`https://www.espn.com/core/video/iframe?id=${clipId}&autoplay=true&mute=true&endcard=false`}
-                                                                title={article.headline}
-                                                                allow="autoplay; encrypted-media"
-                                                                allowFullScreen
-                                                                frameBorder="0"
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        previewImage && (
-                                                            <img
-                                                                src={previewImage.url}
-                                                                alt={article.headline}
-                                                                className="w-100"
-                                                                style={{ height: '20vh', objectFit: 'cover', borderTopLeftRadius: '6px', borderTopRightRadius: '6px', backgroundColor: '#000' }}
-                                                            />
-                                                        )
-                                                    )}
-                                                    <div className="position-absolute bottom-0 start-0 w-100 text-white bg-dark bg-opacity-50 px-2 py-1">
-                                                        <strong>{article.headline}</strong>
-                                                    </div>
-                                                </div>
-                                                <div className="p-3">
-                                                    <p className="text-muted small">{article.description}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    )
-                }
-
-                {/* News Modal */}
-                <div className="modal fade" id="newsModal" tabIndex="-1" aria-hidden="true">
-                    <div className="modal-dialog modal-dialog-centered modal-lg">
-                        <div className="modal-content">
-                            {selectedArticle && (
-                                <>
-                                    <div className="modal-header">
-                                        <h5 className="modal-title">{selectedArticle.headline}</h5>
-                                        <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div className="modal-body text-center">
-                                        {selectedArticle.type === 'Media' && selectedArticle.links?.web?.href?.includes('id=') ? (
-                                            <div className="ratio ratio-16x9 mb-3">
-                                                <iframe
-                                                    src={`https://www.espn.com/core/video/iframe?id=${selectedArticle.links.web.href.split('id=')[1]}&autoplay=true&endcard=false`}
-                                                    title={selectedArticle.headline}
-                                                    allow="autoplay; encrypted-media"
-                                                    allowFullScreen
-                                                    frameBorder="0"
-                                                />
-                                            </div>
-                                        ) : (
-                                            selectedArticle.images?.[0]?.url && (
-                                                <img
-                                                    src={selectedArticle.images[0].url}
-                                                    alt={selectedArticle.headline}
-                                                    className="img-fluid mb-3"
-                                                    style={{ maxHeight: '300px', objectFit: 'contain' }}
-                                                />
-                                            )
+            <div className="flex-grow-1">
+                {activeTab === 'scores' && (
+                    <section className="container-fluid py-3">
+                        <div className="row">
+                            {hasSideColumnGames && (
+                                <div className="col-md-6">
+                                    <div className="row">
+                                        {liveGames.length > 0 && (
+                                            <>
+                                                <h5 className="text-danger fw-bold mb-3">LIVE GAMES</h5>
+                                                {liveGames.map(event => (
+                                                    <LiveGameCard key={event.id} event={event} />
+                                                ))}
+                                            </>
                                         )}
-                                        <p className="text-muted">{selectedArticle.description}</p>
-                                        <a href={selectedArticle.links?.web?.href} target="_blank" rel="noreferrer" className="btn btn-outline-primary mt-2">
-                                            View Full Article
-                                        </a>
+                                        {finalGames.length > 0 && (
+                                            <>
+                                                <hr className="my-4 border-top border-secondary opacity-50" />
+                                                <h6 className="text-muted fw-semibold mb-3">FINAL SCORES</h6>
+                                                {finalGames.map(event => (
+                                                    <PostGameCard key={event.id} event={event} isFinal />
+                                                ))}
+                                            </>
+                                        )}
                                     </div>
-                                </>
+                                </div>
                             )}
+
+                            <div className={hasSideColumnGames ? "col justify-content-center" : "col-12"}>
+                                {upcomingGames.length > 0 && <h2 className="display-6 pb-2">Upcoming Matchups</h2>}
+                                <div className="row g-4">
+                                    {upcomingGames.map(event => (
+                                        <div className="col-12 col-md-6 col-xl-4" key={event.id}>
+                                            <UpcomingGameCard event={event} />
+                                        </div>
+                                    )
+                                    )}
+                                    <div className="col-12 text-center">
+                                        <p className="text-muted">No upcoming games.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div >
-        </div >
+                    </section>
+                )}
+            </div>
+        </div>
     );
 }

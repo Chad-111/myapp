@@ -5,7 +5,6 @@
   padding: 0.5rem 1.5rem;
   height: 56px;
   background-color: #1c1f26;
-  position: relative;
 }
 
 .navbar-wrapper-left {
@@ -16,6 +15,7 @@
   height: 100%;
   padding-left: 1rem;
 }
+
 .navbar-wrapper-right {
   position: absolute;
   right: 0;
@@ -91,7 +91,7 @@
   background: #2e323a;
   min-width: 200px;
   border-radius: 6px;
-  box-shadow: 0px 8px 15px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
   padding: 1rem 0;
   display: none;
   flex-direction: column;
@@ -161,7 +161,7 @@
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: 1rem;
-  color: #00d4ff;
+  color: #12c3e6d3;
   padding-left: 0.5rem;
 }
 
@@ -233,6 +233,7 @@
 /* When sidebar is present */
 .with-sidebar {
   padding-top: 1rem;
-  padding-left: 250px; /* Matches sidebar width */
+  padding-left: 250px;
+  /* Matches sidebar width */
   padding-right: 1.5rem;
 }
