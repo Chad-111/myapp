@@ -90,7 +90,7 @@ export default function Dashboard() {
     return (
         <div className="d-flex flex-column">
             <div className="border-bottom pb-2">
-                <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                <div className="mt-2 d-flex flex-wrap justify-content-between align-items-center mb-2">
                     <h1 className="mb-0 fs-3 fw-bold">Sports Dashboard</h1>
                     <div className="dropdown" ref={dropdownRef} style={{ minWidth: '180px' }}>
                         <button className="btn dropdown-toggle w-100 d-flex align-items-center justify-content-between" type="button" onClick={toggleDropdown} style={{ minHeight: '38px' }}>
@@ -125,13 +125,13 @@ export default function Dashboard() {
             <div className="flex-grow-1">
                 {activeTab === 'scores' && (
                     <section className="container-fluid py-3">
-                        <div className="row">
-                            {hasSideColumnGames && (
-                                <div className="col-md-6">
-                                    <div className="row">
+                        <div className="row g-4">
+                            {(liveGames.length > 0 || finalGames.length > 0) && (
+                                <div className="col-12 col-md-4 col-lg-2">
+                                    <div className="d-flex flex-column gap-3">
                                         {liveGames.length > 0 && (
                                             <>
-                                                <h5 className="text-danger fw-bold mb-3">LIVE GAMES</h5>
+                                                <h5 className="text-danger fw-bold mb-2">LIVE GAMES</h5>
                                                 {liveGames.map(event => (
                                                     <LiveGameCard key={event.id} event={event} />
                                                 ))}
@@ -139,8 +139,7 @@ export default function Dashboard() {
                                         )}
                                         {finalGames.length > 0 && (
                                             <>
-                                                <hr className="my-4 border-top border-secondary opacity-50" />
-                                                <h6 className="text-muted fw-semibold mb-3">FINAL SCORES</h6>
+                                                <h6 className="text-muted fw-semibold mt-4 mb-2">FINAL SCORES</h6>
                                                 {finalGames.map(event => (
                                                     <PostGameCard key={event.id} event={event} isFinal />
                                                 ))}
@@ -150,21 +149,35 @@ export default function Dashboard() {
                                 </div>
                             )}
 
-                            <div className={hasSideColumnGames ? "col justify-content-center" : "col-12"}>
-                                {upcomingGames.length > 0 && <h2 className="display-6 pb-2">Upcoming Matchups</h2>}
-                                <div className="row g-4">
-                                    {upcomingGames.map(event => (
-                                        <div className="col-12 col-md-6 col-xl-4" key={event.id}>
-                                            <UpcomingGameCard event={event} />
+                            <div className={liveGames.length > 0 || finalGames.length > 0 ? "col-auto col-lg-8 col-xl-9" : "col-auto"}>
+                                <div className="row g-4 justify-content-center">
+                                    {upcomingGames.length > 0 ? (
+                                        <>
+                                            <h2 className="display-6 pb-2">Upcoming Matchups</h2>
+                                            {upcomingGames.map(event => (
+                                                <div className="col-sm-4 col-md-12 col-lg-4" key={event.id}>
+                                                    <UpcomingGameCard event={event} />
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : finalGames.length > 0 ? (
+                                        <div className="col-12">
+                                            <div className="card p-4 text-center bg-light-subtle shadow-sm border">
+                                                <h4 className="fw-bold mb-2">No Upcoming Games</h4>
+                                                <p className="text-muted mb-0">Check out the latest completed matchups in the sidebar.</p>
+                                            </div>
                                         </div>
-                                    )
+                                    ) : (
+                                        <div className="col-12 text-center">
+                                            <p className="text-muted">No games available.</p>
+                                        </div>
                                     )}
-                                    <div className="col-12 text-center">
-                                        <p className="text-muted">No upcoming games.</p>
-                                    </div>
                                 </div>
+
                             </div>
                         </div>
+
+
                     </section>
                 )}
             </div>

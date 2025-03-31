@@ -11,7 +11,7 @@ export default function LiveGameCard({ event }) {
 
 
     return (
-        <div className="w-50 mb-3 p-2 border rounded shadow-sm bg-teritary bg-gradient">
+        <div className="w-100 mb-3 p-2 border rounded shadow-sm bg-teritary bg-gradient">
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="live-badge">LIVE</span>
                 <small className="text-muted">{statusType}</small>

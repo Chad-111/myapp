@@ -8,7 +8,7 @@ export default function PostGameCard({ event }) {
     const away = comp?.competitors?.find(c => c.homeAway === 'away');
 
     return (
-        <div className="w-50 mb-3 p-2 border rounded shadow-sm bg-teritary bg-gradient">
+        <div className="w-100 mb-3 p-2 border rounded shadow-sm bg-success-subtle bg-gradient">
             <div className="card-header text-center mb-1">
                 <small className="text-muted fw-bold fs-6">FINAL</small>
             </div>
