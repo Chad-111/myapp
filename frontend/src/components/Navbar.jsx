@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from "react"
 import "./Navbar.css";
 import { LoginContext } from "../App";
 
-function Navbar(isLoggedIn, setIsLoggedIn) {
+function Navbar() {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
   const {isLoggedIn, setIsLoggedIn} = useContext(LoginContext);
