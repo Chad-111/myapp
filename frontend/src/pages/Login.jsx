@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css"; // Import the CSS for your Login component
+import { LoginContext } from "../App";
 
 function Login() {
+  const {isLoggedIn, setIsLoggedIn} = useContext(LoginContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,6 +28,7 @@ function Login() {
 
       const data = await response.json();
       console.log("Login successful:", data);
+      setIsLoggedIn(true);
 
       // Store access token in local storage
       localStorage.setItem("access_token", data.access_token);

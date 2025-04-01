@@ -2,11 +2,12 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react"
 import "./Navbar.css";
+import { LoginContext } from "../App";
 
-function Navbar() {
+function Navbar(isLoggedIn, setIsLoggedIn) {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("access_token") !== null)
+  const {isLoggedIn, setIsLoggedIn} = useContext(LoginContext);
   const navigate = useNavigate();
 
   // handle logout
@@ -43,17 +44,6 @@ function Navbar() {
     }
   };
 
-  useEffect(() => {
-    // Update state whenever localStorage changes
-    const checkAuth = () => {
-      setIsLoggedIn(localStorage.getItem("access_token") !== null);
-    };
-
-    checkAuth();
-
-    window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
-  }, []);
 
   return (
     <div className="sticky-top layout-wrapper">
