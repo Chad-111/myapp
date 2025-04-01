@@ -109,6 +109,9 @@ function Navbar() {
             <li>
               <NavLink to="/league/draft" className={({ isActive }) => isActive ? "active" : ""}>Live Draft</NavLink>
             </li>
+            <li>
+              <NavLink to="/league/brackets" className={({ isActive }) => isActive ? "active" : ""}>Brackets</NavLink>
+            </li>
           </ul>
           <hr />
           <NavLink to="/" className="btn btn-outline-light">Return</NavLink>

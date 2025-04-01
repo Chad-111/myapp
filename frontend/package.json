@@ -13,6 +13,7 @@
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
     "bootstrap": "^5.3.3",
+    "build": "^0.1.4",
     "framer-motion": "^12.6.2",
     "offcanvas-bootstrap": "^2.5.2",
     "react": "^19.0.0",

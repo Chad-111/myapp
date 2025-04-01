@@ -23,6 +23,7 @@ import LeagueHome from "./pages/Fantasy/League/Home";
 import Matchups from "./pages/Fantasy/League/Matchups";
 import LeagueMembers from "./pages/Fantasy/League/Members";
 import TradePortal from "./pages/Fantasy/League/Portal";
+import Brackets from './pages/Fantasy/League/Brackets';
 import LeagueRoster from "./pages/Fantasy/League/Rosters";
 import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
@@ -100,6 +101,7 @@ function Layout() {
           <Route path="/league/matchups" element={<Matchups />} />
           <Route path="/league/members" element={<LeagueMembers />} />
           <Route path="/league/portal" element={<TradePortal />} />
+          <Route path="/league/brackets" element={<Brackets />} />
           <Route path="/league/rosters" element={<LeagueRoster />} />
           <Route path="/league/schedule" element={<LeagueSchedule />} />
           <Route path="/league/settings" element={<LeagueSettings />} />
