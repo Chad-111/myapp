@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import "./Navbar.css";
 import { LoginContext } from "../App";
 
@@ -43,6 +43,8 @@ function Navbar(isLoggedIn, setIsLoggedIn) {
       console.error(error.message);
     }
   };
+
+
 
 
   return (
