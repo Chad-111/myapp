@@ -2,12 +2,12 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react"
 import "./Navbar.css";
-import { LoginContext } from "../App";
+import { AuthContext } from "../App";
 
 function Navbar() {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
-  const {isLoggedIn, setIsLoggedIn} = useContext(LoginContext);
+  const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
   const navigate = useNavigate();
 
   // handle logout
@@ -19,9 +19,9 @@ function Navbar() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": 'Bearer ' + localStorage.getItem("access_token")
+          "Authorization": 'Bearer ' + authToken
         },
-        body: JSON.stringify({ "access_token": localStorage.getItem("access_token") }),
+        body: JSON.stringify({ "access_token": authToken}),
       });
 
       if (!response.ok) {
@@ -31,15 +31,15 @@ function Navbar() {
       const data = await response.json();
       console.log("Logout successful:", data);
 
-      // Remove access token from local storage
-      localStorage.removeItem("access_token");
+      // Remove access token from context
+      setAuthToken(null);
       setIsLoggedIn(false); // Ensure UI updates
 
       // Redirect to the home page or another page
       navigate("/");
 
     } catch (error) {
-      console.error("Error: Log out failed. Please check your credentials and try again.");
+      console.error("Error: Log out failed.");
       console.error(error.message);
     }
   };

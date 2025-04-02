@@ -28,7 +28,7 @@ import LeagueRoster from "./pages/Fantasy/League/Rosters";
 import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
 
-export const LoginContext = createContext();
+export const AuthContext = createContext();
 
 // Wrap routes in a layout-aware component
 function Layout() {
@@ -36,6 +36,7 @@ function Layout() {
   const [theme, setTheme] = useState("light");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isFantasyRoute = location.pathname.startsWith("/league");
+  const [authToken, setAuthToken] = useState(false);
 
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
@@ -43,7 +44,7 @@ function Layout() {
 
   return (
     <>
-      <LoginContext.Provider value={{isLoggedIn, setIsLoggedIn}}>
+      <AuthContext.Provider value={[{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}]}>
         <Navbar/>
         <IconButton
           color="primary"
@@ -110,7 +111,7 @@ function Layout() {
             <Route path="/league/settings" element={<LeagueSettings />} />
           </Routes>
         </main>
-      </LoginContext.Provider>
+      </AuthContext.Provider>
     </>
   );
 }
