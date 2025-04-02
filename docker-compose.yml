@@ -1,4 +1,4 @@
-version: "3.8"
+# version: "3.8"  # Not needed for Docker Compose v2.0 and above
 
 services:
   backend:
