@@ -65,97 +65,67 @@ export default function UpcomingGameCard({ event, onClick }) {
 
 
     return (
-        <div className="mb-4 h-auto">
+        <div className="mb-4 h-100">
             <div
                 className="card p-3 shadow bg-teritary bg-gradient"
                 style={{ cursor: "pointer" }}
                 onClick={() => onClick(event)}
             >
-                <div className="row align-items-center justify-content-center my-2">
+                <div
+                    className="d-flex justify-content-center align-items-center my-3"
+                    style={{ gap: '1rem' }}
+                >
                     {/* Away Team */}
-                    <div className="col-5 text-center d-flex flex-column align-items-center">
-                        <div
-                            className="fw-semibold"
-                            style={{
-                                maxWidth: '100%',
-                                fontSize: 'clamp(1rem, 1.5vw, 1rem)'
-                            }}
-                        >
+                    <div
+                        className="d-flex flex-column align-items-center"
+                        style={{ width: '45%' }} // equal fixed width
+                    >
+                        <div className="fw-semibold text-center" style={{ fontSize: 'clamp(12px, 1.5vw, 14px)' }}>
                             {away?.team?.displayName}
                         </div>
-                        <div
+                        <img
+                            src={away?.team?.logo}
+                            alt={away?.team?.displayName}
+                            className="img-fluid mt-2"
                             style={{
-                                height: 75,
-                                width: 75,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
+                                height: 'clamp(50px, 8vw, 60px)',
+                                width: 'clamp(50px, 8vw, 60px)',
+                                objectFit: 'contain',
+                                aspectRatio: '1 / 1'
                             }}
-                        >
-                            <img
-                                src={away?.team?.logo}
-                                alt={away?.team?.displayName}
-                                className="img-fluid"
-                                style={{
-                                    maxHeight: '100%',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain',
-                                    aspectRatio: '1 / 1'
-                                }}
-                            />
-                        </div>
+                        />
                     </div>
 
                     {/* @ Symbol */}
-                    <div className="col-1 d-flex align-items-center justify-content-center">
-                        <span
-                            style={{
-                                fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-                                fontWeight: '600',
-                            }}
-                        >
-                            @
-                        </span>
-                    </div>
+                    <div style={{ fontSize: 'clamp(12px, 1.5vw, 16px)', fontWeight: 600 }}>@</div>
 
                     {/* Home Team */}
-                    <div className="col-5 text-center d-flex flex-column align-items-center">
-                        <div
-                            className="fw-semibold"
-                            style={{
-                                maxWidth: '100%',
-                                fontSize: 'clamp(1rem, 1.5vw, 1rem)'
-                            }}
-                        >
+                    <div
+                        className="d-flex flex-column align-items-center"
+                        style={{ width: '45%' }} // exact same fixed width
+                    >
+                        <div className="fw-semibold text-center" style={{ fontSize: 'clamp(12px, 1.5vw, 14px)' }}>
                             {home?.team?.displayName}
                         </div>
-                        <div
+                        <img
+                            src={home?.team?.logo}
+                            alt={home?.team?.displayName}
+                            className="img-fluid mt-2"
                             style={{
-                                height: 75,
-                                width: 75,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
+                                height: 'clamp(50px, 8vw, 60px)',
+                                width: 'clamp(50px, 8vw, 60px)',
+                                objectFit: 'contain',
+                                aspectRatio: '1 / 1'
                             }}
-                        >
-                            <img
-                                src={home?.team?.logo}
-                                alt={home?.team?.displayName}
-                                className="img-fluid"
-                                style={{
-                                    maxHeight: '100%',
-                                    maxWidth: '100%',
-                                    objectFit: 'contain',
-                                    aspectRatio: '1 / 1'
-                                }}
-                            />
-                        </div>
+                        />
                     </div>
                 </div>
 
 
+
+
                 {startsIn && (
-                    <p className={`text-center fw-semibold small mb-1 ${countdownColor}`}>
+                    <p className={`text-center fw-semibold fs-6 small my-1 ${countdownColor}`}>
                         {startsIn}
                     </p>
                 )}

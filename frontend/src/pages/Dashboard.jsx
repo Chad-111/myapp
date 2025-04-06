@@ -23,6 +23,15 @@ export default function Dashboard() {
     const [news, setNews] = useState([]);
     const [activeTab, setActiveTab] = useState('scores');
     const [selectedArticle, setSelectedArticle] = useState(null);
+    const [selectedGame, setSelectedGame] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedLiveGame, setSelectedLiveGame] = useState(null);
+    const [showLiveModal, setShowLiveModal] = useState(false);
+    const [selectedFinalGame, setSelectedFinalGame] = useState(null);
+    const [finalGameSummary, setFinalGameSummary] = useState(null);
+    const [showFinalModal, setShowFinalModal] = useState(false);
+
+
 
     const dropdownRef = useRef(null);
     const sportPath = SPORTS[selectedSport].path;
@@ -80,12 +89,25 @@ export default function Dashboard() {
         menu?.classList.remove("show");
     };
 
+    const fetchFinalGameSummary = async (gameId) => {
+        try {
+            const res = await fetch(`http://site.api.espn.com/apis/site/v2/sports/${sportPath}/summary?event=${gameId}`);
+            const data = await res.json();
+            setFinalGameSummary(data.boxscore);
+            setShowFinalModal(true);
+        } catch (err) {
+            console.error('Failed to fetch post-game summary:', err);
+        }
+    };
+
+
     const liveGames = scores.filter(event => event.status?.type?.state === 'in');
     const upcomingGames = scores.filter(event => event.status?.type?.state === 'pre');
     const finalGames = scores.filter(event => event.status?.type?.state === 'post');
     const liveFormatName = leagues.filter(league => league.id === liveGames[0]?.leagues?.[0]?.id)[0]?.name || 'Live Games';
 
     const hasSideColumnGames = liveGames.length > 0 || finalGames.length > 0;
+
 
     return (
         <div className="d-flex flex-column">
@@ -125,61 +147,403 @@ export default function Dashboard() {
             <div className="flex-grow-1">
                 {activeTab === 'scores' && (
                     <section className="container-fluid py-3">
-                        <div className="row g-4">
-                            {(liveGames.length > 0 || finalGames.length > 0) && (
-                                <div className="col-12 col-md-4 col-lg-2">
-                                    <div className="d-flex flex-column gap-3">
+                        <div className="row">
+                            {/* Large screen layout: left (live), center (upcoming), right (final) */}
+                            <div className="d-none d-lg-block">
+                                <div className="row">
+                                    <div className="col-lg-2 mb-4">
                                         {liveGames.length > 0 && (
                                             <>
-                                                <h5 className="text-danger fw-bold mb-2">LIVE GAMES</h5>
+                                                <div className="d-flex justify-content-center align-items-center mb-2">
+                                                    <span className="live-badge">LIVE</span>
+                                                </div>
                                                 {liveGames.map(event => (
-                                                    <LiveGameCard key={event.id} event={event} />
+                                                    <LiveGameCard
+                                                        key={event.id}
+                                                        event={event}
+                                                        onClick={() => {
+                                                            setSelectedLiveGame(event);
+                                                            setShowLiveModal(true);
+                                                        }}
+                                                    />
                                                 ))}
                                             </>
                                         )}
+                                    </div>
+
+                                    <div className="col-lg-8 mb-4">
+                                        <h2 className="display-6 pb-3">Upcoming Matchups</h2>
+                                        <div className="row g-4 justify-content-center">
+                                            {upcomingGames.length > 0 ? (
+                                                upcomingGames.map(event => (
+                                                    <div className="col-12 col-sm-6 col-lg-6 col-xl-4" key={event.id}>
+                                                        <UpcomingGameCard
+                                                            event={event}
+                                                            onClick={event => {
+                                                                setSelectedGame(event);
+                                                                setShowModal(true);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="card p-4 text-center bg-light-subtle shadow-sm border">
+                                                    <h4 className="fw-bold mb-2">No Upcoming Games</h4>
+                                                    <p className="text-muted mb-0">Check out the latest completed matchups.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="col-lg-2 mb-4">
                                         {finalGames.length > 0 && (
                                             <>
-                                                <h6 className="text-muted fw-semibold mt-4 mb-2">FINAL SCORES</h6>
+                                                <div className="d-flex justify-content-center align-items-center mb-2">
+                                                    <span className="final-badge">FINAL</span>
+                                                </div>
                                                 {finalGames.map(event => (
-                                                    <PostGameCard key={event.id} event={event} isFinal />
+                                                    <PostGameCard
+                                                        isFinal
+                                                        key={event.id}
+                                                        event={event}
+                                                        onClick={() => {
+                                                            setSelectedFinalGame(event);
+                                                            fetchFinalGameSummary(event.id);
+                                                        }}
+                                                    />
+
                                                 ))}
                                             </>
                                         )}
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
-                            <div className={liveGames.length > 0 || finalGames.length > 0 ? "col-auto col-lg-8 col-xl-9" : "col-auto"}>
-                                <div className="row g-4 justify-content-center">
-                                    {upcomingGames.length > 0 ? (
-                                        <>
-                                            <h2 className="display-6 pb-2">Upcoming Matchups</h2>
-                                            {upcomingGames.map(event => (
-                                                <div className="col-sm-4 col-md-12 col-lg-4" key={event.id}>
-                                                    <UpcomingGameCard event={event} />
-                                                </div>
-                                            ))}
-                                        </>
-                                    ) : finalGames.length > 0 ? (
-                                        <div className="col-12">
-                                            <div className="card p-4 text-center bg-light-subtle shadow-sm border">
-                                                <h4 className="fw-bold mb-2">No Upcoming Games</h4>
-                                                <p className="text-muted mb-0">Check out the latest completed matchups in the sidebar.</p>
+                            {/* Medium and below layout: live/final side-by-side, upcoming below */}
+                            <div className="d-lg-none">
+                                <div className="row g-4 mb-4">
+                                    {liveGames.length > 0 && (
+                                        <div className="col-12 col-md-6">
+                                            <div className="d-flex justify-content-center align-items-center mb-2">
+                                                <span className="live-badge">LIVE</span>
                                             </div>
+                                            {liveGames.map(event => (
+                                                <LiveGameCard
+                                                    key={event.id}
+                                                    event={event}
+                                                    onClick={() => {
+                                                        setSelectedLiveGame(event);
+                                                        setShowLiveModal(true);
+                                                    }}
+                                                />
+                                            ))}
                                         </div>
-                                    ) : (
-                                        <div className="col-12 text-center">
-                                            <p className="text-muted">No games available.</p>
+                                    )}
+                                    {finalGames.length > 0 && (
+                                        <div className="col-12 col-md-6">
+                                            <div className="d-flex justify-content-center align-items-center mb-2">
+                                                <span className="final-badge">FINAL</span>
+                                            </div>
+                                            {finalGames.map(event => (
+                                                <PostGameCard
+                                                    isFinal
+                                                    key={event.id}
+                                                    event={event}
+                                                    onClick={() => {
+                                                        setSelectedFinalGame(event);
+                                                        fetchFinalGameSummary(event.id);
+                                                    }}
+                                                />
+                                            ))}
                                         </div>
                                     )}
                                 </div>
 
+                                <div className="col-12">
+                                    <h2 className="display-6 pb-3">Upcoming Matchups</h2>
+                                    <div className="row g-4 justify-content-center">
+                                        {upcomingGames.length > 0 ? (
+                                            upcomingGames.map(event => (
+                                                <div className="col-12 col-sm-6 col-lg-4 col-xl-3" key={event.id}>
+                                                    <UpcomingGameCard
+                                                        event={event}
+                                                        onClick={event => {
+                                                            setSelectedGame(event);
+                                                            setShowModal(true);
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="card p-4 text-center bg-light-subtle shadow-sm border">
+                                                <h4 className="fw-bold mb-2">No Upcoming Games</h4>
+                                                <p className="text-muted mb-0">Check out the latest completed matchups.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
 
                     </section>
+
                 )}
+                {showModal && selectedGame && (() => {
+                    const competitors = selectedGame?.competitions?.[0]?.competitors;
+                    if (!competitors) return null;
+
+                    const sortedTeams = [...competitors].sort((a, b) => {
+                        if (a.homeAway === 'away') return -1;
+                        if (b.homeAway === 'away') return 1;
+                        return 0;
+                    });
+
+                    return (
+                        <div
+                            className="modal fade show d-block"
+                            tabIndex="-1"
+                            role="dialog"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+                        >
+                            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                <div className="modal-content border-0 shadow-lg">
+                                    <div className="modal-header justify-content-center border-0 pb-0">
+                                        <div className="text-center w-100">
+                                            <div className="d-flex align-items-center justify-content-center gap-4 mb-2">
+                                                {sortedTeams.map(team => (
+                                                    <div key={team.id} className="d-flex flex-column align-items-center">
+                                                        <img
+                                                            src={team.team.logo}
+                                                            alt={team.team.displayName}
+                                                            style={{ height: 48, width: 48, objectFit: 'contain' }}
+                                                        />
+                                                        <small className="fw-semibold mt-1">{team.team.abbreviation}</small>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <h5 className="modal-title fw-bold">
+                                                {`${sortedTeams[0]?.team?.displayName} at ${sortedTeams[1]?.team?.displayName}`}
+                                            </h5>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn-close position-absolute end-0 me-3"
+                                            onClick={() => setShowModal(false)}
+                                        />
+                                    </div>
+
+                                    <div className="modal-body pt-2">
+                                        <div className="row">
+                                            {sortedTeams.map(team => (
+                                                <div className="col-12 col-md-6" key={team.id}>
+                                                    <div className="border rounded p-3 mb-4 h-100">
+                                                        <div className="text-center mb-3">
+                                                            <img
+                                                                src={team.team.logo}
+                                                                alt={team.team.displayName}
+                                                                className="mb-2"
+                                                                style={{ height: 36, width: 36, objectFit: 'contain' }}
+                                                            />
+                                                            <h6 className="fw-bold mb-0">{team.team.displayName}</h6>
+                                                        </div>
+
+                                                        <ul className="list-unstyled d-flex flex-column align-items-center">
+                                                            {(team.leaders || []).map((statGroup, index) => {
+                                                                const leader = statGroup.leaders?.[0];
+                                                                if (!leader) return null;
+
+                                                                return (
+                                                                    <li
+                                                                        key={index}
+                                                                        className="d-flex align-items-center gap-3 text-center mb-3 w-100"
+                                                                        style={{
+                                                                            padding: '0.5rem',
+                                                                            borderBottom: '1px solid #eee'
+                                                                        }}
+                                                                    >
+                                                                        <img
+                                                                            src={leader.athlete?.headshot}
+                                                                            alt={leader.athlete?.displayName}
+                                                                            style={{
+                                                                                width: 50,
+                                                                                height: 50,
+                                                                                borderRadius: '50%',
+                                                                                objectFit: 'cover'
+                                                                            }}
+                                                                        />
+                                                                        <div className="flex-grow-1">
+                                                                            <div className="fw-semibold">{leader.athlete?.displayName}</div>
+                                                                            <div className="text-muted small">{statGroup.displayName}: {leader.displayValue}</div>
+                                                                        </div>
+                                                                    </li>
+                                                                );
+                                                            })}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {showLiveModal && selectedLiveGame && (() => {
+                    const competitors = selectedLiveGame?.competitions?.[0]?.competitors;
+                    if (!competitors) return null;
+
+                    const sortedTeams = [...competitors].sort((a, b) => (
+                        a.homeAway === 'away' ? -1 : 1
+                    ));
+
+                    return (
+                        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+                            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                <div className="modal-content border-0 shadow-lg">
+                                    <div className="modal-header justify-content-between border-0 pb-0">
+                                        <h5 className="modal-title fw-bold w-100 text-center">{selectedLiveGame.name}</h5>
+                                        <button
+                                            type="button"
+                                            className="btn-close position-absolute end-0 me-3"
+                                            onClick={() => setShowLiveModal(false)}
+                                        />
+                                    </div>
+
+                                    <div className="modal-body pt-2">
+                                        <div className="row">
+                                            {sortedTeams.map(team => (
+                                                <div className="col-12 col-md-6" key={team.id}>
+                                                    <div className="border rounded p-3 mb-4 h-100">
+                                                        <div className="text-center mb-3">
+                                                            <img
+                                                                src={team.team.logo}
+                                                                alt={team.team.displayName}
+                                                                className="mb-2"
+                                                                style={{ height: 36, width: 36, objectFit: 'contain' }}
+                                                            />
+                                                            <h6 className="fw-bold mb-0">{team.team.displayName}</h6>
+                                                            <div className="text-muted">Score: {team.score}</div>
+                                                        </div>
+
+                                                        <ul className="list-unstyled d-flex flex-column align-items-center">
+                                                            {(team.leaders || []).map((statGroup, index) => {
+                                                                const leader = statGroup.leaders?.[0];
+                                                                if (!leader) return null;
+
+                                                                return (
+                                                                    <li
+                                                                        key={index}
+                                                                        className="d-flex align-items-center gap-3 text-center mb-3 w-100"
+                                                                        style={{
+                                                                            padding: '0.5rem',
+                                                                            borderBottom: '1px solid #eee'
+                                                                        }}
+                                                                    >
+                                                                        <img
+                                                                            src={leader.athlete?.headshot}
+                                                                            alt={leader.athlete?.displayName}
+                                                                            style={{
+                                                                                width: 50,
+                                                                                height: 50,
+                                                                                borderRadius: '50%',
+                                                                                objectFit: 'cover'
+                                                                            }}
+                                                                        />
+                                                                        <div className="flex-grow-1">
+                                                                            <div className="fw-semibold">{leader.athlete?.displayName}</div>
+                                                                            <div className="text-muted small">{statGroup.displayName}: {leader.displayValue}</div>
+                                                                        </div>
+                                                                    </li>
+                                                                );
+                                                            })}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {showFinalModal && finalGameSummary && (() => {
+                    const teams = finalGameSummary.teams;
+                    const players = finalGameSummary.players;
+
+                    return (
+                        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+                            <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                <div className="modal-content border-0 shadow-lg">
+                                    <div className="modal-header border-bottom-0">
+                                        <h5 className="modal-title fw-bold w-100 text-center">
+                                            {selectedFinalGame.name} – Final Box Score
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            className="btn-close position-absolute end-0 me-3"
+                                            onClick={() => setShowFinalModal(false)}
+                                        />
+                                    </div>
+                                    <div className="modal-body pt-0" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
+                                        {players.map((teamGroup, i) => (
+                                            <div key={i} className="mb-4">
+                                                <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                                                    <img
+                                                        src={teamGroup.team?.logo}
+                                                        alt={teamGroup.team?.displayName}
+                                                        style={{ height: 28, width: 28, objectFit: 'contain' }}
+                                                    />
+                                                    <h6 className="fw-bold mb-0">{teamGroup.team?.displayName}</h6>
+                                                </div>
+
+                                                {teamGroup.statistics.map((group, j) => (
+                                                    <div key={j} className="mb-3">
+                                                        {group.name && (
+                                                            <div className="text-muted fw-semibold mb-2 text-center" style={{ fontSize: '0.9rem' }}>
+                                                                {group.name.charAt(0).toUpperCase() + group.name.slice(1)}
+                                                            </div>
+                                                        )}
+
+
+                                                        <div className="table-responsive border rounded" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                                            <table className="table table-sm table-striped table-hover text-center mb-0">
+                                                                <thead className="table-light sticky-top small">
+                                                                    <tr>
+                                                                        <th className="text-start">Player</th>
+                                                                        {group.labels.map((label, index) => (
+                                                                            <th key={index} className="text-nowrap">{label}</th>
+                                                                        ))}
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {group.athletes.map((athleteData, k) => (
+                                                                        <tr key={k}>
+                                                                            <td className="text-start">{athleteData.athlete?.displayName}</td>
+                                                                            {athleteData.stats.map((stat, sIdx) => (
+                                                                                <td key={sIdx}>{stat}</td>
+                                                                            ))}
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+
             </div>
         </div>
     );
