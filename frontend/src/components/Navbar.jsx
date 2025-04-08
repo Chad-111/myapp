@@ -81,6 +81,9 @@ function Navbar() {
               <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
             </li>
             <li>
+              <NavLink to="/fantasy/create" className={({ isActive }) => isActive ? "active" : ""}>Create League</NavLink>
+            </li>
+            <li>
               <NavLink to="/league/settings" className={({ isActive }) => isActive ? "active" : ""}>Settings</NavLink>
             </li>
             <li>

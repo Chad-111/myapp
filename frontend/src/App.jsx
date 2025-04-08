@@ -11,13 +11,13 @@ import "./App.css";
 import Navbar from "./components/Navbar";
 // Base Website Pages
 import Dashboard from "./pages/Dashboard";
-import Leagues from "./pages/Leagues";
 import Login from "./pages/Login";
 import Signup from './pages/Signup';
 // !User Specific! -> Overall Fantasy Pages
 import FantasyDashboard from "./pages/Fantasy/Dashboard";
 import Draft from "./pages/Fantasy/Draft";
 import MyTeams from "./pages/Fantasy/MyTeam";
+import LeagueCreation from "./pages/Fantasy/LeagueCreation";
 // !League Specific! -> Fantasy League Pages
 import LeagueHome from "./pages/Fantasy/League/Home";
 import Matchups from "./pages/Fantasy/League/Matchups";
@@ -93,12 +93,12 @@ function Layout() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/leagues" element={<Leagues />} />
 
             {/* Overall Fantasy Pages */}
             <Route path="/fantasy/dashboard" element={<FantasyDashboard />} />
             <Route path="/fantasy/draft" element={<Draft />} />
             <Route path="/fantasy/myteam" element={<MyTeams />} />
+            <Route path="/fantasy/create" element={<LeagueCreation />}/>
 
             {/* League Specific Pages */}
             <Route path="/league/home" element={<LeagueHome />} />

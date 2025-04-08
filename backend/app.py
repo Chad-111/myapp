@@ -43,13 +43,6 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)  # Hashed password
 
 
-
-class UserLeague(db.Model):
-    __tablename__ = "userleagues"
-    connid = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    leagueid = db.Column(db.Integer, db.ForeignKey("leagues.id"), nullable=False)
-
 class League(db.Model):
     __tablename__ = 'leagues'
     id = db.Column(db.Integer, primary_key=True)
@@ -60,6 +53,7 @@ class League(db.Model):
 class Team(db.Model):
     __tablename__ = 'teams'
     id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(80), nullable=False)
     league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'), nullable=False)
     wins = db.Column(db.Integer, default=0)
@@ -262,7 +256,7 @@ def logout():
     return response, 201
 
 # user search for league root
-@app.route("/api/league/search", methods = ["GET"])
+@app.route("/api/league/search", methods = ["POST"])
 @cross_origin(origin="*")
 @jwt_required()
 def league_search():
@@ -272,7 +266,41 @@ def league_search():
     
     id = get_jwt_identity()
 
-    return jsonify({"message" : UserLeague.query.filter_by(userid=id).all()})
+    return jsonify({"message" : {"id": team.id, "name": team.name, "league_id": team.league_id} for team in Team.query.filter_by(owner_id=id).all()}), 201
+
+@app.route("/api/league/create", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def league_create():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    commissioner_id = get_jwt_identity()
+    name = data.get("league_name")
+    sport = data.get("sport")
+    team_name = data.get("team_name")
+
+    new_league = League(commissioner_id=commissioner_id, name=name, sport=sport)
+
+    db.session.add(new_league)
+    db.session.commit()
+
+    league_id = new_league.id
+    team = Team(owner_id=commissioner_id, league_id=league_id, name=team_name)
+    db.session.add(team)
+    db.session.commit()
+
+    return jsonify({'message' : "League successfully created."}), 201
+
+###
+###@app.route("/api/league/join", methods=["POST"])
+###@cross_origin(origin='*')
+###@jwt_required()
+###def league_join():
+###    pass # todo
+
+
 
 
 

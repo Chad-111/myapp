@@ -1,4 +1,7 @@
 import React from 'react';
+import {useContext, useEffect} from 'react';
+import { AuthContext } from "../../App";
+import {useNavigate} from 'react-router-dom'
 
 const FantasyDashboard = () => {
     const leagues = [
@@ -7,9 +10,45 @@ const FantasyDashboard = () => {
         { id: 3, name: 'Fantasy Baseball League', rank: 5, points: 980 },
     ];
 
+    const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
+    const navigate = useNavigate();
+    const createLeague = () => {
+        navigate("/")
+    }
+  
+    useEffect(() => {
+        const fetchData = async () => {
+            // Handle league logic here
+            try {
+                const response = await fetch("/api/league/search", {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({ "access_token": authToken }),
+                });
+
+            if (!response.ok) {
+                throw new Error("League get failed");
+            }
+
+            const data = await response.json();
+            console.log("Message", data);
+
+
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        fetchData();
+    }, []);
+
     return (
         <div class="Fantasy" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
             <h1>Fantasy Dashboard</h1>
+            <button onClick={createLeague}>Create League</button>
             <div style={{ marginTop: '20px' }}>
                 {leagues.map((league) => (
                     <div

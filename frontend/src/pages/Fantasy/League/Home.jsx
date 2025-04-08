@@ -1,11 +1,12 @@
 import React from "react";
+import {useContext, useEffect} from 'react';
+import { AuthContext } from "../../../App";
 
 function LeagueHome() {
+  
   return (
-    <div class="Fantasy">
-      <h1>League Home</h1>
-      <p>Welcome to the League Home page!</p>
-      <p>This should be a framework for individual fantasy leagues. The template should include league name, commissioner, icon, memebers, stats and leaders.</p>
+    <div>
+      <p>Placeholder text.</p>
     </div>
   );
 }
