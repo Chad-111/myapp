@@ -1,44 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 
 const FantasyDashboard = () => {
-    const [leagues, setLeagues] = useState([]);
-
-    useEffect(() => {
-        const fetchLeagues = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:5000/api/leagues", {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                setLeagues(res.data);
-            } catch (err) {
-                console.error("Error fetching leagues", err);
-            }
-        };
-
-        fetchLeagues();
-    }, []);
-
-    const handleJoin = async (leagueId) => {
-        try {
-            const token = localStorage.getItem("token");
-            await axios.post(`http://localhost:5000/api/league/join/${leagueId}`, {}, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            alert("Successfully joined league!");
-        } catch (err) {
-            console.error("Error joining league", err);
-            alert("Failed to join league");
-        }
-    };
+    const leagues = [
+        { id: 1, name: 'Fantasy Football League', rank: 3, points: 1200 },
+        { id: 2, name: 'Fantasy Basketball League', rank: 1, points: 1500 },
+        { id: 3, name: 'Fantasy Baseball League', rank: 5, points: 980 },
+    ];
 
     return (
-        <div className="Fantasy" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+        <div class="Fantasy" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
             <h1>Fantasy Dashboard</h1>
             <div style={{ marginTop: '20px' }}>
                 {leagues.map((league) => (
@@ -53,7 +23,12 @@ const FantasyDashboard = () => {
                         }}
                     >
                         <h2>{league.name}</h2>
-                        <button onClick={() => handleJoin(league.id)}>Join</button>
+                        <p>
+                            <strong>Rank:</strong> {league.rank}
+                        </p>
+                        <p>
+                            <strong>Points:</strong> {league.points}
+                        </p>
                     </div>
                 ))}
             </div>

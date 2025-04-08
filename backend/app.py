@@ -260,22 +260,6 @@ def logout():
 def league_search():
     pass
 
-@app.route("/api/leagues", methods=["GET"])
-@cross_origin(origin="*")
-@jwt_required()
-def get_all_leagues():
-    leagues = League.query.all()
-    result = [
-        {
-            "id": league.id,
-            "name": league.name,
-            "commissioner_id": league.commissioner_id
-        }
-        for league in leagues
-    ]
-    return jsonify(result), 200
-
-
 if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=5000)
