@@ -42,12 +42,20 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)  # Hashed password
 
+
+
+class UserLeague(db.Model):
+    __tablename__ = "userleagues"
+    connid = db.Column(db.Integer, primary_key=True)
+    userid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    leagueid = db.Column(db.Integer, db.ForeignKey("leagues.id"), nullable=False)
+
 class League(db.Model):
     __tablename__ = 'leagues'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     commissioner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    users = db.relationship('User', backref=db.backref('leagues', lazy='dynamic'))
+    sport = db.Column(db.String(15), nullable=False)
 
 class Team(db.Model):
     __tablename__ = 'teams'
@@ -258,8 +266,20 @@ def logout():
 @cross_origin(origin="*")
 @jwt_required()
 def league_search():
-    pass
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    id = get_jwt_identity()
+
+    return jsonify({"message" : UserLeague.query.filter_by(userid=id).all()})
+
+
+
+
 
 if __name__ == '__main__':
-
+    # create_all does not update tables if they are already in the database, so this should be here for first run
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', port=5000)
