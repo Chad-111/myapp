@@ -1,8 +1,9 @@
 import React from "react";
+import "../Fantasy.css";
 
 function LeagueSettings() {
   return (
-    <div>
+    <div class="Fantasy">
       <h1>League Settings</h1>
       <p>Manage your league settings here.</p>
       <p>Based on League ID</p>

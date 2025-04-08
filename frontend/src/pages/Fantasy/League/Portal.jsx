@@ -2,7 +2,7 @@ import React from 'react';
 
 const TradePortal = () => {
     return (
-        <div>
+        <div class="Fantasy">
             <h1>Trade Portal</h1>
             <p>Welcome to the Trade Portal. Here you can manage your trades and view trade history.</p>
             <p>This should be league independent where only league members matching the ID of a league will have the option to propose a trade.</p>

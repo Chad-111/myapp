@@ -2,7 +2,7 @@ import React from "react";
 
 function Matchups() {
   return (
-    <div>
+    <div class="Fantasy">
       <h1>Matchups</h1>
       <p>This is the Matchups page.</p>
       <p>This page should display the upcoming matchups of specific leagues. All members not just the user.</p>
