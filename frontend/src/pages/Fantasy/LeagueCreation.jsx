@@ -1,16 +1,18 @@
 import {React} from 'react'
 import {useContext, useEffect, useState} from 'react';
-import { AuthContext } from "../../App";
-import {useNavigate} from 'react-router-dom'
+import { AuthContext, RedirectContext } from "../../App";
+import {useNavigate, useLocation} from 'react-router-dom'
 
 
 function LeagueCreation() {
+    const location = useLocation();
     const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
     const [name, setName] = useState("");
     const [teamName, setTeamName] = useState("");
     const [leagueName, setLeagueName] = useState("");
     const [error, setError] = useState("");
     const [sport, setSport] = useState("");
+    const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
     const navigate = useNavigate();
     
 
@@ -36,7 +38,12 @@ function LeagueCreation() {
             });
     
             if (!response.ok) {
-                throw new Error("League get failed");
+                if (response.status == 422) {
+                    setRedirectLocation(location.pathname);
+                    navigate("/login")
+                } else {
+                    throw new Error("League get failed");
+                }
             }
     
             const data = await response.json();

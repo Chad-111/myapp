@@ -8,6 +8,9 @@ from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
 from datetime import datetime, timedelta, timezone
 import os
 import bcrypt
+from sqids import Sqids
+
+sqids = Sqids()
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -293,12 +296,40 @@ def league_create():
 
     return jsonify({'message' : "League successfully created."}), 201
 
-###
-###@app.route("/api/league/join", methods=["POST"])
-###@cross_origin(origin='*')
-###@jwt_required()
-###def league_join():
-###    pass # todo
+
+@app.route("/api/league/join", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def league_join():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    league_id = sqids.decode(data.get("code"))
+    name = data.get("name")
+
+    # Assume maximum 12 teams
+    if Team.query.filter_by(league_id=league_id).count() >= 12:
+        return jsonify({"error" : "This league is full."}), 403
+    
+    owner_id = get_jwt_identity()
+    team = Team(owner_id = owner_id, league_id = league_id, name=name)
+    db.session.add(team)
+    db.session.commit()
+    return jsonify({"message" : "League successfully joined."}), 201
+
+@app.route("/api/league/getcode", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def league_get_code():
+    data = request.json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    code = sqids.encode(data.get("league_id"))
+
+    return jsonify({"message" : "League code generated.", "code" : code}), 201
+
 
 
 

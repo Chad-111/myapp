@@ -29,6 +29,7 @@ import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
 
 export const AuthContext = createContext();
+export const RedirectContext = createContext("/");
 
 // Wrap routes in a layout-aware component
 function Layout() {
@@ -37,13 +38,14 @@ function Layout() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isFantasyRoute = location.pathname.startsWith("/league");
   const [authToken, setAuthToken] = useState(false);
-
+  const [redirectLocation, setRedirectLocation] = useState("/");
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
   }, [theme]);
 
   return (
     <>
+      <RedirectContext.Provider value={{redirectLocation, setRedirectLocation}}>
       <AuthContext.Provider value={[{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}]}>
         <Navbar/>
         <IconButton
@@ -112,6 +114,7 @@ function Layout() {
           </Routes>
         </main>
       </AuthContext.Provider>
+      </RedirectContext.Provider>
     </>
   );
 }

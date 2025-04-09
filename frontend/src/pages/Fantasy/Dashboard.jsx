@@ -1,19 +1,21 @@
 import React from 'react';
 import {useContext, useEffect} from 'react';
-import { AuthContext } from "../../App";
-import {useNavigate} from 'react-router-dom'
+import { AuthContext, RedirectContext } from "../../App";
+import {useNavigate, useLocation} from 'react-router-dom'
 
 const FantasyDashboard = () => {
+    const location = useLocation();
     const leagues = [
         { id: 1, name: 'Fantasy Football League', rank: 3, points: 1200 },
         { id: 2, name: 'Fantasy Basketball League', rank: 1, points: 1500 },
         { id: 3, name: 'Fantasy Baseball League', rank: 5, points: 980 },
     ];
 
+    const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
     const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
     const navigate = useNavigate();
     const createLeague = () => {
-        navigate("/")
+        navigate("/fantasy/create")
     }
   
     useEffect(() => {
@@ -29,9 +31,14 @@ const FantasyDashboard = () => {
                     body: JSON.stringify({ "access_token": authToken }),
                 });
 
-            if (!response.ok) {
-                throw new Error("League get failed");
-            }
+                if (!response.ok) {
+                    if (response.status == 422) {
+                        setRedirectLocation(location.pathname);
+                        navigate("/login")
+                    } else {
+                        throw new Error("League get failed");
+                    }
+                }
 
             const data = await response.json();
             console.log("Message", data);

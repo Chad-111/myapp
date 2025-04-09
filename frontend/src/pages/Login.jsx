@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css"; // Import the CSS for your Login component
-import { AuthContext } from "../App";
+import { AuthContext, RedirectContext } from "../App";
 
 function Login() {
   const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
@@ -9,6 +9,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -34,8 +35,10 @@ function Login() {
       // Store access token in local storage
       setAuthToken(data.access_token);
 
+
       // Redirect to the home page or another page
-      navigate("/");
+      navigate(redirectLocation);
+      setRedirectLocation("/");
 
     } catch (error) {
       console.error("Error:", error);
