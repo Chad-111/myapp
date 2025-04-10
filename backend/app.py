@@ -61,6 +61,7 @@ class Team(db.Model):
     league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'), nullable=False)
     wins = db.Column(db.Integer, default=0)
     losses = db.Column(db.Integer, default=0)
+    rank = db.Column(db.Integer, default=1)
 
 class TeamPlayer(db.Model):
     __tablename__ = 'team_players'
@@ -268,8 +269,7 @@ def league_search():
         return jsonify({"error": "No data provided"}), 400
     
     id = get_jwt_identity()
-
-    return jsonify({"message" : {"id": team.id, "name": team.name, "league_id": team.league_id} for team in Team.query.filter_by(owner_id=id).all()}), 201
+    return jsonify({"message" : [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank, "league_name" : League.query.filter_by(id=team.league_id).one().name} for team in Team.query.filter_by(owner_id=id).all()]}), 201
 
 @app.route("/api/league/create", methods=["POST"])
 @cross_origin(origin='*')
@@ -305,7 +305,7 @@ def league_join():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    league_id = sqids.decode(data.get("code"))
+    league_id = sqids.decode([data.get("code")])
     name = data.get("name")
 
     # Assume maximum 12 teams
@@ -322,11 +322,11 @@ def league_join():
 @cross_origin(origin='*')
 @jwt_required()
 def league_get_code():
-    data = request.json()
+    data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    code = sqids.encode(data.get("league_id"))
+    code = sqids.encode([data.get("league_id")])
 
     return jsonify({"message" : "League code generated.", "code" : code}), 201
 

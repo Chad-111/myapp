@@ -1,22 +1,39 @@
 import React from 'react';
-import {useContext, useEffect} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import { RedirectContext } from "../../App";
 import {useNavigate, useLocation} from 'react-router-dom'
 import { getAuthToken } from "../../components/utils/auth";
 const FantasyDashboard = () => {
     const location = useLocation();
-    const leagues = [
-        { id: 1, name: 'Fantasy Football League', rank: 3, points: 1200 },
-        { id: 2, name: 'Fantasy Basketball League', rank: 1, points: 1500 },
-        { id: 3, name: 'Fantasy Baseball League', rank: 5, points: 980 },
-    ];
-
+    const [leagues, setLeagues] = useState([]);
     const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
     const navigate = useNavigate();
     
     const authToken = getAuthToken();
     const createLeague = () => {
         navigate("/fantasy/create")
+    }
+
+    const navToLeagueHub = async (league) => {
+        try {
+            const response = await fetch("/api/league/getcode", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                "Authorization": 'Bearer ' + authToken
+                },
+                body: JSON.stringify({ "access_token": authToken, "league_id" : league.id }),
+            });
+            
+            const data = await response.json()
+            console.log(data.message);
+            navigate("/league/home/" + data.code)
+
+
+
+        } catch (error) {
+            console.error("Error:", error);
+        }
     }
   
     useEffect(() => {
@@ -44,6 +61,8 @@ const FantasyDashboard = () => {
             const data = await response.json();
             console.log("Message", data);
 
+            setLeagues(data.message);
+
 
             } catch (error) {
                 console.error("Error:", error);
@@ -51,7 +70,7 @@ const FantasyDashboard = () => {
         }
 
         fetchData();
-    }, []);
+    }, [location]);
 
     return (
         <div class="Fantasy" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
@@ -68,13 +87,13 @@ const FantasyDashboard = () => {
                             marginBottom: '15px',
                             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                         }}
+                        onClick={() => navToLeagueHub(league)}
                     >
-                        <h2>{league.name}</h2>
+                        <h2>{league.league_name}</h2>
+                        <h3>{league.name}</h3>
+                        <p>{league.sport}</p>
                         <p>
-                            <strong>Rank:</strong> {league.rank}
-                        </p>
-                        <p>
-                            <strong>Points:</strong> {league.points}
+                            <strong>Rank:</strong> {league.league_rank}
                         </p>
                     </div>
                 ))}
