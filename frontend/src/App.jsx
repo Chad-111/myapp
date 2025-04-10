@@ -103,14 +103,14 @@ function Layout() {
             <Route path="/fantasy/create" element={<LeagueCreation />}/>
 
             {/* League Specific Pages */}
-            <Route path="/league/home" element={<LeagueHome />} />
-            <Route path="/league/matchups" element={<Matchups />} />
-            <Route path="/league/members" element={<LeagueMembers />} />
-            <Route path="/league/portal" element={<TradePortal />} />
-            <Route path="/league/brackets" element={<Brackets />} />
-            <Route path="/league/rosters" element={<LeagueRoster />} />
-            <Route path="/league/schedule" element={<LeagueSchedule />} />
-            <Route path="/league/settings" element={<LeagueSettings />} />
+            <Route path="/league/home/*" element={<LeagueHome />} />
+            <Route path="/league/matchups/*" element={<Matchups />} />
+            <Route path="/league/members/*" element={<LeagueMembers />} />
+            <Route path="/league/portal/*" element={<TradePortal />} />
+            <Route path="/league/brackets/*" element={<Brackets />} />
+            <Route path="/league/rosters/*" element={<LeagueRoster />} />
+            <Route path="/league/schedule/*" element={<LeagueSchedule />} />
+            <Route path="/league/settings/*" element={<LeagueSettings />} />
           </Routes>
         </main>
       </AuthContext.Provider>
