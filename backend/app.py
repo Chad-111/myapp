@@ -299,7 +299,7 @@ def league_create():
 
 @app.route("/api/league/join", methods=["POST"])
 @cross_origin(origin='*')
-@jwt_required()
+@jwt_required() 
 def league_join():
     data = request.json
     if not data:
