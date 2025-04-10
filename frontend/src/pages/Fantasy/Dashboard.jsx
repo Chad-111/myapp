@@ -1,8 +1,8 @@
 import React from 'react';
 import {useContext, useEffect} from 'react';
-import { AuthContext, RedirectContext } from "../../App";
+import { RedirectContext } from "../../App";
 import {useNavigate, useLocation} from 'react-router-dom'
-
+import { getAuthToken } from "../../components/utils/auth";
 const FantasyDashboard = () => {
     const location = useLocation();
     const leagues = [
@@ -12,8 +12,9 @@ const FantasyDashboard = () => {
     ];
 
     const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
-    const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
     const navigate = useNavigate();
+    
+    const authToken = getAuthToken();
     const createLeague = () => {
         navigate("/fantasy/create")
     }

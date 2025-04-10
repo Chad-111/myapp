@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext } from "react";
+import React, { useEffect, useState, createContext} from "react";
 import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import IconButton from '@mui/material/IconButton';
 import LightModeTwoToneIcon from '@mui/icons-material/LightModeTwoTone';
@@ -28,16 +28,13 @@ import LeagueRoster from "./pages/Fantasy/League/Rosters";
 import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
 
-export const AuthContext = createContext();
 export const RedirectContext = createContext("/");
 
 // Wrap routes in a layout-aware component
 function Layout() {
   const location = useLocation();
   const [theme, setTheme] = useState("light");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isFantasyRoute = location.pathname.startsWith("/league");
-  const [authToken, setAuthToken] = useState(false);
   const [redirectLocation, setRedirectLocation] = useState("/");
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
@@ -46,7 +43,6 @@ function Layout() {
   return (
     <>
       <RedirectContext.Provider value={{redirectLocation, setRedirectLocation}}>
-      <AuthContext.Provider value={[{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}]}>
         <Navbar/>
         <IconButton
           color="primary"
@@ -113,7 +109,6 @@ function Layout() {
             <Route path="/league/settings/*" element={<LeagueSettings />} />
           </Routes>
         </main>
-      </AuthContext.Provider>
       </RedirectContext.Provider>
     </>
   );

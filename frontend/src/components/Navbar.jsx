@@ -2,13 +2,18 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react"
 import "./Navbar.css";
-import { AuthContext } from "../App";
+import { getAuthToken, removeAuthToken, isLoggedIn as checkLogin } from "./utils/auth";
 
 function Navbar() {
   const location = useLocation();
   const isFantasyRoute = location.pathname.startsWith("/fantasy/") || location.pathname.startsWith("/league/");
-  const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
+  const [isLoggedIn, setIsLoggedIn] = useState(checkLogin());
+  const authToken = getAuthToken();
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    setIsLoggedIn(checkLogin());
+  }, [location]);
 
   // handle logout
   const handleLogout = async (e) => {
@@ -32,8 +37,8 @@ function Navbar() {
       console.log("Logout successful:", data);
 
       // Remove access token from context
-      setAuthToken(null);
-      setIsLoggedIn(false); // Ensure UI updates
+      removeAuthToken();
+      setIsLoggedIn(false);
 
       // Redirect to the home page or another page
       navigate("/");

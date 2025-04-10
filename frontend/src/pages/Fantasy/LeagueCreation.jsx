@@ -1,12 +1,12 @@
 import {React} from 'react'
 import {useContext, useEffect, useState} from 'react';
-import { AuthContext, RedirectContext } from "../../App";
+import { RedirectContext } from "../../App";
 import {useNavigate, useLocation} from 'react-router-dom'
+import { getAuthToken } from "../../components/utils/auth";
 
 
 function LeagueCreation() {
     const location = useLocation();
-    const [{authToken, setAuthToken}, {isLoggedIn, setIsLoggedIn}] = useContext(AuthContext);
     const [name, setName] = useState("");
     const [teamName, setTeamName] = useState("");
     const [leagueName, setLeagueName] = useState("");
@@ -14,6 +14,8 @@ function LeagueCreation() {
     const [sport, setSport] = useState("");
     const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
     const navigate = useNavigate();
+    const authToken = getAuthToken();
+    
     
 
     const handleCreateLeague = async (e) => {
