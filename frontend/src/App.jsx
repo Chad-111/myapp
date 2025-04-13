@@ -27,6 +27,7 @@ import Brackets from './pages/Fantasy/League/Brackets';
 import LeagueRoster from "./pages/Fantasy/League/Rosters";
 import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
+import Join from "./pages/Fantasy/Join";
 
 export const RedirectContext = createContext("/");
 
@@ -107,6 +108,7 @@ function Layout() {
             <Route path="/league/rosters/*" element={<LeagueRoster />} />
             <Route path="/league/schedule/*" element={<LeagueSchedule />} />
             <Route path="/league/settings/*" element={<LeagueSettings />} />
+            <Route path="/league/join/*" element={<Join />} />
           </Routes>
         </main>
       </RedirectContext.Provider>

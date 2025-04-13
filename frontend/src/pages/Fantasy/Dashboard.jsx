@@ -16,13 +16,13 @@ const FantasyDashboard = () => {
 
     const navToLeagueHub = async (league) => {
         try {
-            const response = await fetch("/api/league/getcode", {
+            const response = await fetch("/api/league/geturl", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json",
                 "Authorization": 'Bearer ' + authToken
                 },
-                body: JSON.stringify({ "access_token": authToken, "league_id" : league.id }),
+                body: JSON.stringify({ "access_token": authToken, "league_id" : league.league_id }),
             });
             
             const data = await response.json()

@@ -10,7 +10,9 @@ import os
 import bcrypt
 from sqids import Sqids
 
-sqids = Sqids()
+
+
+sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -305,7 +307,9 @@ def league_join():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    league_id = sqids.decode([data.get("code")])
+    league_id, exptime = sqids.decode(data.get("code"))
+    if (exptime < datetime.now().timestamp()):
+        return jsonify({"error" : "Invite code expired."}), 403
     name = data.get("name")
 
     # Assume maximum 12 teams
@@ -318,6 +322,18 @@ def league_join():
     db.session.commit()
     return jsonify({"message" : "League successfully joined."}), 201
 
+@app.route("/api/league/geturl", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def league_get_url():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    id = data.get("league_id")
+    return jsonify({"message": "League URL successfully generated.", "code": sqids.encode([id])}), 201
+
+
 @app.route("/api/league/getcode", methods=["POST"])
 @cross_origin(origin='*')
 @jwt_required()
@@ -326,15 +342,30 @@ def league_get_code():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    code = sqids.encode([data.get("league_id")])
+    id = sqids.decode(data.get("url"))[0]
+    exptime = int(datetime.now().timestamp()) + 7200
+    code = sqids.encode([id, exptime])
+    
 
     return jsonify({"message" : "League code generated.", "code" : code}), 201
 
 
+@app.route("/api/league/getleague", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def get_league():
+    data = request.json
+    print(data.get("code"))
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
 
-
-
-
+    id = sqids.decode(data.get("code"))[0]
+    print(data.get("code"), id)
+    team_data = [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank} for team in Team.query.filter_by(league_id=id).order_by(Team.rank).all()]
+    
+    league = League.query.filter_by(id=id).one()
+    league_data = {"name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count()}
+    return jsonify({"teams" : team_data, "league": league_data}), 200
 
 
 if __name__ == '__main__':
