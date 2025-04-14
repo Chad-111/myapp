@@ -482,6 +482,31 @@ def email_test():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Not applied now, but building general logic, might be ran on draft creation
+# Draft objest should be dict with key as player_id and value as team_id.
+def instantiate_players(league_id : int, sport : str, draft : dict):
+    if Player.query.filter_by(sport=sport).count() == 0:
+        populate_player_table(sport)
+    
+    if TeamPlayer.query.filter_by(league_id=league_id).count() != 0:
+        raise Exception("League already has players.")
+
+    # instantiate instance of all players
+    for player in Player.query.filter_by(sport=sport).all():
+        if player.id in draft.keys():
+            new_player = TeamPlayer(player_id=player.id, league_id=league_id, team_id=draft[player.id])
+        else:
+            new_player = TeamPlayer(player_id=player.id, league_id=league_id)
+        
+        db.session.add(new_player)
+    
+    db.session.commit()
+
+
+# Should populate the player table with all eligible players.
+def populate_player_table(sport : str):
+    pass # needs to be implemented
+
 
 
 if __name__ == '__main__':

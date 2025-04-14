@@ -5,7 +5,7 @@ import {useNavigate, useLocation} from 'react-router-dom'
 import { getAuthToken } from "../../components/utils/auth";
 
 
-function LeagueCreation() {
+function LeagueJoin() {
     const location = useLocation();
     const [name, setName] = useState("");
     const [teamName, setTeamName] = useState("");
@@ -80,4 +80,4 @@ function LeagueCreation() {
 }
 
 
-export default LeagueCreation;
+export default LeagueJoin;
