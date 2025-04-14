@@ -73,7 +73,7 @@ function LeagueCreation() {
                     />
                 </div>
 
-                <button type="submit" className="create-button">Create league</button>
+                <button type="submit" className="create-button">Create team</button>
             </form>
         </div>
     );

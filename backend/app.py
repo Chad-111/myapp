@@ -1,4 +1,5 @@
 import json
+from time import sleep
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
@@ -216,7 +217,7 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"message": "User created successfully"}), 201
+    return jsonify({"message": "User created successfully", "access_token" : create_access_token(identity=new_user.id)}), 201
 
 @app.after_request
 def refresh_expiring_jwts(response):
@@ -485,6 +486,7 @@ def email_test():
 
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run
+    sleep(2)
     with app.app_context():
         db.create_all()
     app.run(host='0.0.0.0', port=5000)
