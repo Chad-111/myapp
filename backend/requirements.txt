@@ -16,3 +16,4 @@ MarkupSafe==3.0.1
 Werkzeug==3.0.4
 flask_jwt_extended
 sqids
+Flask-Mail

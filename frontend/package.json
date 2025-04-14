@@ -16,16 +16,17 @@
     "bootstrap": "^5.3.3",
     "build": "^0.1.4",
     "framer-motion": "^12.6.2",
+    "jwt-decode": "^4.0.0",
     "offcanvas-bootstrap": "^2.5.2",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",
     "react-scripts": "5.0.1",
+    "react-toastify": "^11.0.5",
     "sass": "^1.86.0",
     "styled-components": "^6.1.16",
-    "web-vitals": "^2.1.4",
-    "jwt-decode": "^4.0.0"
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",

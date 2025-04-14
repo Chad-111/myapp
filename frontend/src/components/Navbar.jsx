@@ -10,7 +10,7 @@ function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(checkLogin());
   const authToken = getAuthToken();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     setIsLoggedIn(checkLogin());
   }, [location]);
@@ -26,7 +26,7 @@ function Navbar() {
           "Content-Type": "application/json",
           "Authorization": 'Bearer ' + authToken
         },
-        body: JSON.stringify({ "access_token": authToken}),
+        body: JSON.stringify({ "access_token": authToken }),
       });
 
       if (!response.ok) {
@@ -49,9 +49,6 @@ function Navbar() {
     }
   };
 
-
-
-
   return (
     <div className="sticky-top layout-wrapper">
       <nav className={`Navbar ${isFantasyRoute ? 'compact' : ''}`}>
@@ -61,18 +58,28 @@ function Navbar() {
         </div>
         <ul className="navbar-links">
           <li>
-            <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
+            {
+              isLoggedIn && (
+                <li>
+                  <NavLink to="/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink>
+                </li>
+              )
+            }
           </li>
-          <li>
-            <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Fantasy</NavLink>
-          </li>
+          {
+            isLoggedIn && (
+              <li>
+                <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Fantasy</NavLink>
+              </li>
+            )
+          }
         </ul>
         <div className="navbar-wrapper-right">
           <div className="navbar-spacer" />
           {
             isLoggedIn ?
               (<button type="button" className={`btn btn-outline-light`} onClick={handleLogout}>Log out</button>) :
-              (<NavLink to="/login" className={`btn btn-outline-light`}>Get Started</NavLink>)
+              (<NavLink to="/" className={`btn btn-outline-light`}>Get Started</NavLink>)
           }
         </div>
       </nav>
@@ -114,7 +121,7 @@ function Navbar() {
             </li>
           </ul>
           <hr />
-          <NavLink to="/" className="btn btn-outline-light">Return</NavLink>
+          <NavLink to="/dashboard" className="btn btn-outline-light">Return</NavLink>
         </aside>
       )}
     </div>

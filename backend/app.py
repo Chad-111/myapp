@@ -9,14 +9,13 @@ from datetime import datetime, timedelta, timezone
 import os
 import bcrypt
 from sqids import Sqids
-
-
+from random import randint
+from flask_mail import Mail, Message
 
 sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
-
 
 # 🔐 Security settings (change for production)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key")
@@ -30,14 +29,20 @@ app.config["JWT_SECRET_KEY"] = "please-remember-to-change-me"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1) # can edit at will
 app.config['JWT_VERIFY_SUB'] = False # to fix problems w logout
 
+app.config['MAIL_SERVER'] = 'in-v3.mailjet.com'  # Or your provider
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv("EMAIL_USER", "1f82b8b334c0602b2171b756159205a8")
+app.config['MAIL_PASSWORD'] = os.getenv("EMAIL_PASS", "b235065e0131153e7b292b88e6a0df74")
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv("EMAIL_USER", "donotreply@draftempire.win")
+
+mail = Mail(app)
+
 db = SQLAlchemy(app)   
 
 migrate = Migrate(app, db)  # Add Migrate
 
 jwt = JWTManager(app)
-
-
-
 
 # 👤 User Model
 class User(db.Model):
@@ -161,6 +166,13 @@ class TeamPlayerPerformance(db.Model):
     starting_position = db.Column(db.String(3), default="BEN")
     fantasy_points = db.Column(db.Float, default=0)
 
+class PasswordResetCode(db.Model):
+    __tablename__ = 'password_reset_codes'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    code = db.Column(db.String(6), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
 
 # ✅ API Routes
 @app.route("/", methods=["GET"])
@@ -231,14 +243,14 @@ def login():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    email = data.get("email")
+    username = data.get("username")
     password = data.get("password")
 
-    if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
 
     # Find user by email
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"error": "Invalid credentials"}), 400
 
@@ -366,6 +378,109 @@ def get_league():
     league = League.query.filter_by(id=id).one()
     league_data = {"name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count()}
     return jsonify({"teams" : team_data, "league": league_data}), 200
+
+@app.route('/api/request-reset', methods=['POST'])
+@cross_origin(origin='*')
+def request_password_reset():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({"error": "Email required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "No user found with that email"}), 404
+
+    # delete any previous
+    PasswordResetCode.query.filter_by(email=email).delete()
+    code = f"{randint(100000, 999999)}"
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    db.session.add(PasswordResetCode(email=email, code=code, expires_at=expires_at))
+    db.session.commit()
+
+    # Send mail
+    try:
+        msg = Message(
+    subject="Your DraftEmpire Password Reset Code",
+    recipients=[email],
+    html=f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+        <h2 style="color: #5689f8;">Password Reset Requested</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset your password for your DraftEmpire account.</p>
+        <p style="font-size: 20px; font-weight: bold; color: #333;">
+            Your reset code is: <span style="color: #5689f8;">{code}</span>
+        </p>
+        <p>This code is valid for <strong>10 minutes</strong>.</p>
+        <p>If you didn't request this, you can safely ignore this email.</p>
+        <hr style="margin: 20px 0;" />
+        <p style="font-size: 0.85rem; color: #888;">DraftEmpire Security Team</p>
+    </div>
+    """
+)
+        mail.send(msg)
+    except Exception as e:
+        return jsonify({"error": "Failed to send email"}), 500
+
+    return jsonify({"message": "Reset code sent to your email"}), 200
+
+
+@app.route('/api/verify-reset-code', methods=['POST'])
+@cross_origin(origin='*')
+def verify_reset_code():
+    data = request.json
+    email = data.get('email')
+    code = data.get('code')
+
+    if not email or not code:
+        return jsonify({"error": "Email and code are required"}), 400
+
+    record = PasswordResetCode.query.filter_by(email=email, code=code).first()
+    if not record:
+        return jsonify({"error": "Invalid reset code"}), 400
+    if datetime.utcnow() > record.expires_at:
+        return jsonify({"error": "Reset code expired"}), 400
+
+    return jsonify({"message": "Code verified"}), 200
+
+
+@app.route('/api/reset-password', methods=['POST'])
+@cross_origin(origin='*')
+def reset_password():
+    data = request.json
+    email = data.get('email')
+    new_password = data.get('new_password')
+
+    if not email or not new_password:
+        return jsonify({"error": "Email and new password required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # update password
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    user.password = hashed_password
+
+    # cleanup
+    PasswordResetCode.query.filter_by(email=email).delete()
+    db.session.commit()
+
+    return jsonify({"message": "Password updated successfully"}), 200
+
+@app.route("/api/email/test", methods=["GET"])
+def email_test():
+    try:
+        msg = Message(
+            subject="Test from DraftEmpire",
+            recipients=["chad.burkett@outlook.com"],  # change this to test
+            body="✅ This is a test email from your Flask app via Mailjet!"
+        )
+        mail.send(msg)
+        return jsonify({"message": "Test email sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':

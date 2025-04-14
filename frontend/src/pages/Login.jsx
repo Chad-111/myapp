@@ -5,8 +5,6 @@ import { RedirectContext } from "../App";
 import { setAuthToken } from "../components/utils/auth";
 
 function Login() {
-  
-  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

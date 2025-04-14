@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createContext} from "react";
+import React, { useEffect, useState, createContext } from "react";
 import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import IconButton from '@mui/material/IconButton';
 import LightModeTwoToneIcon from '@mui/icons-material/LightModeTwoTone';
@@ -7,12 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 
+
+import ProtectedRoute from "./components/utils/ProtectedRoute";
 // Components
 import Navbar from "./components/Navbar";
 // Base Website Pages
 import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Signup from './pages/Signup';
+import Start from './pages/Start';
 // !User Specific! -> Overall Fantasy Pages
 import FantasyDashboard from "./pages/Fantasy/Dashboard";
 import Draft from "./pages/Fantasy/Draft";
@@ -29,22 +30,22 @@ import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
 import Join from "./pages/Fantasy/Join";
 
-export const RedirectContext = createContext("/");
+export const RedirectContext = createContext("/dashboard");
 
 // Wrap routes in a layout-aware component
 function Layout() {
   const location = useLocation();
   const [theme, setTheme] = useState("light");
   const isFantasyRoute = location.pathname.startsWith("/league");
-  const [redirectLocation, setRedirectLocation] = useState("/");
+  const [redirectLocation, setRedirectLocation] = useState("/dashboard");
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
   }, [theme]);
 
   return (
     <>
-      <RedirectContext.Provider value={{redirectLocation, setRedirectLocation}}>
-        <Navbar/>
+      <RedirectContext.Provider value={{ redirectLocation, setRedirectLocation }}>
+        <Navbar />
         <IconButton
           color="primary"
           className="position-fixed bottom-0 end-0 m-3 z-3"
@@ -88,27 +89,24 @@ function Layout() {
 
         <main className={`container-fluid ${isFantasyRoute ? 'with-sidebar' : 'standard-padding'}`}>
           <Routes>
-            {/* Base Pages */}
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            {/* Public Route */}
+            <Route path="/" element={<Start />} />
 
-            {/* Overall Fantasy Pages */}
-            <Route path="/fantasy/dashboard" element={<FantasyDashboard />} />
-            <Route path="/fantasy/draft" element={<Draft />} />
-            <Route path="/fantasy/myteam" element={<MyTeams />} />
-            <Route path="/fantasy/create" element={<LeagueCreation />}/>
-
-            {/* League Specific Pages */}
-            <Route path="/league/home/*" element={<LeagueHome />} />
-            <Route path="/league/matchups/*" element={<Matchups />} />
-            <Route path="/league/members/*" element={<LeagueMembers />} />
-            <Route path="/league/portal/*" element={<TradePortal />} />
-            <Route path="/league/brackets/*" element={<Brackets />} />
-            <Route path="/league/rosters/*" element={<LeagueRoster />} />
-            <Route path="/league/schedule/*" element={<LeagueSchedule />} />
-            <Route path="/league/settings/*" element={<LeagueSettings />} />
-            <Route path="/league/join/*" element={<Join />} />
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/fantasy/dashboard" element={<ProtectedRoute><FantasyDashboard /></ProtectedRoute>} />
+            <Route path="/fantasy/draft" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
+            <Route path="/fantasy/myteam" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
+            <Route path="/fantasy/create" element={<ProtectedRoute><LeagueCreation /></ProtectedRoute>} />
+            <Route path="/league/home/*" element={<ProtectedRoute><LeagueHome /></ProtectedRoute>} />
+            <Route path="/league/matchups/*" element={<ProtectedRoute><Matchups /></ProtectedRoute>} />
+            <Route path="/league/members/*" element={<ProtectedRoute><LeagueMembers /></ProtectedRoute>} />
+            <Route path="/league/portal/*" element={<ProtectedRoute><TradePortal /></ProtectedRoute>} />
+            <Route path="/league/brackets/*" element={<ProtectedRoute><Brackets /></ProtectedRoute>} />
+            <Route path="/league/rosters/*" element={<ProtectedRoute><LeagueRoster /></ProtectedRoute>} />
+            <Route path="/league/schedule/*" element={<ProtectedRoute><LeagueSchedule /></ProtectedRoute>} />
+            <Route path="/league/settings/*" element={<ProtectedRoute><LeagueSettings /></ProtectedRoute>} />
+            <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
           </Routes>
         </main>
       </RedirectContext.Provider>

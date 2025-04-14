@@ -35,4 +35,3 @@ export const removeAuthToken = () => {
 export const isLoggedIn = () => {
   return !!localStorage.getItem("authToken");
 };
-  
