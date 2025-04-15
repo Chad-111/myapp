@@ -11,6 +11,7 @@ import "./App.css";
 import ProtectedRoute from "./components/utils/ProtectedRoute";
 // Components
 import Navbar from "./components/Navbar";
+import ChatWidget from "./components/Chat/ChatWidget";
 // Base Website Pages
 import Dashboard from "./pages/Dashboard";
 import Start from './pages/Start';
@@ -109,6 +110,7 @@ function Layout() {
             <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
           </Routes>
         </main>
+        <ChatWidget />
       </RedirectContext.Provider>
     </>
   );
