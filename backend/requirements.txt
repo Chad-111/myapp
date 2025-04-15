@@ -17,3 +17,5 @@ Werkzeug==3.0.4
 flask_jwt_extended
 sqids
 Flask-Mail
+flask-socketio
+eventlet

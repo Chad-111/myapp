@@ -5,8 +5,11 @@ from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
-                               unset_jwt_cookies, jwt_required, JWTManager
+                               unset_jwt_cookies, jwt_required, verify_jwt_in_request, JWTManager
+from flask_jwt_extended.exceptions import NoAuthorizationError
 from datetime import datetime, timedelta, timezone
+from flask_socketio import SocketIO, emit, join_room, leave_room
+
 import os
 import bcrypt
 from sqids import Sqids
@@ -17,6 +20,7 @@ sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")  # use eventlet by default
 
 # 🔐 Security settings (change for production)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key")
@@ -173,6 +177,37 @@ class PasswordResetCode(db.Model):
     email = db.Column(db.String(120), nullable=False)
     code = db.Column(db.String(6), nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
+
+# Messaging models
+class LeagueChat(db.Model):
+    __tablename__ = 'league_chats'
+    id = db.Column(db.Integer, primary_key=True)
+    league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class LeagueChatParticipant(db.Model):
+    __tablename__ = 'league_chat_participants'
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.Integer, db.ForeignKey('league_chats.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    joined_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class LeagueMessage(db.Model):
+    __tablename__ = 'league_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    chat_id = db.Column(db.Integer, db.ForeignKey("league_chats.id"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class DirectMessage(db.Model):
+    __tablename__ = 'direct_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
 
 
 # ✅ API Routes
@@ -503,10 +538,100 @@ def instantiate_players(league_id : int, sport : str, draft : dict):
     db.session.commit()
 
 
+# Messaging API Routes
+@socketio.on("join_league_chat")
+@jwt_required()
+def handle_join_chat(data):
+    league_id = data.get("league_id")
+    user_id = get_jwt_identity()
+    join_room(str(league_id))
+    emit("user_joined", {"user_id": user_id}, to=str(league_id))
+
+@socketio.on("send_message")
+@jwt_required()
+def handle_send_message(data):
+    user_id = get_jwt_identity()
+    league_id = data.get("league_id")
+    content = data.get("content")
+
+    # Save to DB
+    chat = LeagueChat.query.filter_by(league_id=league_id).first()
+    if not chat:
+        return emit("error", {"message": "Chat not initialized for this league"}, to=request.sid)
+
+    new_msg = LeagueMessage(chat_id=chat.id, sender_id=user_id, content=content)
+    db.session.add(new_msg)
+    db.session.commit()
+
+    emit("receive_message", {
+        "sender_id": user_id,
+        "content": content,
+        "timestamp": datetime.utcnow().isoformat()
+    }, to=str(league_id))
+
+@app.route("/api/chat/league/init", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def init_league_chat():
+    data = request.json
+    league_id = data.get("league_id")
+    user_id = get_jwt_identity()
+
+    chat = LeagueChat.query.filter_by(league_id=league_id).first()
+    if not chat:
+        chat = LeagueChat(league_id=league_id)
+        db.session.add(chat)
+        db.session.commit()
+
+    participant = LeagueChatParticipant.query.filter_by(chat_id=chat.id, user_id=user_id).first()
+    if not participant:
+        db.session.add(LeagueChatParticipant(chat_id=chat.id, user_id=user_id))
+        db.session.commit()
+
+    return jsonify({"chat_id": chat.id}), 200
+
+@app.route("/api/chat/league/send", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def send_league_message():
+    data = request.json
+    chat_id = data.get("chat_id")
+    content = data.get("content")
+    sender_id = get_jwt_identity()
+
+    if not chat_id or not content:
+        return jsonify({"error": "Chat ID and content are required"}), 400
+
+    message = LeagueMessage(chat_id=chat_id, sender_id=sender_id, content=content)
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({"message": "Message sent"}), 201
+
+@app.route("/api/chat/league/messages", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def fetch_league_messages():
+    data = request.json
+    chat_id = data.get("chat_id")
+    if not chat_id:
+        return jsonify({"error": "Chat ID required"}), 400
+
+    messages = LeagueMessage.query.filter_by(chat_id=chat_id).order_by(LeagueMessage.timestamp).all()
+
+    return jsonify([
+        {
+            "id": msg.id,
+            "sender_id": msg.sender_id,
+            "content": msg.content,
+            "timestamp": msg.timestamp.isoformat()
+        } for msg in messages
+    ]), 200
+
+
 # Should populate the player table with all eligible players.
 def populate_player_table(sport : str):
     pass # needs to be implemented
-
 
 
 if __name__ == '__main__':
@@ -514,4 +639,17 @@ if __name__ == '__main__':
     sleep(2)
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)
+
+
+
+
+
+# TEST TEST TEST
+@app.route("/api/chat/test_insert", methods=["POST"])
+def test_insert_league_message():
+    from app import db, LeagueMessage
+    test_message = LeagueMessage(chat_id=1, sender_id=1, content="Test message from backend")
+    db.session.add(test_message)
+    db.session.commit()
+    return jsonify({"message": "Inserted test message"}), 200
