@@ -37,36 +37,61 @@ function LeagueHome() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Handle league logic here
       try {
-          const response = await fetch("/api/league/getleague", {
-              method: "POST",
-              headers: {
-              "Content-Type": "application/json",
-              "Authorization": 'Bearer ' + authToken
-              },
-              body: JSON.stringify({ "access_token": authToken, "code" : location.pathname.split("/").at(-1) }),
-          });
+        const response = await fetch("/api/league/getleague", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + authToken,
+          },
+          body: JSON.stringify({
+            access_token: authToken,
+            code: location.pathname.split("/").at(-1),
+          }),
+        });
 
         const data = await response.json();
+
         if (!response.ok) {
-          if (response.status == 422) {
-              setRedirectLocation(location.pathname);
-              navigate("/login")
+          if (response.status === 422) {
+            setRedirectLocation(location.pathname);
+            navigate("/login");
           } else {
-              throw new Error("League get failed");
+            throw new Error("League get failed");
           }
         }
-        console.log("Message", data);
 
         setLeague(data.league);
         setTeams(data.teams);
 
+        // Save league_id locally and init chat
+        const leagueId = data.teams[0]?.league_id;
+        if (leagueId) {
+          localStorage.setItem("league_id", leagueId);
+
+          // Init chat room + set chat_id
+          const chatResponse = await fetch("/api/chat/league/init", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + authToken,
+            },
+            body: JSON.stringify({ league_id: leagueId }),
+          });
+
+          const chatData = await chatResponse.json();
+          if (chatResponse.ok && chatData.chat_id) {
+            localStorage.setItem("chat_id", chatData.chat_id);
+            console.log("✅ Chat initialized:", chatData.chat_id);
+          } else {
+            console.warn("⚠️ Chat initialization failed:", chatData);
+          }
+        }
 
       } catch (error) {
-          console.error("Error:", error);
+        console.error("Error:", error);
       }
-    }
+    };
 
     fetchData();
   }, []);
@@ -83,7 +108,7 @@ function LeagueHome() {
       ))}
       <div>
       <button onClick={() => generateCode()}>Invite player:</button> 
-      <input type="text" readonly value={inviteCode}/>
+      <input type="text" readOnly value={inviteCode}/>
       </div>
       <p>This code will be valid for 2 hours.</p>
     </div>

@@ -6,6 +6,8 @@ import DarkModeTwoToneIcon from '@mui/icons-material/DarkModeTwoTone';
 import { motion, AnimatePresence } from "framer-motion";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
+import { getAuthToken } from "./components/utils/auth";
+
 
 
 import ProtectedRoute from "./components/utils/ProtectedRoute";
@@ -117,6 +119,14 @@ function Layout() {
 }
 
 function App() {
+  useEffect(() => {
+    import("./socket").then(({ default: socket }) => {
+      if (getAuthToken()) {
+        socket.connect();
+      }
+    });
+  }, []);
+
   return (
     <Router>
       <div className="App">
