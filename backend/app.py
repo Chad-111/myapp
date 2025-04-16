@@ -633,6 +633,52 @@ def fetch_league_messages():
 def populate_player_table(sport : str):
     pass # needs to be implemented
 
+@app.route("/api/chat/direct/send", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def send_direct_message():
+    data = request.json
+    receiver_id = data.get("receiver_id")
+    content = data.get("content")
+    sender_id = get_jwt_identity()
+
+    if not receiver_id or not content:
+        return jsonify({"error": "Receiver and content required"}), 400
+
+    message = DirectMessage(sender_id=sender_id, receiver_id=receiver_id, content=content)
+    db.session.add(message)
+    db.session.commit()
+
+    return jsonify({"message": "Direct message sent"}), 201
+
+@app.route("/api/chat/direct/messages", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def fetch_direct_messages():
+    data = request.json
+    user_id = get_jwt_identity()
+    other_user_id = data.get("other_user_id")
+
+    if not other_user_id:
+        return jsonify({"error": "Other user ID required"}), 400
+
+    messages = DirectMessage.query.filter(
+        db.or_(
+            db.and_(DirectMessage.sender_id == user_id, DirectMessage.receiver_id == other_user_id),
+            db.and_(DirectMessage.sender_id == other_user_id, DirectMessage.receiver_id == user_id)
+        )
+    ).order_by(DirectMessage.timestamp).all()
+
+    return jsonify([
+        {
+            "id": msg.id,
+            "sender_id": msg.sender_id,
+            "receiver_id": msg.receiver_id,
+            "content": msg.content,
+            "timestamp": msg.timestamp.isoformat()
+        }
+        for msg in messages
+    ]), 200
 
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run
