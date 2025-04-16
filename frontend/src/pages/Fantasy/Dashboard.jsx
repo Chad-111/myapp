@@ -1,14 +1,14 @@
 import React from 'react';
-import {useContext, useEffect, useState} from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { RedirectContext } from "../../App";
-import {useNavigate, useLocation} from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getAuthToken } from "../../components/utils/auth";
 const FantasyDashboard = () => {
     const location = useLocation();
     const [leagues, setLeagues] = useState([]);
-    const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
+    const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
     const navigate = useNavigate();
-    
+
     const authToken = getAuthToken();
     const createLeague = () => {
         navigate("/fantasy/create")
@@ -19,12 +19,12 @@ const FantasyDashboard = () => {
             const response = await fetch("/api/league/geturl", {
                 method: "POST",
                 headers: {
-                "Content-Type": "application/json",
-                "Authorization": 'Bearer ' + authToken
+                    "Content-Type": "application/json",
+                    "Authorization": 'Bearer ' + authToken
                 },
-                body: JSON.stringify({ "access_token": authToken, "league_id" : league.league_id }),
+                body: JSON.stringify({ "access_token": authToken, "league_id": league.league_id }),
             });
-            
+
             const data = await response.json()
             console.log(data.message);
             navigate("/league/home/" + data.code)
@@ -35,7 +35,7 @@ const FantasyDashboard = () => {
             console.error("Error:", error);
         }
     }
-  
+
     useEffect(() => {
         const fetchData = async () => {
             // Handle league logic here
@@ -43,8 +43,8 @@ const FantasyDashboard = () => {
                 const response = await fetch("/api/league/search", {
                     method: "POST",
                     headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": 'Bearer ' + authToken
+                        "Content-Type": "application/json",
+                        "Authorization": 'Bearer ' + authToken
                     },
                     body: JSON.stringify({ "access_token": authToken }),
                 });
@@ -58,10 +58,10 @@ const FantasyDashboard = () => {
                     }
                 }
 
-            const data = await response.json();
-            console.log("Message", data);
+                const data = await response.json();
+                console.log("Message", data);
 
-            setLeagues(data.message);
+                setLeagues(data.message);
 
 
             } catch (error) {
@@ -73,7 +73,7 @@ const FantasyDashboard = () => {
     }, [location]);
 
     return (
-        <div class="Fantasy" style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+        <div class="mt-3">
             <h1>Fantasy Dashboard</h1>
             <button onClick={createLeague}>Create League</button>
             <div style={{ marginTop: '20px' }}>

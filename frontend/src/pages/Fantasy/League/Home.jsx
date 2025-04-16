@@ -1,7 +1,7 @@
 import React from "react";
-import {useLocation, useNavigate} from "react-router-dom"
-import {useContext, useEffect, useState} from 'react';
-import {RedirectContext} from "../../../App";
+import { useLocation, useNavigate } from "react-router-dom"
+import { useContext, useEffect, useState } from 'react';
+import { RedirectContext } from "../../../App";
 import { getAuthToken } from "../../../components/utils/auth";
 
 
@@ -12,19 +12,19 @@ function LeagueHome() {
   const authToken = getAuthToken();
   const navigate = useNavigate();
   const [inviteCode, setInviteCode] = useState("");
-  const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
+  const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
 
 
   const generateCode = async () => {
     const response = await fetch("/api/league/getcode", {
-        method: "POST",
-        headers: {
+      method: "POST",
+      headers: {
         "Content-Type": "application/json",
         "Authorization": 'Bearer ' + authToken
-        },
-        body: JSON.stringify({ "access_token": authToken, "url" : location.pathname.split("/").at(-1) }),
+      },
+      body: JSON.stringify({ "access_token": authToken, "url": location.pathname.split("/").at(-1) }),
     });
-    
+
     const data = await response.json()
     console.log(data.message);
 
@@ -32,29 +32,29 @@ function LeagueHome() {
     setInviteCode(window.location.origin + "/league/join/" + code);
     console.log(inviteCode);
 
-      
+
   }
 
   useEffect(() => {
     const fetchData = async () => {
       // Handle league logic here
       try {
-          const response = await fetch("/api/league/getleague", {
-              method: "POST",
-              headers: {
-              "Content-Type": "application/json",
-              "Authorization": 'Bearer ' + authToken
-              },
-              body: JSON.stringify({ "access_token": authToken, "code" : location.pathname.split("/").at(-1) }),
-          });
+        const response = await fetch("/api/league/getleague", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": 'Bearer ' + authToken
+          },
+          body: JSON.stringify({ "access_token": authToken, "code": location.pathname.split("/").at(-1) }),
+        });
 
         const data = await response.json();
         if (!response.ok) {
           if (response.status == 422) {
-              setRedirectLocation(location.pathname);
-              navigate("/login")
+            setRedirectLocation(location.pathname);
+            navigate("/login")
           } else {
-              throw new Error("League get failed");
+            throw new Error("League get failed");
           }
         }
         console.log("Message", data);
@@ -64,7 +64,7 @@ function LeagueHome() {
 
 
       } catch (error) {
-          console.error("Error:", error);
+        console.error("Error:", error);
       }
     }
 
@@ -72,18 +72,18 @@ function LeagueHome() {
   }, []);
 
   return (
-    <div>
+    <div class="mt-3">
       <p>Your league: {league.name}</p>
       <p>Teams:</p>
       {teams.map((team) => (
         <div>
-        <p>{team.name}</p>
-        <p>{team.league_rank}</p>
+          <p>{team.name}</p>
+          <p>{team.league_rank}</p>
         </div>
       ))}
       <div>
-      <button onClick={() => generateCode()}>Invite player:</button> 
-      <input type="text" readonly value={inviteCode}/>
+        <button onClick={() => generateCode()}>Invite player:</button>
+        <input type="text" readonly value={inviteCode} />
       </div>
       <p>This code will be valid for 2 hours.</p>
     </div>

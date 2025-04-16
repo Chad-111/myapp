@@ -2,7 +2,7 @@ import React from "react";
 
 function MyTeam() {
   return (
-    <div class="Fantasy">
+    <div class="mt-3">
       <h1>Meet Our Team</h1>
       <p>This is the My Team page.</p>
       <p>A selector of what league(s) the user is a part of should be large and visible.</p>

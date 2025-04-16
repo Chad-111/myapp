@@ -31,7 +31,19 @@ export default function Dashboard() {
     const [finalGameSummary, setFinalGameSummary] = useState(null);
     const [showFinalModal, setShowFinalModal] = useState(false);
 
+    function formatDateForESPN(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}${month}${day}`;
+    }
 
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    const todayStr = formatDateForESPN(today);
+    const tomorrowStr = formatDateForESPN(tomorrow);
 
     const dropdownRef = useRef(null);
     const sportPath = SPORTS[selectedSport].path;
@@ -44,7 +56,7 @@ export default function Dashboard() {
         const fetchData = async () => {
             try {
                 const [scoresRes, newsRes] = await Promise.all([
-                    fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard`),
+                    fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard?dates=${todayStr}-${tomorrowStr}`),
                     fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportPath}/news`)
                 ]);
 
@@ -151,7 +163,7 @@ export default function Dashboard() {
                             {/* Large screen layout: left (live), center (upcoming), right (final) */}
                             <div className="d-none d-lg-block">
                                 <div className="row">
-                                    <div className="col-lg-2 mb-4">
+                                    <div className="col-lg-2 mb-auto">
                                         {liveGames.length > 0 && (
                                             <>
                                                 <div className="d-flex justify-content-center align-items-center mb-2">
@@ -171,9 +183,9 @@ export default function Dashboard() {
                                         )}
                                     </div>
 
-                                    <div className="col-lg-8 mb-4">
-                                        <h2 className="display-6 pb-3">Upcoming Matchups</h2>
-                                        <div className="row g-4 justify-content-center">
+                                    <div className="col-lg-8 mb-auto">
+                                        <h2 className="pb-3">Upcoming Matchups</h2>
+                                        <div className="row g-2 justify-content-center">
                                             {upcomingGames.length > 0 ? (
                                                 upcomingGames.map(event => (
                                                     <div className="col-12 col-sm-6 col-lg-6 col-xl-4" key={event.id}>
@@ -195,7 +207,7 @@ export default function Dashboard() {
                                         </div>
                                     </div>
 
-                                    <div className="col-lg-2 mb-4">
+                                    <div className="col-lg-2 mb-auto">
                                         {finalGames.length > 0 && (
                                             <>
                                                 <div className="d-flex justify-content-center align-items-center mb-2">
@@ -221,7 +233,7 @@ export default function Dashboard() {
 
                             {/* Medium and below layout: live/final side-by-side, upcoming below */}
                             <div className="d-lg-none">
-                                <div className="row g-4 mb-4">
+                                <div className="row g-4 mb-auto">
                                     {liveGames.length > 0 && (
                                         <div className="col-12 col-md-6">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
@@ -260,8 +272,8 @@ export default function Dashboard() {
                                 </div>
 
                                 <div className="col-12">
-                                    <h2 className="display-6 pb-3">Upcoming Matchups</h2>
-                                    <div className="row g-4 justify-content-center">
+                                    <h2 className="pb-3">Upcoming Matchups</h2>
+                                    <div className="row g-2 justify-content-center">
                                         {upcomingGames.length > 0 ? (
                                             upcomingGames.map(event => (
                                                 <div className="col-12 col-sm-6 col-lg-4 col-xl-3" key={event.id}>
@@ -289,6 +301,44 @@ export default function Dashboard() {
                     </section>
 
                 )}
+                {activeTab === 'news' && (
+                    <section className="container py-4">
+                        <h2 className="pb-3 border-bottom">Top Stories</h2>
+                        <div className="row g-4">
+                            {news.length > 0 ? (
+                                news.map((article, index) => (
+                                    <div className="col-12 col-md-6 col-lg-4" key={index}>
+                                        <div className="card h-100 shadow-sm">
+                                            {article.images?.[0]?.url && (
+                                                <img
+                                                    src={article.images[0].url}
+                                                    alt={article.headline}
+                                                    className="card-img-top"
+                                                    style={{ objectFit: 'cover', height: '180px' }}
+                                                />
+                                            )}
+                                            <div className="card-body d-flex flex-column">
+                                                <h5 className="card-title">{article.headline}</h5>
+                                                <p className="card-text small text-muted mb-2">
+                                                    {article.description || 'No description available.'}
+                                                </p>
+                                                <a href={article.links?.web?.href || '#'} className="btn btn-outline-primary mt-auto" target="_blank" rel="noopener noreferrer">
+                                                    Read More
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-muted">No news articles available.</div>
+                            )}
+                        </div>
+                    </section>
+                )}
+
+
+
+
                 {showModal && selectedGame && (() => {
                     const competitors = selectedGame?.competitions?.[0]?.competitors;
                     if (!competitors) return null;
@@ -300,12 +350,7 @@ export default function Dashboard() {
                     });
 
                     return (
-                        <div
-                            className="modal fade show d-block"
-                            tabIndex="-1"
-                            role="dialog"
-                            style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
-                        >
+                        <div className="custom-modal" role="dialog">
                             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header justify-content-center border-0 pb-0">
@@ -400,7 +445,7 @@ export default function Dashboard() {
                     ));
 
                     return (
-                        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+                        <div className="custom-modal" role="dialog">
                             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header justify-content-between border-0 pb-0">
@@ -476,7 +521,7 @@ export default function Dashboard() {
                     const players = finalGameSummary.players;
 
                     return (
-                        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+                        <div className="custom-modal" role="dialog">
                             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header border-bottom-0">

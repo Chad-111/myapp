@@ -2,7 +2,7 @@ import React from "react";
 
 function LeagueSchedule() {
   return (
-    <div class="Fantasy">
+    <div class="mt-3">
       <h1>League Schedule</h1>
       <p>See the league schedule.</p>
       <p>Based on League ID</p>

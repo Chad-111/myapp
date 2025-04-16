@@ -65,9 +65,9 @@ export default function UpcomingGameCard({ event, onClick }) {
 
 
     return (
-        <div className="mb-4 h-100">
+        <div className="h-100">
             <div
-                className="card p-3 shadow bg-teritary bg-gradient"
+                className="card p-2 shadow shadow-md bg-teritary bg-gradient"
                 style={{ cursor: "pointer" }}
                 onClick={() => onClick(event)}
             >
@@ -88,16 +88,19 @@ export default function UpcomingGameCard({ event, onClick }) {
                             alt={away?.team?.displayName}
                             className="img-fluid mt-2"
                             style={{
-                                height: 'clamp(50px, 8vw, 60px)',
-                                width: 'clamp(50px, 8vw, 60px)',
-                                objectFit: 'contain',
-                                aspectRatio: '1 / 1'
+                                // height: 'clamp(50px, 8vw, 60px)',
+                                // width: 'clamp(50px, 8vw, 60px)',
+                                // objectFit: 'contain',
+                                // aspectRatio: '1 / 1'
+                                height: '10vh',
+                                width: '10vh',
+                                objectFit: 'scale-down'
                             }}
                         />
                     </div>
 
                     {/* @ Symbol */}
-                    <div style={{ fontSize: 'clamp(12px, 1.5vw, 16px)', fontWeight: 600 }}>@</div>
+                    <div style={{ fontSize: 'clamp(12px, 1.5vw, 16px)', fontWeight: 100 }}>@</div>
 
                     {/* Home Team */}
                     <div
@@ -112,35 +115,26 @@ export default function UpcomingGameCard({ event, onClick }) {
                             alt={home?.team?.displayName}
                             className="img-fluid mt-2"
                             style={{
-                                height: 'clamp(50px, 8vw, 60px)',
-                                width: 'clamp(50px, 8vw, 60px)',
-                                objectFit: 'contain',
-                                aspectRatio: '1 / 1'
+                                // height: 'clamp(50px, 8vw, 60px)',
+                                // width: 'clamp(50px, 8vw, 60px)',
+                                // objectFit: 'contain',
+                                // aspectRatio: '1 / 1'
+                                height: '10vh',
+                                width: '10vh',
+                                objectFit: 'scale-down'
                             }}
                         />
                     </div>
                 </div>
-
-
-
-
                 {startsIn && (
                     <p className={`text-center fw-semibold fs-6 small my-1 ${countdownColor}`}>
                         {startsIn}
                     </p>
                 )}
                 {showDate && (
-                    <p className="text-center text-muted small mb-1">
+                    <p className="text-center text-muted small mb-1 fw-bold">
                         {formattedDate}
                     </p>
-                )}
-
-
-
-                {odds && (
-                    <div className="card-footer text-muted text-center mt-auto">
-                        <div className="fw-semibold">{odds.details}</div>
-                    </div>
                 )}
             </div>
         </div>
