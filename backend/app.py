@@ -12,12 +12,13 @@ import bcrypt
 from sqids import Sqids
 from random import randint
 from flask_mail import Mail, Message
-
+from scraping import return_all_player_details  # Ensure scraping.py is in the same directory or in the Python path
 sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+last_refresh = datetime.now() - timedelta(hours = 1)
 # 🔐 Security settings (change for production)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -125,6 +126,7 @@ class Ruleset(db.Model):
 class Player(db.Model):
     __tablename__ = 'players'
     id = db.Column(db.Integer, primary_key=True)
+    sport = db.Column(db.String(15), nullable=False)
     position = db.Column(db.String(3), nullable=False)
     team_name = db.Column(db.String, default="FA")
     last_name = db.Column(db.String, nullable=False)
@@ -418,7 +420,7 @@ def request_password_reset():
         <p style="font-size: 0.85rem; color: #888;">DraftEmpire Security Team</p>
     </div>
     """
-)
+    )
         mail.send(msg)
     except Exception as e:
         return jsonify({"error": "Failed to send email"}), 500
@@ -482,7 +484,13 @@ def email_test():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Not applied now, but building general logic, might be ran on draft creation
+def get_player_list(sport : str):
+    if Player.query.filter_by(sport=sport).count() == 0:
+        populate_player_table(sport)
+    
+    return [dict(player) for player in Player.query.filter_by(sport=sport).all()]
+
+# Not applied now, but building general logic, will be ran on draft creation
 # Draft objest should be dict with key as player_id and value as team_id.
 def instantiate_players(league_id : int, sport : str, draft : dict):
     if Player.query.filter_by(sport=sport).count() == 0:
@@ -502,10 +510,32 @@ def instantiate_players(league_id : int, sport : str, draft : dict):
     
     db.session.commit()
 
+SPORTS = {"nhl": "hockey", "nfl": "football", "mlb": "baseball", "nba": "basketball"}
 
 # Should populate the player table with all eligible players.
-def populate_player_table(sport : str):
-    pass # needs to be implemented
+def populate_player_table(league : str):
+    sport = SPORTS.get(league)
+    if not sport:
+        raise Exception("Invalid league specified.")
+
+    player_data = return_all_player_details(sport, league)
+    print(player_data)
+    for player in player_data:
+        if Player.query.filter_by(id=player.get('id')).count() == 0:
+            new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
+            db.session.add(new_player)
+        else:
+            existing_player = Player.query.filter_by(id=player.get('id')).first()
+            db.session.delete(existing_player)
+            db.session.commit()
+            new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
+            db.session.add(new_player)
+        
+    db.session.commit()
+
+
+
+
 
 
 
@@ -514,4 +544,5 @@ if __name__ == '__main__':
     sleep(2)
     with app.app_context():
         db.create_all()
+        print(get_player_list("nhl")) # for debug, for now
     app.run(host='0.0.0.0', port=5000)
