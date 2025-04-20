@@ -40,8 +40,40 @@ async def fetch_player_detail(session, sport, league, player):
             return None
         return await response.json()
 
-async def batch_fetch_player_details(sport, league, players, batch_size=50):
+def get_defense_details():
     details = []
+    url = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams"
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch data: {response.status_code} - {response.text}")
+    teams = response.json().get("sports")[0].get("leagues")[0].get("teams")
+    for team in teams:
+        player = {
+            # Using negative id for defense/special teams
+            "id": -int(team.get("team").get("id")),
+            "name": f"{team.get("team").get("displayName")} D/ST",
+            "first_name": "",
+            "last_name": "",
+            "position": "DST",
+            "team": team.get("team").get("displayName"),
+            "team_abbrev": team.get("team").get("abbreviation"),
+            "stats": {},
+            "active": True,
+            "location": team.get("team").get("location"),
+            "short_name": team.get("team").get("name"),
+        }
+        details.append(player)
+    return details
+
+# Gets player details, inc. D/ST.
+async def batch_fetch_player_details(sport, league, players, batch_size=50):
+    if sport == "football":
+        # For football, we need to add defense/special teams (D/ST) details
+        details = get_defense_details()
+    else:
+        details = []
+
+
     connector = aiohttp.TCPConnector(limit=batch_size)
     async with aiohttp.ClientSession(connector=connector) as session:
         tasks = [fetch_player_detail(session, sport, league, player) for player in players if player.get("active")]
@@ -92,27 +124,32 @@ def get_week_number(year, sport, league):
     else:
         return None
 
-def get_daily_games(sport : str, league : str):
+def get_daily_games(sport : str, league : str, day=datetime.datetime.now()):
     BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/"
-    url = BASE_URL + f"{sport}/{league}/scoreboard?dates={(datetime.datetime.now()-datetime.timedelta(hours=5)).strftime('%Y%m%d')}-{(datetime.datetime.now()-datetime.timedelta(hours=5)).strftime('%Y%m%d')}"
+    url = BASE_URL + f"{sport}/{league}/scoreboard?dates={(day-datetime.timedelta(hours=5)).strftime('%Y%m%d')}-{(day-datetime.timedelta(hours=5)).strftime('%Y%m%d')}"
     response = requests.get(url)
+    print(response.json())
     if response.status_code != 200:
         raise Exception(f"Failed to fetch data: {response.status_code} - {response.text}")
     ids = []
     for item in response.json().get('events'):
         ids.append(item.get('id'))
-    
+    print(ids)
     return ids
 
-def get_daily_stats(sport : str, league : str):
-    daily_ids = get_daily_games(sport, league)
+def get_daily_stats(sport : str, league : str, day=None):
+    if day is None:
+        daily_ids = get_daily_games(sport, league)
+    else:
+        print("called")
+        daily_ids = get_daily_games(sport, league, day)
+
+    print(daily_ids)
     if not daily_ids:
         return
     
     
     for game_id in daily_ids:
-
-        
         if sport == "hockey":
             url = f"https://site.web.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={game_id}"
         else:
@@ -131,10 +168,14 @@ def get_daily_stats(sport : str, league : str):
         if not data:
             raise Exception("No data found in response.")
         
+        if data.get("gamepackageJSON").get("header").get("competitions")[0].get("status").get("type").get("completed") == False:
+            print("Game not completed yet.")
+            return
+        
         
         # Should run between midnight and 7 am CST (5 am and noon UTC)
         today = (datetime.datetime.now() - datetime.timedelta(hours=12)).strftime('%Y%m%d')
-        total_stats = {"date": today, "sport": sport, "stats": []}
+        total_stats = {"date": today, "sport": sport, "stats": {}}
         # implementation finished
         if sport == "baseball":
             # data manipulation (boooo)
@@ -178,7 +219,7 @@ def get_daily_stats(sport : str, league : str):
                         caught_stealing += 1
 
                 # IMPORTANT: when accessing, use get() method with default value of 0, otherwise it will throw an error if the key does not exist
-                total_stats["stats"].append({"player_id": player_id, "runs": runs, "hits": hits, "home_runs": home_runs, "rbis": rbis, "walks": walks, "strikeouts": strikeouts, "stolen_bases": stolen_bases, "caught_stealing": caught_stealing})
+                total_stats["stats"][player_id] = {"runs": runs, "hits": hits, "home_runs": home_runs, "rbis": rbis, "walks": walks, "strikeouts": strikeouts, "stolen_bases": stolen_bases, "caught_stealing": caught_stealing}
 
             for item in pitching:
                 last_name = item.get("athlete").get("displayName").split(" ")[-1]
@@ -189,7 +230,7 @@ def get_daily_stats(sport : str, league : str):
                 saves = 1 if "S" in item.get("notes", [{}])[0].get("text", "") else 0
                 
                 # same warning as above
-                total_stats["stats"].append({"player_id": player_id, "wins": wins, "quality_starts": quality_starts, "saves": saves, "innings_pitched": innings_pitched, "earned_runs": earned_runs, "pitching_strikeouts": pitching_strikeouts})
+                total_stats["stats"][player_id] = {"wins": wins, "quality_starts": quality_starts, "saves": saves, "innings_pitched": innings_pitched, "earned_runs": earned_runs, "pitching_strikeouts": pitching_strikeouts}
 
         # implementation finished
         elif sport == "hockey":
@@ -251,7 +292,7 @@ def get_daily_stats(sport : str, league : str):
                     pp_points = power_play_points.get(str(player_id), 0)
                     sh_points = short_handed_points.get(str(player_id), 0)
                 
-                    total_stats["stats"].append({"player_id": player_id, "goals": goals, "assists": assists, "plus_minus": plus_minus, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points})
+                    total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "plus_minus": plus_minus, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
 
                 for item in defense:
                     player_id = item.get("athlete").get("id")
@@ -259,13 +300,13 @@ def get_daily_stats(sport : str, league : str):
                     pp_points = power_play_points.get(str(player_id), 0)
                     sh_points = short_handed_points.get(str(player_id), 0)
 
-                    total_stats["stats"].append({"player_id": player_id, "goals": goals, "assists": assists, "plus_minus": plus_minus, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points})
+                    total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "plus_minus": plus_minus, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
                 
                 for item in goalies:
                     player_id = item.get("athlete").get("id")
                     saves, goals_against = [item.get("stats")[i] for i in [saves_index, goals_against_index]]
                     shutouts = 1 if goals_against == "0" else 0
-                    total_stats["stats"].append({"player_id": player_id, "saves": saves, "goals_against": goals_against, "shutouts": shutouts})
+                    total_stats["stats"][player_id] = {"saves": saves, "goals_against": goals_against, "shutouts": shutouts}
             
         # implementation finished
         elif sport == "basketball":
@@ -294,17 +335,186 @@ def get_daily_stats(sport : str, league : str):
                     points, rebounds, assists, steals, blocks, turnovers, three_point_field_goals = [item.get("stats")[i] for i in stat_index]
                     three_point_made, _ = three_point_field_goals.split("-")
 
-                    total_stats["stats"].append({"player_id": player_id, "points": points, "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks, "turnovers": turnovers, "three_pointers": three_point_made, "double_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 else 0, "triple_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 and int(assists) >= 10 else 0})
+                    total_stats["stats"]["player_id"] = {"points": points, "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks, "turnovers": turnovers, "three_pointers": three_point_made, "double_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 else 0, "triple_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 and int(assists) >= 10 else 0}
         
                 except IndexError as e:
                     print(f"IndexError: {e} for player {player_id}")                
 
-        # implementation TODO
-        elif sport == "football": 
-            # this is going to suck, but there's no football on lol
-            # so we can just do this later
-            pass
+        # Also have to do the same thing for college football lol
+        elif league == "nfl": 
+            items = data.get("gamepackageJSON").get("boxscore").get("players")
+            passing = []
+            rushing = []
+            receiving = []
+            fumbles = []
+            kickers = []
+            defense = []
 
+            team_data = data.get("gamepackageJSON").get("boxscore").get("teams")
+
+            
+
+            for item in items:
+                passing.extend(item.get("statistics")[0].get("athletes"))
+                rushing.extend(item.get("statistics")[1].get("athletes"))
+                receiving.extend(item.get("statistics")[2].get("athletes"))
+                fumbles.extend(item.get("statistics")[3].get("athletes"))
+                kickers.extend(item.get("statistics")[8].get("athletes"))
+                defense.extend(item.get("statistics")[4])
+            
+            # get index of stats
+            pass_yd_index = items[0].get("statistics")[0].get("keys").index("passingYards")
+            pass_td_index = items[0].get("statistics")[0].get("keys").index("passingTouchdowns")
+            int_index = items[0].get("statistics")[0].get("keys").index("interceptions")
+
+            rush_td_index = items[0].get("statistics")[1].get("keys").index("rushingTouchdowns")
+            rush_yd_index = items[0].get("statistics")[1].get("keys").index("rushingYards")
+
+            receptions_index = items[0].get("statistics")[2].get("keys").index("receptions")
+            rec_yd_index = items[0].get("statistics")[2].get("keys").index("receivingYards")
+            rec_td_index = items[0].get("statistics")[2].get("keys").index("receivingTouchdowns")
+
+            fumbles_index = items[0].get("statistics")[3].get("keys").index("fumblesLost")
+            def_int_index = items[0].get("statistics")[5].get("keys").index("interceptions")
+            def_td_index = items[0].get("statistics")[4].get("keys").index("defensiveTouchdowns")
+            sacks_index = items[0].get("statistics")[4].get("keys").index("sacks")
+
+            kr_td_index = items[0].get("statistics")[6].get("keys").index("kickReturnTouchdowns")
+            punt_td_index = items[0].get("statistics")[7].get("keys").index("puntReturnTouchdowns")
+            # wow this sucks
+            url = f"https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/{game_id}/competitions/{game_id}/plays?limit=500"
+            
+            events = requests.get(url)
+            events = events.json().get("items")
+            for event in events:
+                # defensive blocked kicks (touchdowns should**** be covered by team stats)
+                if "Field Goal Good" in event.get("type").get("text"):
+                    for participant in event.get("participants"):
+                        if participant.get("type") == "scorer":
+                            player_id = participant.get("athlete").get("$ref").split("/")[-1].split("?")[0]
+                            yards = [int(word) for word in event.get("shortText").split() if word.isdigit()]
+                            yards = yards[0] if yards else 0
+
+                            total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})      
+                            if yards <= 39:
+                                total_stats["stats"][player_id]["field_goals_made_0_39"] = total_stats["stats"][player_id].get("field_goals_made_0_39", 0) + 1
+                            elif yards <= 49:
+                                total_stats["stats"][player_id]["field_goals_made_40_49"] = total_stats["stats"][player_id].get("field_goals_made_40_49", 0) + 1
+                            else:
+                                total_stats["stats"][player_id]["field_goals_made_50_plus"] = total_stats["stats"][player_id].get("field_goals_made_50_plus", 0) + 1
+                if "Blocked" in event.get("type").get("text"):
+                    ref = event.get("team").get("$ref")
+                    data = requests.get(ref).json()
+                    player_id = -int(data.get("id"))
+                    total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                    total_stats["stats"][player_id]["defense_blocked_kick"] = total_stats["stats"][player_id].get("defense_blocked_kick", 0) + 1
+                
+                if "Safety" in event.get("type").get("text"):
+                    ref = event.get("team").get("$ref")
+                    data = requests.get(ref).json()
+                    player_id = -int(data.get("id"))
+                    total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                    total_stats["stats"][player_id]["defense_safety"] = total_stats["stats"][player_id].get("defense_safety", 0) + 1
+
+                if event.get("pointAfterAttempt") and event.get("pointAfterAttempt").get("text") == "Two Point Pass" and event.get("pointAfterAttempt").get("value") == 2:
+                    for player in event.get("participants"):
+                        if player.get("type") == "patPasser":
+                            player_id = player.get("athlete").get("id")
+                            total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                            total_stats["stats"][player_id]["passing_two_point_conversion"] = total_stats["stats"][player_id].get("passing_two_point_conversion", 0) + 1
+                        elif player.get("type") == "patScorer":
+                            player_id = player.get("athlete").get("id")
+                            total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                            total_stats["stats"][player_id]["receiving_two_point_conversion"] = total_stats["stats"][player_id].get("receiving_two_point_conversion", 0) + 1
+                elif event.get("pointAfterAttempt") and event.get("pointAfterAttempt").get("text") == "Two Point Rush" and event.get("pointAfterAttempt").get("value") == 2:
+                    for player in event.get("participants"):
+                        if player.get("type") == "patRusher":
+                            player_id = player.get("athlete").get("id")
+                            total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                            total_stats["stats"][player_id]["rushing_two_point_conversion"] = total_stats["stats"][player_id].get("rushing_two_point_conversion", 0) + 1
+            
+            
+
+            for item in passing:
+                player_id = item.get("athlete").get("id")
+                pass_yds, pass_td, ints = [item.get("stats")[i] for i in [pass_yd_index, pass_td_index, int_index]]
+                total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                total_stats["stats"][player_id]["passing_yards"] = pass_yds
+                total_stats["stats"][player_id]["passing_touchdowns"] = pass_td
+                total_stats["stats"][player_id]["interceptions"] = ints
+            
+            for item in rushing:
+                player_id = item.get("athlete").get("id")
+                rush_yds, rush_td = [item.get("stats")[i] for i in [rush_yd_index, rush_td_index]]
+                total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                total_stats["stats"][player_id]["rushing_yards"] = rush_yds
+                total_stats["stats"][player_id]["rushing_touchdowns"] = rush_td
+            
+            for item in receiving:
+                player_id = item.get("athlete").get("id")
+                rec_yds, rec_td, rec = [item.get("stats")[i] for i in [rec_yd_index, rec_td_index, receptions_index]]
+                total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                total_stats["stats"][player_id]["receiving_yards"] = rec_yds
+                total_stats["stats"][player_id]["receiving_touchdowns"] = rec_td
+                total_stats["stats"][player_id]["receptions"] = rec
+            
+            for item in fumbles:
+                player_id = item.get("athlete").get("id")
+                fumbles_lost = item.get("stats")[fumbles_index]
+                total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                total_stats["stats"][player_id]["fumbles_lost"] = fumbles_lost
+
+            for item in kickers:
+                player_id = item.get("athlete").get("id")
+                field_goals_made, field_goals_attempted = item.get("stats")[0].split("/")
+                extra_points_made, extra_points_attempted = item.get("stats")[3].split("/")
+                total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                total_stats["stats"][player_id]["field_goals_missed"] = int(field_goals_attempted) - int(field_goals_made)
+                total_stats["stats"][player_id]["extra_points_made"] = int(extra_points_made)
+                total_stats["stats"][player_id]["extra_points_missed"] = int(extra_points_attempted) - int(extra_points_made)
+            
+            # each team
+            for item in items:
+                team_id = -int(item.get("team").get("id"))
+                totals = item.get("statistics")[4].get("totals")
+                total_stats["stats"][team_id] = total_stats["stats"].get(team_id, {})
+                total_stats["stats"][team_id]["sacks"] = totals[sacks_index]
+                total_stats["stats"][team_id]["defensive_touchdowns"] = totals[def_td_index]
+                if len(item.get("statistics")[5].get("totals")) > 0:
+                    total_stats["stats"][team_id]["interceptions"] = item.get("statistics")[5].get("totals")[def_int_index]
+                else:
+                    total_stats["stats"][team_id]["interceptions"] = 0
+                
+                if len(item.get("statistics")[6].get("totals")) > 0:
+                    kr_total = item.get("statistics")[6].get("totals")[kr_td_index]
+                else:
+                    kr_total = 0
+
+                if len(item.get("statistics")[7].get("totals")) > 0:
+                    pr_total = item.get("statistics")[7].get("totals")[punt_td_index]
+                else:
+                    pr_total = 0
+                total_stats["stats"][team_id]["kick_return_touchdowns"] = kr_total
+                total_stats["stats"][team_id]["punt_return_touchdowns"] = pr_total
+            
+
+            # summary data for points allowed
+            url = f"https://site.web.api.espn.com/apis/site/v2/sports/football/{league}/summary?event={game_id}"
+            response = requests.get(url, headers=headers)
+            if response.status_code != 200:
+                raise Exception(f"Failed to fetch data: {response.status_code} - {response.text}")
+            summary_data = response.json()
+            home_team_id, away_team_id = -int(summary_data.get("boxscore").get("teams")[1].get("team").get("id")), -int(summary_data.get("boxscore").get("teams")[0].get("team").get("id"))
+
+            home_score, away_score = summary_data.get("scoringPlays")[-1].get("homeScore"), summary_data.get("scoringPlays")[-1].get("awayScore")
+            total_stats["stats"][home_team_id] = total_stats["stats"].get(home_team_id, {})
+            total_stats["stats"][home_team_id]["points_allowed"] = away_score
+            total_stats["stats"][away_team_id] = total_stats["stats"].get(away_team_id, {})
+            total_stats["stats"][away_team_id]["points_allowed"] = home_score
+            
+        # college football
+        elif league == "college-football":
+            pass # for now: TODO
         else:
             raise Exception("Invalid sport specified.")
         
@@ -312,4 +522,4 @@ def get_daily_stats(sport : str, league : str):
 
 
 if __name__ == "__main__":
-    print(get_daily_stats("hockey", "nhl"))
+    print(get_daily_stats("football", "nfl", day=datetime.datetime(year=2024, month=9, day=30)))

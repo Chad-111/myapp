@@ -96,6 +96,9 @@ class RulesetFootball(db.Model):
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
     points_passtd = db.Column(db.Float, default=4.0)  # Passing TD
     points_passyd = db.Column(db.Float, default=0.04)  # Passing yard
+    points_2pt_passtd = db.Column(db.Float, default=2.0)  # 2-point conversion (pass)
+    points_2pt_rushtd = db.Column(db.Float, default=2.0)  # 2-point conversion (rush)
+    points_2pt_rectd = db.Column(db.Float, default=2.0)  # 2-point conversion (rec)
     points_int = db.Column(db.Float, default=-2.0)  # Interception
     points_rushtd = db.Column(db.Float, default=6.0)  # Rushing TD
     points_rushyd = db.Column(db.Float, default=0.1)  # Rushing yard
