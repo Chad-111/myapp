@@ -9,6 +9,34 @@ function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(checkLogin());
   const authToken = getAuthToken();
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    setIsLoggedIn(checkLogin());
+
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + authToken,
+          },
+        });
+        const data = await response.json();
+        if (response.ok && data.username) {
+          setUsername(data.username);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user info:", err);
+      }
+    };
+
+    if (checkLogin()) {
+      fetchUserInfo();
+    }
+
+  }, [location]);
+
 
   useEffect(() => {
     setIsLoggedIn(checkLogin());
@@ -62,11 +90,26 @@ function Navbar() {
           <div className="navbar-logo w-50 text-start">DraftEmpire</div>
 
           <div className="d-none d-lg-block ms-auto me-auto">
-            <ul className="navbar-links d-flex justify-content-center gap-3 mb-0 list-unstyled">
+            <ul className="navbar-links d-flex justify-content-center gap-2 mb-0 list-unstyled">
               {isLoggedIn && (
                 <>
-                  <li><NavLink to="/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink></li>
-                  <li><NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "active" : ""}>Fantasy</NavLink></li>
+                  <li><NavLink
+                    to="/dashboard"
+                    className={({ isActive }) =>
+                      `nav-link px-3 py-2 ${isActive ? 'active fw-semibold' : 'text-secondary'}`
+                    }
+                  >
+                    Home
+                  </NavLink></li>
+                  <li><NavLink
+                    to="/fantasy/dashboard"
+                    className={({ isActive }) =>
+                      `nav-link px-3 py-2 ${isActive ? 'active fw-semibold' : 'text-secondary'}`
+                    }
+                  >
+                    Fantasy
+                  </NavLink>
+                  </li>
                 </>
               )}
             </ul>
@@ -74,7 +117,7 @@ function Navbar() {
 
           {isLoggedIn && (
             <button
-              className="btn btn-outline-light d-lg-none me-2"
+              className="btn btn-outline-light d-lg-none ms-auto me-2"
               type="button"
               onClick={openOffcanvas}
               aria-controls="mobileNav"
@@ -85,11 +128,15 @@ function Navbar() {
 
           <div className="d-none d-lg-block w-50 text-end">
             {isLoggedIn ? (
-              <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
+              <>
+                <span className="me-3 text-light fw-semibold">{username}</span>
+                <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
+              </>
             ) : (
               <NavLink to="/" className="btn btn-outline-light">Get Started</NavLink>
             )}
           </div>
+
         </div>
       </nav>
 
@@ -101,6 +148,10 @@ function Navbar() {
         </div>
         <div className="offcanvas-body">
           <ul className="list-unstyled">
+            {isLoggedIn && (
+              <li className="fw-semibold text-center mb-2">Logged in as <span className="text-primary">{username}</span></li>
+            )}
+
             <li><NavLink to="/dashboard" className="nav-link" onClick={closeOffcanvas}>Home</NavLink></li>
             <li><NavLink to="/fantasy/dashboard" className="nav-link" onClick={closeOffcanvas}>Fantasy</NavLink></li>
 
@@ -108,8 +159,7 @@ function Navbar() {
               <div className="d-lg-none">
                 <hr />
                 <li className="fw-semibold text-uppercase small px-2 text-muted">Fantasy</li>
-                <li><NavLink to="/fantasy/create" className="nav-link" onClick={closeOffcanvas}>Create League</NavLink></li>
-                <li><NavLink to="/league/settings" className="nav-link" onClick={closeOffcanvas}>Settings</NavLink></li>
+                {/* <li><NavLink to="/fantasy/create" className="nav-link" onClick={closeOffcanvas}>Create League</NavLink></li> */}
                 <li><NavLink to="/league/members" className="nav-link" onClick={closeOffcanvas}>Members</NavLink></li>
                 <li><NavLink to="/league/rosters" className="nav-link" onClick={closeOffcanvas}>Rosters</NavLink></li>
                 <li><NavLink to="/league/schedule" className="nav-link" onClick={closeOffcanvas}>Schedule</NavLink></li>
@@ -117,6 +167,8 @@ function Navbar() {
                 <li><NavLink to="/league/portal" className="nav-link" onClick={closeOffcanvas}>Trade Portal</NavLink></li>
                 <li><NavLink to="/league/draft" className="nav-link" onClick={closeOffcanvas}>Live Draft</NavLink></li>
                 <li><NavLink to="/league/brackets" className="nav-link" onClick={closeOffcanvas}>Brackets</NavLink></li>
+                {/* <li><NavLink to="/league/settings" className="nav-link" onClick={closeOffcanvas}>Settings</NavLink></li> */}
+
               </div>
             )}
             <li className="mt-3">
@@ -133,8 +185,7 @@ function Navbar() {
         <nav className="FantasySubnav bg-dark py-2 d-none d-lg-flex">
           <div className="container-fluid d-flex flex-wrap gap-3 justify-content-evenly">
             <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Home</NavLink>
-            <NavLink to="/fantasy/create" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Create League</NavLink>
-            <NavLink to="/league/settings" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Settings</NavLink>
+            {/* <NavLink to="/fantasy/create" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Create League</NavLink> */}
             <NavLink to="/league/members" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Members</NavLink>
             <NavLink to="/league/rosters" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Rosters</NavLink>
             <NavLink to="/league/schedule" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Schedule</NavLink>
@@ -142,6 +193,8 @@ function Navbar() {
             <NavLink to="/league/portal" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Trade Portal</NavLink>
             <NavLink to="/league/draft" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Live Draft</NavLink>
             <NavLink to="/league/brackets" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Brackets</NavLink>
+            {/* <NavLink to="/league/settings" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Settings</NavLink> */}
+
           </div>
         </nav>
       )}

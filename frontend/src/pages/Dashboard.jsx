@@ -8,20 +8,22 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 
 const SPORTS = {
-    nhl: { name: "NHL", path: "hockey/nhl", logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png" },
-    nba: { name: "NBA", path: "basketball/nba", logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png" },
+    nhl: { name: "NHL", path: "hockey/nhl", logo: "https://a.espncdn.com/i/teamlogos/leagues/500-dark/nhl.png" },
+    nba: { name: "NBA", path: "basketball/nba", logo: "https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500-dark/nba.png&w=500&h=500&transparent=true" },
     nfl: { name: "NFL", path: "football/nfl", logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png" },
-    mlb: { name: "MLB", path: "baseball/mlb", logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png" },
-    ncaaf: { name: "NCAA FB", path: "football/college-football", logo: "https://a.espncdn.com/i/teamlogos/ncaa/500/default.png" },
-    ncaa_mbb: { name: "NCAA MBB", path: "basketball/mens-college-basketball", logo: "https://a.espncdn.com/i/teamlogos/ncaa/500/default.png" }
+    mlb: { name: "MLB", path: "baseball/mlb", logo: "https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500-dark/mlb.png&w=500&h=500&transparent=true" },
+    golf: { name: "Golf", path: "golf/pga", logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-golf.png" },
+    ncaaf: { name: "NCAA FB", path: "football/college-football", logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png" },
+    ncaa_mbb: { name: "NCAA MBB", path: "basketball/mens-college-basketball", logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png" }
 };
 
+
 export default function Dashboard() {
-    const [selectedSport, setSelectedSport] = useState(() => localStorage.getItem("selectedSport") || "ncaa_mbb");
-    const [scores, setScores] = useState([]);
+    const [selectedSport, setSelectedSport] = useState(() => localStorage.getItem("selectedSport") || "nhl");
+    const [games, setGames] = useState([]);
     const [leagues, setLeagues] = useState([]);
     const [news, setNews] = useState([]);
-    const [activeTab, setActiveTab] = useState('scores');
+    const [activeTab, setActiveTab] = useState('games');
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [selectedGame, setSelectedGame] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -52,30 +54,72 @@ export default function Dashboard() {
         localStorage.setItem("selectedSport", selectedSport);
     }, [selectedSport]);
 
+    const intervalRef = useRef(null);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [scoresRes, newsRes] = await Promise.all([
-                    fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard?dates=${todayStr}-${tomorrowStr}`),
-                    fetch(`https://site.api.espn.com/apis/site/v2/sports/${sportPath}/news`)
+                const [gamesRes, newsRes] = await Promise.all([
+                    fetch(`/api/scoreboard?sport=${selectedSport}&dates=${todayStr}-${tomorrowStr}`),
+                    fetch(`/api/news?sport=${selectedSport}`)
                 ]);
 
                 const [scoresData, newsData] = await Promise.all([
-                    scoresRes.json(),
+                    gamesRes.json(),
                     newsRes.json()
                 ]);
                 setLeagues(scoresData.leagues || []);
-                setScores(scoresData.events || []);
+                setGames(scoresData.events || []);
                 setNews(newsData.articles || []);
             } catch (err) {
                 console.error('Failed to fetch data.', err);
             }
         };
 
-        fetchData();
-        const interval = setInterval(fetchData, 10000);
-        return () => clearInterval(interval);
+        const startPolling = () => {
+            if (intervalRef.current === null) {
+                intervalRef.current = setInterval(fetchData, 10000);
+            }
+        };
+
+        const stopPolling = () => {
+            if (intervalRef.current !== null) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        };
+
+        fetchData(); // fetch immediately on mount
+        startPolling();
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                fetchData();  // fetch immediately when tab becomes visible
+                startPolling();
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            stopPolling();
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, [selectedSport]);
+
+
+    const fetchFinalGameSummary = async (gameId) => {
+        try {
+            const res = await fetch(`/api/summary?sport=${selectedSport}&gameId=${gameId}`);
+            const data = await res.json();
+            setFinalGameSummary(data.boxscore);
+            setShowFinalModal(true);
+        } catch (err) {
+            console.error('Failed to fetch post-game summary:', err);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -101,21 +145,9 @@ export default function Dashboard() {
         menu?.classList.remove("show");
     };
 
-    const fetchFinalGameSummary = async (gameId) => {
-        try {
-            const res = await fetch(`http://site.api.espn.com/apis/site/v2/sports/${sportPath}/summary?event=${gameId}`);
-            const data = await res.json();
-            setFinalGameSummary(data.boxscore);
-            setShowFinalModal(true);
-        } catch (err) {
-            console.error('Failed to fetch post-game summary:', err);
-        }
-    };
-
-
-    const liveGames = scores.filter(event => event.status?.type?.state === 'in');
-    const upcomingGames = scores.filter(event => event.status?.type?.state === 'pre');
-    const finalGames = scores.filter(event => event.status?.type?.state === 'post');
+    const liveGames = games.filter(event => event.status?.type?.state === 'in');
+    const upcomingGames = games.filter(event => event.status?.type?.state === 'pre');
+    const finalGames = games.filter(event => event.status?.type?.state === 'post');
     const liveFormatName = leagues.filter(league => league.id === liveGames[0]?.leagues?.[0]?.id)[0]?.name || 'Live Games';
 
     const hasSideColumnGames = liveGames.length > 0 || finalGames.length > 0;
@@ -123,21 +155,57 @@ export default function Dashboard() {
 
     return (
         <div className="d-flex flex-column">
-            <div className="border-bottom pb-2">
-                <div className="mt-2 d-flex flex-wrap justify-content-between align-items-center mb-2">
-                    <h1 className="mb-0 fs-3 fw-bold">Sports Dashboard</h1>
-                    <div className="dropdown" ref={dropdownRef} style={{ minWidth: '180px' }}>
-                        <button className="btn dropdown-toggle w-100 d-flex align-items-center justify-content-between" type="button" onClick={toggleDropdown} style={{ minHeight: '38px' }}>
+            <div className="border-bottom">
+                <div className="d-flex align-items-center justify-content-between flex-wrap mt-2 mb-2 px-2 gap-2">
+                    {/* Tabs - Centered */}
+                    <ul className="nav nav-pills gap-2 me-auto order-1 order-lg-0">
+                        {['games', 'news'].map(tab => (
+                            <li className="nav-item" key={tab}>
+                                <button
+                                    className={`nav-link rounded-pill px-4 ${activeTab === tab ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(tab)}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+
+                    {/* Dropdown - Right on desktop, below on mobile */}
+                    <div
+                        className="dropdown ms-auto order-0 order-lg-1"
+                        ref={dropdownRef}
+                        style={{ minWidth: '180px' }}
+                    >
+                        <button
+                            className="btn dropdown-toggle w-100 d-flex align-items-center justify-content-between"
+                            type="button"
+                            onClick={toggleDropdown}
+                            style={{ minHeight: '38px' }}
+                        >
                             <div className="d-flex align-items-center gap-2">
-                                <img src={SPORTS[selectedSport].logo} alt={SPORTS[selectedSport].name} style={{ height: '24px', width: '24px' }} onError={(e) => (e.target.style.display = 'none')} />
+                                <img
+                                    src={SPORTS[selectedSport].logo}
+                                    alt={SPORTS[selectedSport].name}
+                                    style={{ height: '24px', width: '24px' }}
+                                    onError={(e) => (e.target.style.display = 'none')}
+                                />
                                 <span>{SPORTS[selectedSport].name}</span>
                             </div>
                         </button>
                         <ul className="dropdown-menu w-100" id="dropdownMenu">
                             {Object.entries(SPORTS).map(([key, sport]) => (
                                 <li key={key}>
-                                    <button className={`dropdown-item d-flex align-items-center gap-2 ${key === selectedSport ? 'active' : ''}`} onClick={() => handleSportSelect(key)}>
-                                        <img src={sport.logo} alt={sport.name} style={{ height: '20px', width: '20px' }} onError={(e) => (e.target.style.display = 'none')} />
+                                    <button
+                                        className={`dropdown-item d-flex align-items-center gap-2 ${key === selectedSport ? 'active' : ''}`}
+                                        onClick={() => handleSportSelect(key)}
+                                    >
+                                        <img
+                                            src={sport.logo}
+                                            alt={sport.name}
+                                            style={{ height: '20px', width: '20px' }}
+                                            onError={(e) => (e.target.style.display = 'none')}
+                                        />
                                         {sport.name}
                                     </button>
                                 </li>
@@ -145,45 +213,40 @@ export default function Dashboard() {
                         </ul>
                     </div>
                 </div>
-                <ul className="nav nav-pills gap-2 justify-content-center border-top pt-2">
-                    {['scores', 'news'].map(tab => (
-                        <li className="nav-item" key={tab}>
-                            <button className={`nav-link rounded-pill px-4 fw-semibold ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
             </div>
 
+
+            {/* Main Content START */}
             <div className="flex-grow-1">
-                {activeTab === 'scores' && (
+                {/* Games Tab = ACTIVE */}
+                {activeTab === 'games' && (
                     <section className="container-fluid py-3">
                         <div className="row">
                             {/* Large screen layout: left (live), center (upcoming), right (final) */}
                             <div className="d-none d-lg-block">
-                                <div className="row">
-                                    <div className="col-lg-2 mb-auto">
-                                        {liveGames.length > 0 && (
-                                            <>
-                                                <div className="d-flex justify-content-center align-items-center mb-2">
-                                                    <span className="live-badge">LIVE</span>
-                                                </div>
-                                                {liveGames.map(event => (
-                                                    <LiveGameCard
-                                                        key={event.id}
-                                                        event={event}
-                                                        onClick={() => {
-                                                            setSelectedLiveGame(event);
-                                                            setShowLiveModal(true);
-                                                        }}
-                                                    />
-                                                ))}
-                                            </>
-                                        )}
-                                    </div>
+                                <div className="row justify-content-around">
+                                    {/* At LEAST 1 LIVE Game Active */}
+                                    {/* LIVE Games (Left Column) */}
+                                    {liveGames.length > 0 && (
+                                        <div className="col-lg-2 mb-auto">
+                                            <div className="d-flex justify-content-center align-items-center mb-2">
+                                                <span className="live-badge">LIVE</span>
+                                            </div>
+                                            {liveGames.map(event => (
+                                                <LiveGameCard
+                                                    key={event.id}
+                                                    event={event}
+                                                    onClick={() => {
+                                                        setSelectedLiveGame(event);
+                                                        setShowLiveModal(true);
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
 
-                                    <div className="col-lg-8 mb-auto">
+                                    {/* Center for Upcoming Games */}
+                                    <div className="col-8 mb-auto">
                                         <h2 className="pb-3">Upcoming Matchups</h2>
                                         <div className="row g-2 justify-content-center">
                                             {upcomingGames.length > 0 ? (
@@ -199,6 +262,7 @@ export default function Dashboard() {
                                                     </div>
                                                 ))
                                             ) : (
+                                                // If no upcoming games, show this card
                                                 <div className="card p-4 text-center bg-light-subtle shadow-sm border">
                                                     <h4 className="fw-bold mb-2">No Upcoming Games</h4>
                                                     <p className="text-muted mb-0">Check out the latest completed matchups.</p>
@@ -206,34 +270,34 @@ export default function Dashboard() {
                                             )}
                                         </div>
                                     </div>
+                                    {/* FINAL Games (Right Column) */}
+                                    {finalGames.length > 0 && (
+                                        <div className="col-lg-2 mb-auto">
+                                            <div className="d-flex justify-content-center align-items-center mb-2">
+                                                <span className="final-badge">FINAL</span>
+                                            </div>
+                                            {finalGames.map(event => (
+                                                <PostGameCard
+                                                    isFinal
+                                                    key={event.id}
+                                                    event={event}
+                                                    onClick={() => {
+                                                        setSelectedFinalGame(event);
+                                                        fetchFinalGameSummary(event.id);
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
 
-                                    <div className="col-lg-2 mb-auto">
-                                        {finalGames.length > 0 && (
-                                            <>
-                                                <div className="d-flex justify-content-center align-items-center mb-2">
-                                                    <span className="final-badge">FINAL</span>
-                                                </div>
-                                                {finalGames.map(event => (
-                                                    <PostGameCard
-                                                        isFinal
-                                                        key={event.id}
-                                                        event={event}
-                                                        onClick={() => {
-                                                            setSelectedFinalGame(event);
-                                                            fetchFinalGameSummary(event.id);
-                                                        }}
-                                                    />
-
-                                                ))}
-                                            </>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
+                            {/* END Large Screen Layout */}
 
-                            {/* Medium and below layout: live/final side-by-side, upcoming below */}
+                            {/* Medium and below layout: Live and Final (TOP half/half) Upcoming Games (BELOW full width) */}
                             <div className="d-lg-none">
                                 <div className="row g-4 mb-auto">
+                                    {/* At LEAST 1 Live Game ACTIVE */}
                                     {liveGames.length > 0 && (
                                         <div className="col-12 col-md-6">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
@@ -251,6 +315,7 @@ export default function Dashboard() {
                                             ))}
                                         </div>
                                     )}
+                                    {/* At LEAST 1 Finished Game */}
                                     {finalGames.length > 0 && (
                                         <div className="col-12 col-md-6">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
@@ -270,8 +335,8 @@ export default function Dashboard() {
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="col-12">
+                                {/* Upcoming Games */}
+                                <div className="col-12 mt-3">
                                     <h2 className="pb-3">Upcoming Matchups</h2>
                                     <div className="row g-2 justify-content-center">
                                         {upcomingGames.length > 0 ? (
@@ -287,6 +352,7 @@ export default function Dashboard() {
                                                 </div>
                                             ))
                                         ) : (
+                                            // If no upcoming games, show this card
                                             <div className="card p-4 text-center bg-light-subtle shadow-sm border">
                                                 <h4 className="fw-bold mb-2">No Upcoming Games</h4>
                                                 <p className="text-muted mb-0">Check out the latest completed matchups.</p>
@@ -295,20 +361,24 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             </div>
+                            {/* END Medium and below layout */}
                         </div>
-
-
                     </section>
-
                 )}
+                {/* END Games Tab */}
+
+                {/* News Tab = ACTIVE */}
                 {activeTab === 'news' && (
                     <section className="container py-4">
+                        {/* Header START */}
                         <h2 className="pb-3 border-bottom">Top Stories</h2>
                         <div className="row g-4">
+                            {/* If At LEAST 1 News Article */}
                             {news.length > 0 ? (
                                 news.map((article, index) => (
                                     <div className="col-12 col-md-6 col-lg-4" key={index}>
                                         <div className="card h-100 shadow-sm">
+                                            {/* Display the image linked to article */}
                                             {article.images?.[0]?.url && (
                                                 <img
                                                     src={article.images[0].url}
@@ -317,11 +387,14 @@ export default function Dashboard() {
                                                     style={{ objectFit: 'cover', height: '180px' }}
                                                 />
                                             )}
+                                            {/* Article Headline */}
                                             <div className="card-body d-flex flex-column">
                                                 <h5 className="card-title">{article.headline}</h5>
+                                                {/* Article Body (Description) */}
                                                 <p className="card-text small text-muted mb-2">
                                                     {article.description || 'No description available.'}
                                                 </p>
+                                                {/* Article Source */}
                                                 <a href={article.links?.web?.href || '#'} className="btn btn-outline-primary mt-auto" target="_blank" rel="noopener noreferrer">
                                                     Read More
                                                 </a>
@@ -330,15 +403,15 @@ export default function Dashboard() {
                                     </div>
                                 ))
                             ) : (
+                                // If NO News Articles, show this message
                                 <div className="text-muted">No news articles available.</div>
                             )}
                         </div>
                     </section>
                 )}
+                {/* END News Tab */}
 
-
-
-
+                {/* If Upcoming Games Card clicked, show stats modal */}
                 {showModal && selectedGame && (() => {
                     const competitors = selectedGame?.competitions?.[0]?.competitors;
                     if (!competitors) return null;
@@ -350,23 +423,16 @@ export default function Dashboard() {
                     });
 
                     return (
-                        <div className="custom-modal" role="dialog">
+                        <div
+                            className="modal fade show d-block"
+                            tabIndex="-1"
+                            role="dialog"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+                        >
                             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header justify-content-center border-0 pb-0">
                                         <div className="text-center w-100">
-                                            <div className="d-flex align-items-center justify-content-center gap-4 mb-2">
-                                                {sortedTeams.map(team => (
-                                                    <div key={team.id} className="d-flex flex-column align-items-center">
-                                                        <img
-                                                            src={team.team.logo}
-                                                            alt={team.team.displayName}
-                                                            style={{ height: 48, width: 48, objectFit: 'contain' }}
-                                                        />
-                                                        <small className="fw-semibold mt-1">{team.team.abbreviation}</small>
-                                                    </div>
-                                                ))}
-                                            </div>
                                             <h5 className="modal-title fw-bold">
                                                 {`${sortedTeams[0]?.team?.displayName} at ${sortedTeams[1]?.team?.displayName}`}
                                             </h5>
@@ -445,7 +511,7 @@ export default function Dashboard() {
                     ));
 
                     return (
-                        <div className="custom-modal" role="dialog">
+                        <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
                             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header justify-content-between border-0 pb-0">
@@ -521,7 +587,7 @@ export default function Dashboard() {
                     const players = finalGameSummary.players;
 
                     return (
-                        <div className="custom-modal" role="dialog">
+                        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
                             <div className="modal-dialog modal-lg modal-dialog-centered" role="document">
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header border-bottom-0">
@@ -534,7 +600,7 @@ export default function Dashboard() {
                                             onClick={() => setShowFinalModal(false)}
                                         />
                                     </div>
-                                    <div className="modal-body pt-0" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
+                                    <div className="modal-body pt-0" style={{ maxHeight: 'fit-content', overflowY: 'auto' }}>
                                         {players.map((teamGroup, i) => (
                                             <div key={i} className="mb-4">
                                                 <div className="d-flex align-items-center justify-content-center gap-2 mb-2">

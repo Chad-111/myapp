@@ -13,6 +13,7 @@ from sqids import Sqids
 from random import randint
 from flask_mail import Mail, Message
 from scraping import return_all_player_details  # Ensure scraping.py is in the same directory or in the Python path
+import requests
 sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
@@ -276,17 +277,109 @@ def logout():
     unset_jwt_cookies(response)
     return response, 201
 
+SPORTS_PATHS = {
+    "nhl": "hockey/nhl",
+    "nba": "basketball/nba",
+    "nfl": "football/nfl",
+    "mlb": "baseball/mlb",
+    "golf": "golf/pga",
+    "ncaaf": "football/college-football",
+    "ncaa_mbb": "basketball/mens-college-basketball",
+}
+
+@app.route("/api/auth/me", methods=["GET"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_current_user():
+    user_id = get_jwt_identity()
+    return jsonify({"id": user_id}), 200
+
+
+@app.route("/api/scoreboard")
+def get_scoreboard():
+    sport_key = request.args.get("sport")
+    dates = request.args.get("dates")
+
+    if not sport_key or not dates:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    sport_path = SPORTS_PATHS.get(sport_key)
+    if not sport_path:
+        return jsonify({"error": "Invalid sport key"}), 400
+
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/scoreboard?dates={dates}"
+    try:
+        resp = requests.get(url)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/news")
+def get_news():
+    sport_key = request.args.get("sport")
+    sport_path = SPORTS_PATHS.get(sport_key)
+
+    if not sport_path:
+        return jsonify({"error": "Invalid sport key"}), 400
+
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/news"
+    try:
+        resp = requests.get(url)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/api/summary")
+def get_game_summary():
+    sport_key = request.args.get("sport")
+    game_id = request.args.get("gameId")
+
+    if not sport_key or not game_id:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    sport_path = SPORTS_PATHS.get(sport_key)
+    if not sport_path:
+        return jsonify({"error": "Invalid sport key"}), 400
+
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_path}/summary?event={game_id}"
+    try:
+        resp = requests.get(url)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # user search for league root
-@app.route("/api/league/search", methods = ["POST"])
+@app.route("/api/league/search", methods=["POST"])
 @cross_origin(origin="*")
 @jwt_required()
 def league_search():
     data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
-    
+
     id = get_jwt_identity()
-    return jsonify({"message" : [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank, "league_name" : League.query.filter_by(id=team.league_id).one().name} for team in Team.query.filter_by(owner_id=id).all()]}), 201
+
+    teams = Team.query.filter_by(owner_id=id).all()
+    response = []
+    for team in teams:
+        league = League.query.filter_by(id=team.league_id).first()
+        if league:
+            response.append({
+                "id": team.id,
+                "name": team.name,
+                "league_id": team.league_id,
+                "league_rank": team.rank,
+                "wins": team.wins,
+                "losses": team.losses,
+                "sport": league.sport,
+                "league_name": league.name
+            })
+
+    return jsonify({"message": response}), 200
+
 
 @app.route("/api/league/create", methods=["POST"])
 @cross_origin(origin='*')
@@ -312,6 +405,30 @@ def league_create():
     db.session.commit()
 
     return jsonify({'message' : "League successfully created."}), 201
+
+@app.route("/api/league/joinable", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_joinable_leagues():
+    user_id = get_jwt_identity()
+
+    # Leagues the user already joined
+    user_team_league_ids = db.session.query(Team.league_id).filter_by(owner_id=user_id).subquery()
+
+    # Leagues user is not already in
+    joinable_leagues = League.query.filter(~League.id.in_(user_team_league_ids)).all()
+
+    response = [
+        {
+            "id": league.id,
+            "name": league.name,
+            "sport": league.sport,
+            "commissioner": User.query.get(league.commissioner_id).username
+        }
+        for league in joinable_leagues
+    ]
+
+    return jsonify({"leagues": response}), 200
 
 
 @app.route("/api/league/join", methods=["POST"])
@@ -376,11 +493,32 @@ def get_league():
 
     id = sqids.decode(data.get("code"))[0]
     print(data.get("code"), id)
-    team_data = [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank} for team in Team.query.filter_by(league_id=id).order_by(Team.rank).all()]
+    team_data = [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank, "owner_id": User.query.get(team.owner_id).username, "wins" : team.wins, "losses" : team.losses} for team in Team.query.filter_by(league_id=id).order_by(Team.rank).all()]
     
     league = League.query.filter_by(id=id).one()
-    league_data = {"name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count()}
+    league_data = {"name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count(), "commissioner" : league.commissioner_id}
     return jsonify({"teams" : team_data, "league": league_data}), 200
+
+@app.route("/api/league/verify_commissioner", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def verify_commissioner():
+    data = request.json
+    if not data or "code" not in data:
+        return jsonify({"error": "Missing code"}), 400
+
+    user_id = get_jwt_identity()
+    league_id = sqids.decode(data["code"])[0]
+
+    league = League.query.filter_by(id=league_id).first()
+    if not league:
+        return jsonify({"error": "League not found"}), 404
+
+    if league.commissioner_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    return jsonify({"message": "Authorized"}), 200
+
 
 @app.route('/api/request-reset', methods=['POST'])
 @cross_origin(origin='*')
@@ -484,11 +622,11 @@ def email_test():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-def get_player_list(sport : str):
-    if Player.query.filter_by(sport=sport).count() == 0:
-        populate_player_table(sport)
+# def get_player_list(sport : str):
+#     if Player.query.filter_by(sport=sport).count() == 0:
+#         populate_player_table(sport)
     
-    return [dict(player) for player in Player.query.filter_by(sport=sport).all()]
+#     return [dict(player) for player in Player.query.filter_by(sport=sport).all()]
 
 # Not applied now, but building general logic, will be ran on draft creation
 # Draft objest should be dict with key as player_id and value as team_id.
@@ -533,16 +671,11 @@ def populate_player_table(league : str):
         
     db.session.commit()
 
-
-
-
-
-
-
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run
     sleep(2)
     with app.app_context():
         db.create_all()
-        print(get_player_list("nhl")) # for debug, for now
+        # print(get_player_list("nhl")) # for debug, for now
     app.run(host='0.0.0.0', port=5000)
+    

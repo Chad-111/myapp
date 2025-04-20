@@ -105,8 +105,9 @@ function Layout() {
             <Route path="/league/brackets/*" element={<ProtectedRoute><Brackets /></ProtectedRoute>} />
             <Route path="/league/rosters/*" element={<ProtectedRoute><LeagueRoster /></ProtectedRoute>} />
             <Route path="/league/schedule/*" element={<ProtectedRoute><LeagueSchedule /></ProtectedRoute>} />
-            <Route path="/league/settings/*" element={<ProtectedRoute><LeagueSettings /></ProtectedRoute>} />
+            <Route path="/league/settings/:code" element={<ProtectedRoute><LeagueSettings /></ProtectedRoute>} />
             <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
+            <Route path="/unauthorized" element={<h1>403 – You are not authorized to view this page.</h1>} />
           </Routes>
         </main>
       </RedirectContext.Provider>
