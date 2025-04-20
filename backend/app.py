@@ -9,10 +9,11 @@ from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
 from datetime import datetime, timedelta, timezone
 import os
 import bcrypt
+import requests
 from sqids import Sqids
 from random import randint
 from flask_mail import Mail, Message
-from scraping import return_all_player_details  # Ensure scraping.py is in the same directory or in the Python path
+from scraping import get_daily_stats, return_all_player_details, get_week_number, get_daily_games  # Ensure scraping.py is in the same directory or in the Python path
 sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
@@ -89,8 +90,8 @@ class Matchup(db.Model):
     home_team_id = db.Column(db.Integer, db.ForeignKey("teams.id"))
     home_team_score = db.Column(db.Float, default=0)
 
-class Ruleset(db.Model):
-    __tablename__ = 'rulesets'
+class RulesetFootball(db.Model):
+    __tablename__ = 'rulesets_football'
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
     points_passtd = db.Column(db.Float, default=4.0)  # Passing TD
     points_passyd = db.Column(db.Float, default=0.04)  # Passing yard
@@ -123,6 +124,52 @@ class Ruleset(db.Model):
     points_xp = db.Column(db.Float, default=1.0)  # Extra point made
     points_xp_miss = db.Column(db.Float, default=-1.0)  # Missed extra point
 
+class RulesetBasketball(db.Model):
+    __tablename__ = 'rulesets_basketball'
+    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    points_point = db.Column(db.Float, default=1.0)  # Points scored
+    points_rebound = db.Column(db.Float, default=1.2)  # Rebound
+    points_assist = db.Column(db.Float, default=1.5)  # Assist
+    points_steal = db.Column(db.Float, default=3.0)  # Steal
+    points_block = db.Column(db.Float, default=3.0)  # Block
+    points_turnover = db.Column(db.Float, default=-1.0)  # Turnover
+    points_three_pointer = db.Column(db.Float, default=0.5)  # 3PT bonus
+    points_double_double = db.Column(db.Float, default=1.5)  # Double-double bonus
+    points_triple_double = db.Column(db.Float, default=3.0)  # Triple-double bonus
+
+class RulesetBaseball(db.Model):
+    __tablename__ = 'rulesets_baseball'
+    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    points_hit = db.Column(db.Float, default=1.0)  # Single
+    points_home_run = db.Column(db.Float, default=4.0)  # Home run
+    points_rbi = db.Column(db.Float, default=1.0)  # Run Batted In
+    points_run = db.Column(db.Float, default=1.0)  # Run scored
+    points_walk = db.Column(db.Float, default=0.5)  # Walk (BB)
+    points_strikeout = db.Column(db.Float, default=-0.5)  # Batter strikeout
+    points_sb = db.Column(db.Float, default=2.0)  # Stolen base
+    points_cs = db.Column(db.Float, default=-1.0)  # Caught stealing
+    points_ip = db.Column(db.Float, default=1.0)  # Inning pitched
+    points_pitcher_strikeout = db.Column(db.Float, default=1.0)  # Pitcher strikeout
+    points_win = db.Column(db.Float, default=5.0)  # Pitching win
+    points_save = db.Column(db.Float, default=5.0)  # Save
+    points_earned_run = db.Column(db.Float, default=-2.0)  # Earned run allowed
+
+class RulesetHockey(db.Model):
+    __tablename__ = 'rulesets_hockey'
+    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    points_goal = db.Column(db.Float, default=3.0)  # Goal
+    points_assist = db.Column(db.Float, default=2.0)  # Assist
+    points_plus_minus = db.Column(db.Float, default=1.0)  # Plus/Minus
+    points_shot = db.Column(db.Float, default=0.5)  # Shot on goal
+    points_hit = db.Column(db.Float, default=0.5)  # Hit
+    points_block = db.Column(db.Float, default=0.5)  # Blocked shot
+    points_pp_point = db.Column(db.Float, default=0.5)  # Power Play point
+    points_sh_point = db.Column(db.Float, default=1.0)  # Short-handed point
+    points_shutout = db.Column(db.Float, default=4.0)  # Goalie shutout
+    points_goal_against = db.Column(db.Float, default=-1.0)  # Goal allowed
+    points_save = db.Column(db.Float, default=0.2)  # Goalie save
+
+
 class Player(db.Model):
     __tablename__ = 'players'
     id = db.Column(db.Integer, primary_key=True)
@@ -132,8 +179,8 @@ class Player(db.Model):
     last_name = db.Column(db.String, nullable=False)
     first_name = db.Column(db.String, nullable=False)
 
-class WeeklyStats(db.Model):
-    __tablename__ = 'weekly_stats'
+class WeeklyStatsFootball(db.Model):
+    __tablename__ = 'weekly_stats_football'
     week_num = db.Column(db.Integer, nullable=False, primary_key=True)
     player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
     passing_tds = db.Column(db.Integer, default=0)
@@ -160,6 +207,158 @@ class WeeklyStats(db.Model):
     fg_missed = db.Column(db.Integer, default=0)
     xp_made = db.Column(db.Integer, default=0)
     xp_missed = db.Column(db.Integer, default=0)
+
+    def calculate_fantasy_points(self, ruleset: dict):
+        points_allowed = self.points_allowed or 0
+        if points_allowed == 0:
+            pa_score = ruleset.get('points_shutout', 0)
+        elif 1 <= points_allowed <= 6:
+            pa_score = ruleset.get('points_1_6_pa', 0)
+        elif 7 <= points_allowed <= 13:
+            pa_score = ruleset.get('points_7_13_pa', 0)
+        elif 14 <= points_allowed <= 20:
+            pa_score = ruleset.get('points_14_20_pa', 0)
+        elif 21 <= points_allowed <= 27:
+            pa_score = ruleset.get('points_21_27_pa', 0)
+        elif 28 <= points_allowed <= 34:
+            pa_score = ruleset.get('points_28_34_pa', 0)
+        else:
+            pa_score = ruleset.get('points_35plus_pa', 0)
+
+        return (
+            self.passing_tds * ruleset.get('points_passtd', 0) +
+            self.passing_yds * ruleset.get('points_passyd', 0) +
+            self.interceptions * ruleset.get('points_int', 0) +
+            self.rushing_tds * ruleset.get('points_rushtd', 0) +
+            self.rushing_yds * ruleset.get('points_rushyd', 0) +
+            self.receiving_tds * ruleset.get('points_rectd', 0) +
+            self.receiving_yds * ruleset.get('points_recyd', 0) +
+            self.receptions * ruleset.get('points_reception', 0) +
+            self.fumbles_lost * ruleset.get('points_fumble', 0) +
+            self.sacks * ruleset.get('points_sack', 0) +
+            self.interceptions_def * ruleset.get('points_int_def', 0) +
+            self.fumbles_recovered * ruleset.get('points_fumble_def', 0) +
+            self.safeties * ruleset.get('points_safety', 0) +
+            self.defensive_tds * ruleset.get('points_def_td', 0) +
+            self.blocked_kicks * ruleset.get('points_block_kick', 0) +
+            pa_score +
+            self.kick_return_tds * ruleset.get('points_kick_return_td', 0) +
+            self.punt_return_tds * ruleset.get('points_punt_return_td', 0) +
+            self.fg_made_0_39 * ruleset.get('points_fg_0_39', 0) +
+            self.fg_made_40_49 * ruleset.get('points_fg_40_49', 0) +
+            self.fg_made_50plus * ruleset.get('points_fg_50plus', 0) +
+            self.fg_missed * ruleset.get('points_fg_miss', 0) +
+            self.xp_made * ruleset.get('points_xp', 0) +
+            self.xp_missed * ruleset.get('points_xp_miss', 0)
+        )
+
+
+class DailyStatsHockey(db.Model):
+    __tablename__ = 'daily_stats_hockey'
+    date = db.Column(db.Date, nullable=False, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+
+    goals = db.Column(db.Integer, default=0)
+    assists = db.Column(db.Integer, default=0)
+    shots_on_goal = db.Column(db.Integer, default=0)
+    blocks = db.Column(db.Integer, default=0)
+    hits = db.Column(db.Integer, default=0)
+    penalty_minutes = db.Column(db.Integer, default=0)
+    power_play_points = db.Column(db.Integer, default=0)
+    short_handed_points = db.Column(db.Integer, default=0)
+    saves = db.Column(db.Integer, default=0)
+    goals_against = db.Column(db.Integer, default=0)
+    shutouts = db.Column(db.Integer, default=0)
+    wins = db.Column(db.Integer, default=0)
+
+    def calculate_fantasy_points(self, ruleset: dict):
+        return (
+            self.goals * ruleset.get('points_goal', 0) +
+            self.assists * ruleset.get('points_assist', 0) +
+            self.shots_on_goal * ruleset.get('points_sog', 0) +
+            self.blocks * ruleset.get('points_block', 0) +
+            self.hits * ruleset.get('points_hit', 0) +
+            self.penalty_minutes * ruleset.get('points_pim', 0) +
+            self.power_play_points * ruleset.get('points_ppp', 0) +
+            self.short_handed_points * ruleset.get('points_shp', 0) +
+            self.saves * ruleset.get('points_save', 0) +
+            self.goals_against * ruleset.get('points_goal_against', 0) +
+            self.shutouts * ruleset.get('points_shutout', 0)
+        )
+
+
+class DailyStatsBasketball(db.Model):
+    __tablename__ = 'daily_stats_basketball'
+    date = db.Column(db.Date, nullable=False, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+
+    points = db.Column(db.Integer, default=0)
+    rebounds = db.Column(db.Integer, default=0)
+    assists = db.Column(db.Integer, default=0)
+    steals = db.Column(db.Integer, default=0)
+    blocks = db.Column(db.Integer, default=0)
+    turnovers = db.Column(db.Integer, default=0)
+    three_pointers_made = db.Column(db.Integer, default=0)
+    double_doubles = db.Column(db.Integer, default=0)
+    triple_doubles = db.Column(db.Integer, default=0)
+
+    def calculate_fantasy_points(self, ruleset: dict):
+        return (
+            self.points * ruleset.get('points_point', 0) +
+            self.rebounds * ruleset.get('points_rebound', 0) +
+            self.assists * ruleset.get('points_assist', 0) +
+            self.steals * ruleset.get('points_steal', 0) +
+            self.blocks * ruleset.get('points_block', 0) +
+            self.turnovers * ruleset.get('points_turnover', 0) +
+            self.three_pointers_made * ruleset.get('points_three_pm', 0) +
+            self.double_doubles * ruleset.get('points_double_double', 0) +
+            self.triple_doubles * ruleset.get('points_triple_double', 0)
+        )
+
+
+class DailyStatsBaseball(db.Model):
+    __tablename__ = 'daily_stats_baseball'
+    date = db.Column(db.Date, nullable=False, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+
+    runs = db.Column(db.Integer, default=0)
+    hits = db.Column(db.Integer, default=0)
+    home_runs = db.Column(db.Integer, default=0)
+    rbis = db.Column(db.Integer, default=0)
+    walks = db.Column(db.Integer, default=0)
+    strikeouts = db.Column(db.Integer, default=0)
+    stolen_bases = db.Column(db.Integer, default=0)
+    caught_stealing = db.Column(db.Integer, default=0)
+    wins = db.Column(db.Integer, default=0)
+    quality_starts = db.Column(db.Integer, default=0)
+    saves = db.Column(db.Integer, default=0)
+    innings_pitched = db.Column(db.Float, default=0.0)
+    hits_allowed = db.Column(db.Integer, default=0)
+    earned_runs = db.Column(db.Integer, default=0)
+    walks_allowed = db.Column(db.Integer, default=0)
+    pitching_strikeouts = db.Column(db.Integer, default=0)
+
+    def calculate_fantasy_points(self, ruleset: dict):
+        return (
+            self.runs * ruleset.get('points_run', 0) +
+            self.hits * ruleset.get('points_hit', 0) +
+            self.home_runs * ruleset.get('points_home_run', 0) +
+            self.rbis * ruleset.get('points_rbi', 0) +
+            self.walks * ruleset.get('points_walk', 0) +
+            self.strikeouts * ruleset.get('points_strikeout', 0) +
+            self.stolen_bases * ruleset.get('points_sb', 0) +
+            self.caught_stealing * ruleset.get('points_cs', 0) +
+            self.wins * ruleset.get('points_win', 0) +
+            self.quality_starts * ruleset.get('points_quality_start', 0) +
+            self.saves * ruleset.get('points_save', 0) +
+            self.innings_pitched * ruleset.get('points_inning_pitched', 0) +
+            self.hits_allowed * ruleset.get('points_hit_allowed', 0) +
+            self.earned_runs * ruleset.get('points_earned_run', 0) +
+            self.walks_allowed * ruleset.get('points_walk_allowed', 0) +
+            self.pitching_strikeouts * ruleset.get('points_pitching_strikeout', 0)
+        )
+
+
 
 class TeamPlayerPerformance(db.Model):
     __tablename__ = 'team_player_performances'
@@ -535,6 +734,22 @@ def populate_player_table(league : str):
 
 
 
+                
+        
+
+
+        
+
+        
+
+
+
+
+
+        
+
+
+        
 
 
 
@@ -544,5 +759,5 @@ if __name__ == '__main__':
     sleep(2)
     with app.app_context():
         db.create_all()
-        print(get_player_list("nhl")) # for debug, for now
+        print(get_daily_stats("hockey", "nhl")) # for debug, for now
     app.run(host='0.0.0.0', port=5000)

@@ -18,5 +18,4 @@ flask_jwt_extended
 sqids
 Flask-Mail
 aiohttp
-requests
-pandas
+requests==2.32.3
