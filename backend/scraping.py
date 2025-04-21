@@ -128,13 +128,12 @@ def get_daily_games(sport : str, league : str, day=datetime.datetime.now()):
     BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/"
     url = BASE_URL + f"{sport}/{league}/scoreboard?dates={(day-datetime.timedelta(hours=5)).strftime('%Y%m%d')}-{(day-datetime.timedelta(hours=5)).strftime('%Y%m%d')}"
     response = requests.get(url)
-    print(response.json())
+
     if response.status_code != 200:
         raise Exception(f"Failed to fetch data: {response.status_code} - {response.text}")
     ids = []
     for item in response.json().get('events'):
         ids.append(item.get('id'))
-    print(ids)
     return ids
 
 def get_daily_stats(sport : str, league : str, day=None):
@@ -168,9 +167,14 @@ def get_daily_stats(sport : str, league : str, day=None):
         if not data:
             raise Exception("No data found in response.")
         
-        if data.get("gamepackageJSON").get("header").get("competitions")[0].get("status").get("type").get("completed") == False:
-            print("Game not completed yet.")
-            return
+        if sport != "hockey":
+            if data.get("gamepackageJSON").get("header").get("competitions")[0].get("status").get("type").get("completed") == False:
+                print("Game not completed yet.")
+                return
+        else:
+            if data.get("gameInfo").get("attendance", None) is None:
+                print("Game not completed yet.")
+                return
         
         
         # Should run between midnight and 7 am CST (5 am and noon UTC)
