@@ -878,6 +878,6 @@ if __name__ == '__main__':
     sleep(2)
     with app.app_context():
         db.create_all()
-        print(get_daily_stats("hockey", "nhl")) # for debug, for now
+        print(get_daily_stats("hockey", "nhl", datetime.now() - timedelta(days=1))) # for debug, for now
     app.run(host='0.0.0.0', port=5000)
     
