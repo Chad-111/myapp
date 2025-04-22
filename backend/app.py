@@ -8,7 +8,7 @@ from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
                                unset_jwt_cookies, jwt_required, verify_jwt_in_request, JWTManager
 from flask_jwt_extended.exceptions import NoAuthorizationError
 from datetime import datetime, timedelta, timezone
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 
 import os
 import bcrypt
@@ -309,17 +309,34 @@ def logout():
     unset_jwt_cookies(response)
     return response, 201
 
+@app.route("/api/users", methods=["GET"])
+@cross_origin(origin='*')
+@jwt_required()
+def get_users():
+    users = User.query.all()
+    return jsonify([
+        {"id": user.id, "username": user.username, "email": user.email}
+        for user in users
+    ])
+
 # user search for league root
-@app.route("/api/league/search", methods = ["POST"])
+@app.route("/api/league/search", methods=["POST"])
 @cross_origin(origin="*")
 @jwt_required()
 def league_search():
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-    
     id = get_jwt_identity()
-    return jsonify({"message" : [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank, "league_name" : League.query.filter_by(id=team.league_id).one().name} for team in Team.query.filter_by(owner_id=id).all()]}), 201
+    return jsonify({
+        "message": [
+            {
+                "id": team.id,
+                "name": team.name,
+                "league_id": team.league_id,
+                "league_rank": team.rank,
+                "league_name": League.query.filter_by(id=team.league_id).one().name
+            }
+            for team in Team.query.filter_by(owner_id=id).all()
+        ]
+    }), 201
 
 @app.route("/api/league/create", methods=["POST"])
 @cross_origin(origin='*')
@@ -540,34 +557,55 @@ def instantiate_players(league_id : int, sport : str, draft : dict):
 
 # Messaging API Routes
 @socketio.on("join_league_chat")
-@jwt_required()
 def handle_join_chat(data):
-    league_id = data.get("league_id")
-    user_id = get_jwt_identity()
-    join_room(str(league_id))
-    emit("user_joined", {"user_id": user_id}, to=str(league_id))
+    try:
+        verify_jwt_in_request(locations=["query_string"])
+        user_id = get_jwt_identity()
+
+        league_id = data.get("league_id")
+        if not league_id:
+            emit("error", {"message": "Missing league_id"})
+            return
+
+        join_room(f"league_{league_id}")
+        emit("success", {"message": f"Joined league chat {league_id}"})
+    except NoAuthorizationError:
+        emit("error", {"message": "Unauthorized"})
+        disconnect()
 
 @socketio.on("send_message")
-@jwt_required()
 def handle_send_message(data):
-    user_id = get_jwt_identity()
-    league_id = data.get("league_id")
-    content = data.get("content")
+    try:
+        # Verify JWT token
+        verify_jwt_in_request(locations=["query_string"])
+        user_id = get_jwt_identity()
 
-    # Save to DB
-    chat = LeagueChat.query.filter_by(league_id=league_id).first()
-    if not chat:
-        return emit("error", {"message": "Chat not initialized for this league"}, to=request.sid)
+        # Extract message data
+        league_id = data.get("league_id")
+        content = data.get("content")
+        if not league_id or not content:
+            emit("error", {"message": "Invalid message data"})
+            return
 
-    new_msg = LeagueMessage(chat_id=chat.id, sender_id=user_id, content=content)
-    db.session.add(new_msg)
-    db.session.commit()
+        # Save the message to the database
+        chat_id = LeagueChat.query.filter_by(league_id=league_id).first().id
+        new_message = LeagueMessage(chat_id=chat_id, sender_id=user_id, content=content)
+        db.session.add(new_message)
+        db.session.commit()
 
-    emit("receive_message", {
-        "sender_id": user_id,
-        "content": content,
-        "timestamp": datetime.utcnow().isoformat()
-    }, to=str(league_id))
+        # Broadcast the message to the league chat room
+        emit("receive_message", {
+            "id": new_message.id,
+            "sender_id": user_id,
+            "league_id": league_id,
+            "content": content,
+            "timestamp": new_message.timestamp.isoformat(),
+        }, to=f"league_{league_id}")
+    except NoAuthorizationError:
+        emit("error", {"message": "Unauthorized"})
+        disconnect()
+    except Exception as e:
+        emit("error", {"message": str(e)})
 
 @app.route("/api/chat/league/init", methods=["POST"])
 @cross_origin(origin='*')
@@ -628,6 +666,30 @@ def fetch_league_messages():
         } for msg in messages
     ]), 200
 
+@app.route("/api/league/<int:league_id>/messages", methods=["GET"])
+@jwt_required()
+def get_league_messages(league_id):
+    # First check if chat exists
+    league_chat = LeagueChat.query.filter_by(league_id=league_id).first()
+    if not league_chat:
+        # Create new chat for this league if it doesn't exist
+        league_chat = LeagueChat(league_id=league_id)
+        db.session.add(league_chat)
+        db.session.commit()
+
+    # Now fetch messages using the chat_id
+    messages = LeagueMessage.query.filter_by(
+        chat_id=league_chat.id
+    ).order_by(LeagueMessage.timestamp.asc()).all()  
+    
+    return jsonify({
+        "messages": [{
+            "id": msg.id,
+            "sender_id": msg.sender_id,
+            "content": msg.content,
+            "timestamp": msg.timestamp.isoformat()  
+        } for msg in messages]
+    })
 
 # Should populate the player table with all eligible players.
 def populate_player_table(sport : str):
@@ -680,22 +742,25 @@ def fetch_direct_messages():
         for msg in messages
     ]), 200
 
+@app.route("/api/me", methods=["GET"])
+@cross_origin(origin='*')
+@jwt_required()
+def get_current_user():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    }), 200
+
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run
     sleep(2)
     with app.app_context():
         db.create_all()
     socketio.run(app, host='0.0.0.0', port=5000)
-
-
-
-
-
-# TEST TEST TEST
-@app.route("/api/chat/test_insert", methods=["POST"])
-def test_insert_league_message():
-    from app import db, LeagueMessage
-    test_message = LeagueMessage(chat_id=1, sender_id=1, content="Test message from backend")
-    db.session.add(test_message)
-    db.session.commit()
-    return jsonify({"message": "Inserted test message"}), 200
