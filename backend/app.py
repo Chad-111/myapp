@@ -861,7 +861,6 @@ def league_create():
                 db.session.commit()
             else:
                 ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
-                ruleset_id = ruleset.id
         elif sport == "nhl":
             ruleset = RulesetHockey()
             if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
@@ -869,7 +868,6 @@ def league_create():
                 db.session.commit()
             else:
                 ruleset = build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).first()
-                ruleset_id = ruleset.id
         else:
             return jsonify({"error": "Invalid sport"}), 400
         pass
@@ -880,7 +878,7 @@ def league_create():
             db.session.commit()
         else:
             ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
-            ruleset_id = ruleset.id
+            
     elif sport == "nba":
         ruleset = RulesetBasketball()
         if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
@@ -888,7 +886,7 @@ def league_create():
             db.session.commit()
         else:
             ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
-            ruleset_id = ruleset.id
+            
     elif sport == "mlb":
         ruleset = RulesetBaseball()
         if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
@@ -896,7 +894,7 @@ def league_create():
             db.session.commit()
         else:
             ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
-            ruleset_id = ruleset.id
+            
     elif sport == "nhl":
         ruleset = RulesetHockey()
         if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
@@ -904,15 +902,16 @@ def league_create():
             db.session.commit()
         else:
             ruleset = build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).first()
-            ruleset_id = ruleset.id
+            
     else:
         return jsonify({"error": "Invalid sport"}), 400
     
 
 
+    ruleset_id = ruleset.id
     
 
-
+    print(ruleset_id)
     if sport == "nfl":
         new_league = League(commissioner_id=commissioner_id, name=name, sport=sport, football_ruleset_id=ruleset_id)
     elif sport == "nba":
