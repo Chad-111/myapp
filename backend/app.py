@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from flask_jwt_extended import create_access_token,get_jwt,get_jwt_identity, \
                                unset_jwt_cookies, jwt_required, JWTManager
 from datetime import datetime, timedelta, timezone
+from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import bcrypt
 import requests
@@ -48,6 +49,35 @@ migrate = Migrate(app, db)  # Add Migrate
 
 jwt = JWTManager(app)
 
+
+
+def update_player_stats():
+    print(f"Task executed at {datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    hockey_stats = get_daily_stats("hockey", "nhl")
+    basketball_stats = get_daily_stats("basketball", "nba")
+    football_stats = get_daily_stats("football", "nfl")
+    baseball_stats = get_daily_stats("baseball", "mlb")
+
+    # Hockey handler
+    #for player_id, stats in hockey_stats["stats"].items():
+    #    player = Player.query.filter_by(id=player_id).first()
+    #    if player:
+    #        daily_stats = DailyStatsHockey.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
+    #        if not daily_stats:
+    #            daily_stats = DailyStatsHockey(player_id=player_id, date=datetime.now().date(), **stats)
+    #            db.session.add(daily_stats)
+    #        for key, value in stats.items():
+    #            setattr(daily_stats, key, value)
+    #        db.session.commit()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=update_player_stats, trigger="interval", minutes=20)
+
+@app.before_first_request
+def start_scheduler():
+    scheduler.start()
+    
+
 # 👤 User Model
 class User(db.Model):
     __tablename__ = 'users'
@@ -63,6 +93,11 @@ class League(db.Model):
     name = db.Column(db.String(80), nullable=False)
     commissioner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     sport = db.Column(db.String(15), nullable=False)
+    football_ruleset_id = db.Column(db.Integer, db.ForeignKey('rulesets_football.id'), nullable=True)
+    basketball_ruleset_id = db.Column(db.Integer, db.ForeignKey('rulesets_basketball.id'), nullable=True)
+    baseball_ruleset_id = db.Column(db.Integer, db.ForeignKey('rulesets_baseball.id'), nullable=True)
+    hockey_ruleset_id = db.Column(db.Integer, db.ForeignKey('rulesets_hockey.id'), nullable=True)
+    draft_time = db.Column(db.DateTime, nullable=True)  # Draft time for the league
 
 class Team(db.Model):
     __tablename__ = 'teams'
@@ -93,7 +128,7 @@ class Matchup(db.Model):
 
 class RulesetFootball(db.Model):
     __tablename__ = 'rulesets_football'
-    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    league_id = db.Column(db.Integer, primary_key=True)
     points_passtd = db.Column(db.Float, default=4.0)  # Passing TD
     points_passyd = db.Column(db.Float, default=0.04)  # Passing yard
     points_2pt_passtd = db.Column(db.Float, default=2.0)  # 2-point conversion (pass)
@@ -127,10 +162,13 @@ class RulesetFootball(db.Model):
     points_fg_miss = db.Column(db.Float, default=-1.0)  # Missed FG
     points_xp = db.Column(db.Float, default=1.0)  # Extra point made
     points_xp_miss = db.Column(db.Float, default=-1.0)  # Missed extra point
+    points_2pt_rushtd = db.Column(db.Float, default=2.0)  # 2-point conversion (rush)
+    points_2pt_rectd = db.Column(db.Float, default=2.0)  # 2-point conversion (rec)
+    points_2pt_passtd = db.Column(db.Float, default=2.0)  # 2-point conversion (pass)
 
 class RulesetBasketball(db.Model):
     __tablename__ = 'rulesets_basketball'
-    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    league_id = db.Column(db.Integer, primary_key=True)
     points_point = db.Column(db.Float, default=1.0)  # Points scored
     points_rebound = db.Column(db.Float, default=1.2)  # Rebound
     points_assist = db.Column(db.Float, default=1.5)  # Assist
@@ -143,7 +181,7 @@ class RulesetBasketball(db.Model):
 
 class RulesetBaseball(db.Model):
     __tablename__ = 'rulesets_baseball'
-    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     points_hit = db.Column(db.Float, default=1.0)  # Single
     points_home_run = db.Column(db.Float, default=4.0)  # Home run
     points_rbi = db.Column(db.Float, default=1.0)  # Run Batted In
@@ -160,10 +198,9 @@ class RulesetBaseball(db.Model):
 
 class RulesetHockey(db.Model):
     __tablename__ = 'rulesets_hockey'
-    league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     points_goal = db.Column(db.Float, default=3.0)  # Goal
     points_assist = db.Column(db.Float, default=2.0)  # Assist
-    points_plus_minus = db.Column(db.Float, default=1.0)  # Plus/Minus
     points_shot = db.Column(db.Float, default=0.5)  # Shot on goal
     points_hit = db.Column(db.Float, default=0.5)  # Hit
     points_block = db.Column(db.Float, default=0.5)  # Blocked shot
@@ -211,6 +248,9 @@ class WeeklyStatsFootball(db.Model):
     fg_missed = db.Column(db.Integer, default=0)
     xp_made = db.Column(db.Integer, default=0)
     xp_missed = db.Column(db.Integer, default=0)
+    rushing_2pt = db.Column(db.Integer, default=0)
+    receiving_2pt = db.Column(db.Integer, default=0)
+    passing_2pt = db.Column(db.Integer, default=0)
 
     def calculate_fantasy_points(self, ruleset: dict):
         points_allowed = self.points_allowed or 0
@@ -253,7 +293,10 @@ class WeeklyStatsFootball(db.Model):
             self.fg_made_50plus * ruleset.get('points_fg_50plus', 0) +
             self.fg_missed * ruleset.get('points_fg_miss', 0) +
             self.xp_made * ruleset.get('points_xp', 0) +
-            self.xp_missed * ruleset.get('points_xp_miss', 0)
+            self.xp_missed * ruleset.get('points_xp_miss', 0) + 
+            self.rushing_2pt * ruleset.get('points_2pt_rushtd', 0) +
+            self.receiving_2pt * ruleset.get('points_2pt_rectd', 0) +
+            self.passing_2pt * ruleset.get('points_2pt_passtd', 0)
         )
 
 
@@ -267,7 +310,6 @@ class DailyStatsHockey(db.Model):
     shots_on_goal = db.Column(db.Integer, default=0)
     blocks = db.Column(db.Integer, default=0)
     hits = db.Column(db.Integer, default=0)
-    penalty_minutes = db.Column(db.Integer, default=0)
     power_play_points = db.Column(db.Integer, default=0)
     short_handed_points = db.Column(db.Integer, default=0)
     saves = db.Column(db.Integer, default=0)
@@ -282,7 +324,6 @@ class DailyStatsHockey(db.Model):
             self.shots_on_goal * ruleset.get('points_sog', 0) +
             self.blocks * ruleset.get('points_block', 0) +
             self.hits * ruleset.get('points_hit', 0) +
-            self.penalty_minutes * ruleset.get('points_pim', 0) +
             self.power_play_points * ruleset.get('points_ppp', 0) +
             self.short_handed_points * ruleset.get('points_shp', 0) +
             self.saves * ruleset.get('points_save', 0) +
@@ -337,9 +378,7 @@ class DailyStatsBaseball(db.Model):
     quality_starts = db.Column(db.Integer, default=0)
     saves = db.Column(db.Integer, default=0)
     innings_pitched = db.Column(db.Float, default=0.0)
-    hits_allowed = db.Column(db.Integer, default=0)
     earned_runs = db.Column(db.Integer, default=0)
-    walks_allowed = db.Column(db.Integer, default=0)
     pitching_strikeouts = db.Column(db.Integer, default=0)
 
     def calculate_fantasy_points(self, ruleset: dict):
@@ -356,9 +395,7 @@ class DailyStatsBaseball(db.Model):
             self.quality_starts * ruleset.get('points_quality_start', 0) +
             self.saves * ruleset.get('points_save', 0) +
             self.innings_pitched * ruleset.get('points_inning_pitched', 0) +
-            self.hits_allowed * ruleset.get('points_hit_allowed', 0) +
             self.earned_runs * ruleset.get('points_earned_run', 0) +
-            self.walks_allowed * ruleset.get('points_walk_allowed', 0) +
             self.pitching_strikeouts * ruleset.get('points_pitching_strikeout', 0)
         )
 

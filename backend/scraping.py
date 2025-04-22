@@ -316,14 +316,13 @@ def get_daily_stats(sport : str, league : str, day=None):
                         pp_points = power_play_points.get(str(player_id), 0)
                         sh_points = short_handed_points.get(str(player_id), 0)
                     
-                        total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "plus_minus": plus_minus, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
+                        total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
                     except IndexError as e:
                         print(f"IndexError: {e} for player {player_id}")
                         # Handle the case where the index is not found
                         total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                         total_stats["stats"][player_id]["goals"] = 0
                         total_stats["stats"][player_id]["assists"] = 0
-                        total_stats["stats"][player_id]["plus_minus"] = 0
                         total_stats["stats"][player_id]["shots_on_goal"] = 0
                         total_stats["stats"][player_id]["hits"] = 0
                         total_stats["stats"][player_id]["blocks"] = 0
@@ -337,14 +336,13 @@ def get_daily_stats(sport : str, league : str, day=None):
                         pp_points = power_play_points.get(str(player_id), 0)
                         sh_points = short_handed_points.get(str(player_id), 0)
 
-                        total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "plus_minus": plus_minus, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
+                        total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
                     except IndexError as e:
                         print(f"IndexError: {e} for player {player_id}")
                         # Handle the case where the index is not found
                         total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                         total_stats["stats"][player_id]["goals"] = 0
                         total_stats["stats"][player_id]["assists"] = 0
-                        total_stats["stats"][player_id]["plus_minus"] = 0
                         total_stats["stats"][player_id]["shots_on_goal"] = 0
                         total_stats["stats"][player_id]["hits"] = 0
                         total_stats["stats"][player_id]["blocks"] = 0
@@ -393,7 +391,7 @@ def get_daily_stats(sport : str, league : str, day=None):
                     points, rebounds, assists, steals, blocks, turnovers, three_point_field_goals = [item.get("stats")[i] for i in stat_index]
                     three_point_made, _ = three_point_field_goals.split("-")
 
-                    total_stats["stats"]["player_id"] = {"points": points, "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks, "turnovers": turnovers, "three_pointers": three_point_made, "double_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 else 0, "triple_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 and int(assists) >= 10 else 0}
+                    total_stats["stats"]["player_id"] = {"points": points, "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks, "turnovers": turnovers, "three_pointers_made": three_point_made, "double_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 else 0, "triple_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 and int(assists) >= 10 else 0}
         
                 except IndexError as e:
                     print(f"IndexError: {e} for player {player_id}")                
@@ -455,41 +453,41 @@ def get_daily_stats(sport : str, league : str, day=None):
 
                             total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})      
                             if yards <= 39:
-                                total_stats["stats"][player_id]["field_goals_made_0_39"] = total_stats["stats"][player_id].get("field_goals_made_0_39", 0) + 1
+                                total_stats["stats"][player_id]["fg_made_0_39"] = total_stats["stats"][player_id].get("fg_made_0_39", 0) + 1
                             elif yards <= 49:
-                                total_stats["stats"][player_id]["field_goals_made_40_49"] = total_stats["stats"][player_id].get("field_goals_made_40_49", 0) + 1
+                                total_stats["stats"][player_id]["fg_made_40_49"] = total_stats["stats"][player_id].get("fg_made_40_49", 0) + 1
                             else:
-                                total_stats["stats"][player_id]["field_goals_made_50_plus"] = total_stats["stats"][player_id].get("field_goals_made_50_plus", 0) + 1
+                                total_stats["stats"][player_id]["fg_made_50plus"] = total_stats["stats"][player_id].get("fg_made_50plus", 0) + 1
                 if "Blocked" in event.get("type").get("text"):
                     ref = event.get("team").get("$ref")
                     data = requests.get(ref).json()
                     player_id = -int(data.get("id"))
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["defense_blocked_kick"] = total_stats["stats"][player_id].get("defense_blocked_kick", 0) + 1
+                    total_stats["stats"][player_id]["blocked_kicks"] = total_stats["stats"][player_id].get("blocked_kicks", 0) + 1
                 
                 if "Safety" in event.get("type").get("text"):
                     ref = event.get("team").get("$ref")
                     data = requests.get(ref).json()
                     player_id = -int(data.get("id"))
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["defense_safety"] = total_stats["stats"][player_id].get("defense_safety", 0) + 1
+                    total_stats["stats"][player_id]["safeties"] = total_stats["stats"][player_id].get("safeties", 0) + 1
 
                 if event.get("pointAfterAttempt") and event.get("pointAfterAttempt").get("text") == "Two Point Pass" and event.get("pointAfterAttempt").get("value") == 2:
                     for player in event.get("participants"):
                         if player.get("type") == "patPasser":
                             player_id = player.get("athlete").get("id")
                             total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                            total_stats["stats"][player_id]["passing_two_point_conversion"] = total_stats["stats"][player_id].get("passing_two_point_conversion", 0) + 1
+                            total_stats["stats"][player_id]["passing_2pt"] = total_stats["stats"][player_id].get("passing_2pt", 0) + 1
                         elif player.get("type") == "patScorer":
                             player_id = player.get("athlete").get("id")
                             total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                            total_stats["stats"][player_id]["receiving_two_point_conversion"] = total_stats["stats"][player_id].get("receiving_two_point_conversion", 0) + 1
+                            total_stats["stats"][player_id]["reveiving_2pt"] = total_stats["stats"][player_id].get("receiving_2pt", 0) + 1
                 elif event.get("pointAfterAttempt") and event.get("pointAfterAttempt").get("text") == "Two Point Rush" and event.get("pointAfterAttempt").get("value") == 2:
                     for player in event.get("participants"):
                         if player.get("type") == "patRusher":
                             player_id = player.get("athlete").get("id")
                             total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                            total_stats["stats"][player_id]["rushing_two_point_conversion"] = total_stats["stats"][player_id].get("rushing_two_point_conversion", 0) + 1
+                            total_stats["stats"][player_id]["rushing_2pt"] = total_stats["stats"][player_id].get("rushing_2pt", 0) + 1
             
             
 
@@ -498,15 +496,15 @@ def get_daily_stats(sport : str, league : str, day=None):
                 try:
                     pass_yds, pass_td, ints = [item.get("stats")[i] for i in [pass_yd_index, pass_td_index, int_index]]
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["passing_yards"] = pass_yds
-                    total_stats["stats"][player_id]["passing_touchdowns"] = pass_td
+                    total_stats["stats"][player_id]["passing_yds"] = pass_yds
+                    total_stats["stats"][player_id]["passing_tds"] = pass_td
                     total_stats["stats"][player_id]["interceptions"] = ints
                 except IndexError as e:
                     print(f"IndexError: {e} for player {player_id}")
                     # Handle the case where the index is not found
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["passing_yards"] = 0
-                    total_stats["stats"][player_id]["passing_touchdowns"] = 0
+                    total_stats["stats"][player_id]["passing_yds"] = 0
+                    total_stats["stats"][player_id]["passing_tds"] = 0
                     total_stats["stats"][player_id]["interceptions"] = 0
             
             for item in rushing:
@@ -514,29 +512,29 @@ def get_daily_stats(sport : str, league : str, day=None):
                 try:
                     rush_yds, rush_td = [item.get("stats")[i] for i in [rush_yd_index, rush_td_index]]
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["rushing_yards"] = rush_yds
-                    total_stats["stats"][player_id]["rushing_touchdowns"] = rush_td
+                    total_stats["stats"][player_id]["rushing_yds"] = rush_yds
+                    total_stats["stats"][player_id]["rushing_tds"] = rush_td
                 except IndexError as e:
                     print(f"IndexError: {e} for player {player_id}")
                     # Handle the case where the index is not found
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["rushing_yards"] = 0
-                    total_stats["stats"][player_id]["rushing_touchdowns"] = 0
+                    total_stats["stats"][player_id]["rushing_yds"] = 0
+                    total_stats["stats"][player_id]["rushing_tds"] = 0
             
             for item in receiving:
                 player_id = item.get("athlete").get("id")
                 try:
                     rec_yds, rec_td, rec = [item.get("stats")[i] for i in [rec_yd_index, rec_td_index, receptions_index]]
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["receiving_yards"] = rec_yds
-                    total_stats["stats"][player_id]["receiving_touchdowns"] = rec_td
+                    total_stats["stats"][player_id]["receiving_yds"] = rec_yds
+                    total_stats["stats"][player_id]["receiving_tds"] = rec_td
                     total_stats["stats"][player_id]["receptions"] = rec
                 except IndexError as e:
                     print(f"IndexError: {e} for player {player_id}")
                     # Handle the case where the index is not found
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["receiving_yards"] = 0
-                    total_stats["stats"][player_id]["receiving_touchdowns"] = 0
+                    total_stats["stats"][player_id]["receiving_yds"] = 0
+                    total_stats["stats"][player_id]["receiving_tds"] = 0
                     total_stats["stats"][player_id]["receptions"] = 0
             
             for item in fumbles:
@@ -557,16 +555,16 @@ def get_daily_stats(sport : str, league : str, day=None):
                     field_goals_made, field_goals_attempted = item.get("stats")[0].split("/")
                     extra_points_made, extra_points_attempted = item.get("stats")[3].split("/")
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["field_goals_missed"] = int(field_goals_attempted) - int(field_goals_made)
-                    total_stats["stats"][player_id]["extra_points_made"] = int(extra_points_made)
-                    total_stats["stats"][player_id]["extra_points_missed"] = int(extra_points_attempted) - int(extra_points_made)
+                    total_stats["stats"][player_id]["fg_missed"] = int(field_goals_attempted) - int(field_goals_made)
+                    total_stats["stats"][player_id]["xp_made"] = int(extra_points_made)
+                    total_stats["stats"][player_id]["xp_missed"] = int(extra_points_attempted) - int(extra_points_made)
                 except IndexError as e:
                     print(f"IndexError: {e} for player {player_id}")
                     # Handle the case where the index is not found
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["field_goals_missed"] = 0
-                    total_stats["stats"][player_id]["extra_points_made"] = 0
-                    total_stats["stats"][player_id]["extra_points_missed"] = 0
+                    total_stats["stats"][player_id]["fg_missed"] = 0
+                    total_stats["stats"][player_id]["xp_made"] = 0
+                    total_stats["stats"][player_id]["xp_missed"] = 0
 
             # each team
             for item in items:
@@ -574,7 +572,7 @@ def get_daily_stats(sport : str, league : str, day=None):
                 totals = item.get("statistics")[4].get("totals")
                 total_stats["stats"][team_id] = total_stats["stats"].get(team_id, {})
                 total_stats["stats"][team_id]["sacks"] = totals[sacks_index]
-                total_stats["stats"][team_id]["defensive_touchdowns"] = totals[def_td_index]
+                total_stats["stats"][team_id]["defensive_tds"] = totals[def_td_index]
                 if len(item.get("statistics")[5].get("totals")) > 0:
                     total_stats["stats"][team_id]["interceptions"] = item.get("statistics")[5].get("totals")[def_int_index]
                 else:
@@ -589,8 +587,8 @@ def get_daily_stats(sport : str, league : str, day=None):
                     pr_total = item.get("statistics")[7].get("totals")[punt_td_index]
                 else:
                     pr_total = 0
-                total_stats["stats"][team_id]["kick_return_touchdowns"] = kr_total
-                total_stats["stats"][team_id]["punt_return_touchdowns"] = pr_total
+                total_stats["stats"][team_id]["kick_return_tds"] = kr_total
+                total_stats["stats"][team_id]["punt_return_tds"] = pr_total
             
 
             # summary data for points allowed
@@ -614,8 +612,24 @@ def get_daily_stats(sport : str, league : str, day=None):
             raise Exception("Invalid sport specified.")
         
         all_stats.append(total_stats)
-    return all_stats
+    cleaned_stats = {"sport": sport, "league": league, "today": today, "stats": {}}
+    #cleaning, to handle doubleheaders
+    for item in all_stats:
+        # for all player ids
+        for key in item["stats"].keys():
+            if key in cleaned_stats["stats"].keys():
+                # sum columns that exist in both dictionaries, otherwise add the new key
+                for stat_key in item["stats"][key].keys():
+                    if stat_key in cleaned_stats["stats"][key].keys():
+                        cleaned_stats["stats"][key][stat_key] += item["stats"][key][stat_key]
+                    else:
+                        cleaned_stats["stats"][key][stat_key] = item["stats"][key][stat_key]
+            else:
+                cleaned_stats["stats"][key] = item["stats"][key]
+    return cleaned_stats
+
 
 
 if __name__ == "__main__":
+    # testing
     print(get_daily_stats("football", "nfl", day=datetime.datetime(year=2024, month=9, day=30)))
