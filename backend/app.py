@@ -286,10 +286,7 @@ class RulesetFootball(db.Model):
     points_fg_miss = db.Column(db.Float, default=-1.0)  # Missed FG
     points_xp = db.Column(db.Float, default=1.0)  # Extra point made
     points_xp_miss = db.Column(db.Float, default=-1.0)  # Missed extra point
-    points_2pt_rushtd = db.Column(db.Float, default=2.0)  # 2-point conversion (rush)
-    points_2pt_rectd = db.Column(db.Float, default=2.0)  # 2-point conversion (rec)
-    points_2pt_passtd = db.Column(db.Float, default=2.0)  # 2-point conversion (pass)
-
+    
 class RulesetBasketball(db.Model):
     __tablename__ = 'rulesets_basketball'
     id = db.Column(db.Integer, primary_key=True)
@@ -748,6 +745,86 @@ def league_search():
 @cross_origin(origin='*')
 @jwt_required()
 def league_create():
+    fields_football = [
+        "points_passtd",
+        "points_passyd",
+        "points_2pt_passtd",
+        "points_2pt_rushtd",
+        "points_2pt_rectd",
+        "points_int",
+        "points_rushtd",
+        "points_rushyd",
+        "points_rectd",
+        "points_recyd",
+        "points_reception",
+        "points_fumble",
+        "points_sack",
+        "points_int_def",
+        "points_fumble_def",
+        "points_safety",
+        "points_def_td",
+        "points_block_kick",
+        "points_shutout",
+        "points_1_6_pa",
+        "points_7_13_pa",
+        "points_14_20_pa",
+        "points_21_27_pa",
+        "points_28_34_pa",
+        "points_35plus_pa",
+        "points_kick_return_td",
+        "points_punt_return_td",
+        "points_fg_0_39",
+        "points_fg_40_49",
+        "points_fg_50plus",
+        "points_fg_miss",
+        "points_xp",
+        "points_xp_miss"
+    ]
+
+    fields_basketball = [
+        "points_point",
+        "points_rebound",
+        "points_assist",
+        "points_steal",
+        "points_block",
+        "points_turnover",
+        "points_three_pointer",
+        "points_double_double",
+        "points_triple_double"
+    ]
+
+    fields_baseball = [
+        "points_hit",
+        "points_home_run",
+        "points_rbi",
+        "points_run",
+        "points_walk",
+        "points_strikeout",
+        "points_sb",
+        "points_cs",
+        "points_ip",
+        "points_pitcher_strikeout",
+        "points_win",
+        "points_save",
+        "points_earned_run"
+    ]
+
+    fields_hockey = [
+        "points_goal",
+        "points_assist",
+        "points_shot",
+        "points_hit",
+        "points_block",
+        "points_pp_point",
+        "points_sh_point",
+        "points_shutout",
+        "points_goal_against",
+        "points_save"
+    ]
+    def build_ruleset_filter(model_cls, ruleset, fields):
+        filters = {field: getattr(ruleset, field) for field in fields}
+        return model_cls.query.filter_by(**filters)
+    
     data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -757,7 +834,93 @@ def league_create():
     sport = data.get("sport")
     team_name = data.get("team_name")
 
-    new_league = League(commissioner_id=commissioner_id, name=name, sport=sport)
+    ruleset = None
+    ruleset_id = None
+    if data.get("ruleset"):
+        # logic should be handled - TODO
+        if sport == "nfl":
+            ruleset = RulesetFootball()
+            if build_ruleset_filter(RulesetFootball, ruleset, fields_football).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
+                ruleset_id = ruleset.id
+        elif sport == "nba":
+            ruleset = RulesetBasketball()
+            if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
+                ruleset_id = ruleset.id
+        elif sport == "mlb":
+            ruleset = RulesetBaseball()
+            if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
+                ruleset_id = ruleset.id
+        elif sport == "nhl":
+            ruleset = RulesetHockey()
+            if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).first()
+                ruleset_id = ruleset.id
+        else:
+            return jsonify({"error": "Invalid sport"}), 400
+        pass
+    elif sport == "nfl":
+        ruleset = RulesetFootball()
+        if build_ruleset_filter(RulesetFootball, ruleset, fields_football).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
+            ruleset_id = ruleset.id
+    elif sport == "nba":
+        ruleset = RulesetBasketball()
+        if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
+            ruleset_id = ruleset.id
+    elif sport == "mlb":
+        ruleset = RulesetBaseball()
+        if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
+            ruleset_id = ruleset.id
+    elif sport == "nhl":
+        ruleset = RulesetHockey()
+        if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).first()
+            ruleset_id = ruleset.id
+    else:
+        return jsonify({"error": "Invalid sport"}), 400
+    
+
+
+    
+
+
+    if sport == "nfl":
+        new_league = League(commissioner_id=commissioner_id, name=name, sport=sport, football_ruleset_id=ruleset_id)
+    elif sport == "nba":
+        new_league = League(commissioner_id=commissioner_id, name=name, sport=sport, basketball_ruleset_id=ruleset_id)
+    elif sport == "mlb":
+        new_league = League(commissioner_id=commissioner_id, name=name, sport=sport, baseball_ruleset_id=ruleset_id)
+    elif sport == "nhl":
+        new_league = League(commissioner_id=commissioner_id, name=name, sport=sport, hockey_ruleset_id=ruleset_id)
 
     db.session.add(new_league)
     db.session.commit()

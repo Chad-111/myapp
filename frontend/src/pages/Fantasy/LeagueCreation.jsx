@@ -82,9 +82,11 @@ function LeagueCreation() {
                                 onChange={(e) => setSport(e.target.value)}
                             >
                                 <option value="" disabled>Select a sport</option>
-                                <option value="NHL">NHL</option>
-                                <option value="NCAAF">College Football</option>
-                                <option value="MLB">MLB</option>
+                                <option value="nhl">NHL</option>
+                                <option value="ncaaf">College Football</option>
+                                <option value="mlb">MLB</option>
+                                <option value="nba">NBA</option>
+                                <option value="nfl">NFL</option>
                             </select>
                             <label htmlFor="sport">Sport</label>
                         </div>
