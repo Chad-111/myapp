@@ -16,7 +16,7 @@ def get_players_stats(sport, league):
     players = []
     for item in data.get("items", []):
         player_info = {
-            "id": item.get("id"),
+            "id": league + item.get("id"),
             "name": item.get("displayName"),
             "first_name": item.get("firstName"),
             "last_name": item.get("lastName"),
@@ -32,7 +32,7 @@ def get_players_stats(sport, league):
 async def fetch_player_detail(session, sport, league, player):
     if not player.get("active"):
         return None
-    player_id = player.get("id")
+    player_id = player.get("id")[3:]
     url = f"https://site.web.api.espn.com/apis/common/v3/sports/{sport}/{league}/athletes/{player_id}"
     async with session.get(url) as response:
         if response.status != 200:
@@ -50,7 +50,7 @@ def get_defense_details():
     for team in teams:
         player = {
             # Using negative id for defense/special teams
-            "id": -int(team.get("team").get("id")),
+            "id": "nfl" + str(-int(team.get("team").get("id"))),
             "name": f"{team.get("team").get("displayName")} D/ST",
             "first_name": "",
             "last_name": "",
@@ -82,7 +82,7 @@ async def batch_fetch_player_details(sport, league, players, batch_size=50):
             if isinstance(result, dict):
                 result = result.get("athlete")
                 player = {
-                    "id": result.get("id"),
+                    "id": league + result.get("id"),
                     "name": result.get("displayName"),
                     "position": result.get("position", {}).get("abbreviation"),
                     "last_name": result.get("lastName"),
@@ -126,7 +126,7 @@ def get_week_number(year, sport, league):
 
 def get_daily_games(sport : str, league : str, day=datetime.datetime.now()):
     BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/"
-    url = BASE_URL + f"{sport}/{league}/scoreboard?dates={(day-datetime.timedelta(hours=5)).strftime('%Y%m%d')}-{(day-datetime.timedelta(hours=5)).strftime('%Y%m%d')}"
+    url = BASE_URL + f"{sport}/{league}/scoreboard?dates={(day-datetime.timedelta(hours=12)).strftime('%Y%m%d')}-{(day-datetime.timedelta(hours=12)).strftime('%Y%m%d')}"
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -167,14 +167,7 @@ def get_daily_stats(sport : str, league : str, day=None):
         if not data:
             raise Exception("No data found in response.")
         
-        if sport != "hockey":
-            if data.get("gamepackageJSON").get("header").get("competitions")[0].get("status").get("type").get("completed") == False:
-                print("Game not completed yet.")
-                return
-        else:
-            if data.get("gameInfo").get("attendance", None) is None:
-                print("Game not completed yet.")
-                return
+        
         
         
         # Should run between midnight and 7 am CST (5 am and noon UTC)
@@ -186,74 +179,93 @@ def get_daily_stats(sport : str, league : str, day=None):
             athletes = [item.get("statistics") for item in data.get("gamepackageJSON").get("boxscore").get("players")]
             batting = []
             pitching = []
-            # get index of batting stats (idk if this is random but this probably is the best way to do it)
-            hit_index = athletes[0][0].get("names").index("H")
-            hr_index = athletes[0][0].get("names").index("HR")
-            rbi_index = athletes[0][0].get("names").index("RBI")
-            run_index = athletes[0][0].get("names").index("R")
-            walk_index = athletes[0][0].get("names").index("BB")
-            strikeout_index = athletes[0][0].get("names").index("K")
-            batting_stat_list = [hit_index, hr_index, rbi_index, run_index, walk_index, strikeout_index]
-
-            # get index of pitching stats
-            ip_index = athletes[0][1].get("names").index("IP")
-            er_index = athletes[0][1].get("names").index("ER")
-            k_index = athletes[0][1].get("names").index("K")
-
-            pitching_stat_list = [ip_index, er_index, k_index]
-
-            for item in athletes:
-                batting.extend(item[0].get("athletes"))
-                pitching.extend(item[1].get("athletes"))
-            
-            for item in batting:
-                # find stolen bases and caught stealing
-
-                last_name = item.get("athlete").get("displayName").split(" ")[-1]
-                player_id = item.get("athlete").get("id")
+            if len(athletes[0][0].get("athletes")) != 0:
+                # get index of batting stats (idk if this is random but this probably is the best way to do it)
+                hit_index = athletes[0][0].get("names").index("H")
+                hr_index = athletes[0][0].get("names").index("HR")
+                rbi_index = athletes[0][0].get("names").index("RBI")
+                walk_index = athletes[0][0].get("names").index("BB")
+                strikeout_index = athletes[0][0].get("names").index("K")
                 try:
-                    hits, home_runs, rbis, runs, walks, strikeouts = [item.get("stats")[i] for i in batting_stat_list]
-                    stolen_bases, caught_stealing = 0, 0
-                    # given player id: (awful way to do this, but whatever)
-                    for event in data.get("gamepackageJSON").get("plays"):
-                        # this does not see if a person steals home, that's something we can handle later lol
-                        # I LOVE INLINE FOR LOOPS (i am going insane)
-                        if event.get("type").get("abbreviation") == "SB" and player_id in [participant.get("athlete").get("id") for participant in event.get("participants") if participant.get("type") == "onSecond" or participant.get("type") == "onThird"]:
-                            stolen_bases += 1
-                        if event.get("type").get("abbreviation") == "CS" and last_name in event.get("text"):
-                            caught_stealing += 1
-
-                    # IMPORTANT: when accessing, use get() method with default value of 0, otherwise it will throw an error if the key does not exist
-                    total_stats["stats"][player_id] = {"runs": runs, "hits": hits, "home_runs": home_runs, "rbis": rbis, "walks": walks, "strikeouts": strikeouts, "stolen_bases": stolen_bases, "caught_stealing": caught_stealing}
-                except IndexError as e:
-                    print(f"IndexError: {e} for player {player_id}")
-                    # Handle the case where the index is not found
-                    total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
-                    total_stats["stats"][player_id]["runs"] = 0
-                    total_stats["stats"][player_id]["hits"] = 0
-                    total_stats["stats"][player_id]["home_runs"] = 0
-                    total_stats["stats"][player_id]["rbis"] = 0
-                    total_stats["stats"][player_id]["walks"] = 0
-                    total_stats["stats"][player_id]["strikeouts"] = 0
-                    total_stats["stats"][player_id]["stolen_bases"] = 0
-                    total_stats["stats"][player_id]["caught_stealing"] = 0
-
-            for item in pitching:
-                last_name = item.get("athlete").get("displayName").split(" ")[-1]
-                player_id = item.get("athlete").get("id")
-                try:
-                    innings_pitched, earned_runs, pitching_strikeouts = [item.get("stats")[i] for i in pitching_stat_list]
-                    wins = 1 if "W" in item.get("notes", [{}])[0].get("text", "") else 0
-                    quality_starts = 1 if float(innings_pitched) >= 6 and int(earned_runs) <= 3 else 0
-                    saves = 1 if "S" in item.get("notes", [{}])[0].get("text", "") else 0
-                except IndexError as e:
-                    print(f"IndexError: {e} for player {player_id}")
-                    # Handle the case where the index is not found
-                    innings_pitched, earned_runs, pitching_strikeouts = 0, 0, 0
-                    wins, quality_starts, saves = 0, 0, 0
+                    run_index = athletes[0][0].get("names").index("R")
+                except ValueError:
+                    run_index = -1
                 
-                # same warning as above
-                total_stats["stats"][player_id] = {"wins": wins, "quality_starts": quality_starts, "saves": saves, "innings_pitched": innings_pitched, "earned_runs": earned_runs, "pitching_strikeouts": pitching_strikeouts}
+                if run_index == -1:
+                    batting_stat_list = [hit_index, hr_index, rbi_index, walk_index, strikeout_index]
+                else:
+                    batting_stat_list = [hit_index, hr_index, rbi_index, run_index, walk_index, strikeout_index]
+
+                # get index of pitching stats
+                ip_index = athletes[0][1].get("names").index("IP")
+                er_index = athletes[0][1].get("names").index("ER")
+                k_index = athletes[0][1].get("names").index("K")
+
+                pitching_stat_list = [ip_index, er_index, k_index]
+
+                for item in athletes:
+                    batting.extend(item[0].get("athletes"))
+                    pitching.extend(item[1].get("athletes"))
+                
+                
+                for item in batting:
+                    # find stolen bases and caught stealing
+
+                    last_name = item.get("athlete").get("displayName").split(" ")[-1]
+                    player_id = "mlb" + item.get("athlete").get("id")
+                    try:
+                        if run_index == -1:
+                            # if run index is not found, set it to 0
+                            runs = 0
+                            hits, home_runs, rbis, walks, strikeouts = [item.get("stats")[i] for i in batting_stat_list]
+                        else:
+                            hits, home_runs, rbis, runs, walks, strikeouts = [item.get("stats")[i] for i in batting_stat_list]
+                        stolen_bases, caught_stealing = 0, 0
+                        # given player id: (awful way to do this, but whatever)
+                        for event in data.get("gamepackageJSON").get("plays"):
+                            # this does not see if a person steals home, that's something we can handle later lol
+                            # I LOVE INLINE FOR LOOPS (i am going insane)
+                            if event.get("type").get("abbreviation") == "SB" and player_id in [participant.get("athlete").get("id") for participant in event.get("participants") if participant.get("type") == "onSecond" or participant.get("type") == "onThird"]:
+                                stolen_bases += 1
+                            if event.get("type").get("abbreviation") == "CS" and last_name in event.get("text"):
+                                caught_stealing += 1
+
+                        # IMPORTANT: when accessing, use get() method with default value of 0, otherwise it will throw an error if the key does not exist
+                        total_stats["stats"][player_id] = {"runs": int(runs), "hits": int(hits), "home_runs": int(home_runs), "rbis": int(rbis), "walks": int(walks), "strikeouts": int(strikeouts), "stolen_bases": int(stolen_bases), "caught_stealing": int(caught_stealing)}
+                    except IndexError as e:
+                        print(f"IndexError: {e} for player {player_id}")
+                        # Handle the case where the index is not found
+                        total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
+                        total_stats["stats"][player_id]["runs"] = 0
+                        total_stats["stats"][player_id]["hits"] = 0
+                        total_stats["stats"][player_id]["home_runs"] = 0
+                        total_stats["stats"][player_id]["rbis"] = 0
+                        total_stats["stats"][player_id]["walks"] = 0
+                        total_stats["stats"][player_id]["strikeouts"] = 0
+                        total_stats["stats"][player_id]["stolen_bases"] = 0
+                        total_stats["stats"][player_id]["caught_stealing"] = 0
+
+                for item in pitching:
+                    last_name = item.get("athlete").get("displayName").split(" ")[-1]
+                    player_id = "mlb" + item.get("athlete").get("id")
+                    try:
+                        innings_pitched, earned_runs, pitching_strikeouts = [item.get("stats")[i] for i in pitching_stat_list]
+                        if "." in innings_pitched:
+                            innings_pitched, partial_out = innings_pitched.split(".")
+                            innings_pitched = float(innings_pitched) + (float(partial_out) / 3 if partial_out else 0)
+                        else:
+                            innings_pitched = float(innings_pitched)
+                        wins = 1 if "W" in item.get("notes", [{}])[0].get("text", "") else 0
+                        quality_starts = 1 if float(innings_pitched) >= 6 and int(earned_runs) <= 3 else 0
+                        saves = 1 if "S" in item.get("notes", [{}])[0].get("text", "") else 0
+                    except IndexError as e:
+                        print(f"IndexError: {e} for player {player_id}")
+                        # Handle the case where the index is not found
+                        innings_pitched, earned_runs, pitching_strikeouts = 0, 0, 0
+                        wins, quality_starts, saves = 0, 0, 0
+                    
+                    # same warning as above
+                    total_stats["stats"][player_id] = {"wins": wins, "quality_starts": quality_starts, "saves": saves, "innings_pitched": innings_pitched, "earned_runs": earned_runs, "pitching_strikeouts": pitching_strikeouts}
 
         # implementation finished
         elif sport == "hockey":
@@ -310,13 +322,13 @@ def get_daily_stats(sport : str, league : str, day=None):
                     goalies.extend(item.get("statistics")[2].get("athletes"))
                 
                 for item in forwards:
-                    player_id = item.get("athlete").get("id")
+                    player_id = "nhl" + item.get("athlete").get("id")
                     try:
                         goals, assists, plus_minus, shots, hits, blocks = [item.get("stats")[i] for i in fw_def_index_list]
                         pp_points = power_play_points.get(str(player_id), 0)
                         sh_points = short_handed_points.get(str(player_id), 0)
                     
-                        total_stats["stats"][player_id] = {"goals": goals, "assists": assists, "shots_on_goal": shots, "hits": hits, "blocks": blocks, "power_play_points": pp_points, "short_handed_points": sh_points}
+                        total_stats["stats"][player_id] = {"goals": int(goals), "assists": int(assists), "shots_on_goal": int(shots), "hits": int(hits), "blocks": int(blocks), "power_play_points": int(pp_points), "short_handed_points": int(sh_points)}
                     except IndexError as e:
                         print(f"IndexError: {e} for player {player_id}")
                         # Handle the case where the index is not found
@@ -330,9 +342,9 @@ def get_daily_stats(sport : str, league : str, day=None):
                         total_stats["stats"][player_id]["short_handed_points"] = 0
 
                 for item in defense:
-                    player_id = item.get("athlete").get("id")
+                    player_id = "nhl" + item.get("athlete").get("id")
                     try:
-                        goals, assists, plus_minus, shots, hits, blocks = [item.get("stats")[i] for i in fw_def_index_list]
+                        goals, assists, plus_minus, shots, hits, blocks = [int(item.get("stats")[i]) for i in fw_def_index_list]
                         pp_points = power_play_points.get(str(player_id), 0)
                         sh_points = short_handed_points.get(str(player_id), 0)
 
@@ -351,9 +363,9 @@ def get_daily_stats(sport : str, league : str, day=None):
 
                     
                 for item in goalies:
-                    player_id = item.get("athlete").get("id")
+                    player_id = "nhl" + item.get("athlete").get("id")
                     try:
-                        saves, goals_against = [item.get("stats")[i] for i in [saves_index, goals_against_index]]
+                        saves, goals_against = [int(item.get("stats")[i]) for i in [saves_index, goals_against_index]]
                         shutouts = 1 if goals_against == "0" else 0
                         total_stats["stats"][player_id] = {"saves": saves, "goals_against": goals_against, "shutouts": shutouts}
                     except IndexError as e:
@@ -368,33 +380,37 @@ def get_daily_stats(sport : str, league : str, day=None):
         elif sport == "basketball":
             # should be similar to baseball, but with different stats
             items = data.get("gamepackageJSON").get("boxscore").get("players")
-            athletes = []
-            for item in items:
-                athletes.extend(item.get("statistics")[0].get("athletes"))
+            if items is None:
+                print("No players found in boxscore")
+                print(data.get("gamepackageJSON").get("boxscore"))
+            else:
+                athletes = []
+                for item in items:
+                    athletes.extend(item.get("statistics")[0].get("athletes"))
+                
+                # get index of stats
+                points_index = items[0].get("statistics")[0].get("keys").index("points")
+                rebounds_index = items[0].get("statistics")[0].get("keys").index("rebounds")
+                assists_index = items[0].get("statistics")[0].get("keys").index("assists")
+                steals_index = items[0].get("statistics")[0].get("keys").index("steals")
+                blocks_index = items[0].get("statistics")[0].get("keys").index("blocks")
+                turnovers_index = items[0].get("statistics")[0].get("keys").index("turnovers")
+                three_point_index = items[0].get("statistics")[0].get("keys").index("threePointFieldGoalsMade-threePointFieldGoalsAttempted")
+
+
+                stat_index = [points_index, rebounds_index, assists_index, steals_index, blocks_index, turnovers_index, three_point_index]
+
+                for item in athletes:
+                    player_id = "nba" + item.get("athlete").get("id")
+                    print(stat_index)
+                    try:
+                        points, rebounds, assists, steals, blocks, turnovers, three_point_field_goals = [item.get("stats")[i] for i in stat_index]
+                        three_point_made, _ = three_point_field_goals.split("-")
+
+                        total_stats["stats"][player_id] = {"points": int(points), "rebounds": int(rebounds), "assists": int(assists), "steals": int(steals), "blocks": int(blocks), "turnovers": int(turnovers), "three_pointers_made": int(three_point_made), "double_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 else 0, "triple_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 and int(assists) >= 10 else 0}
             
-            # get index of stats
-            points_index = items[0].get("statistics")[0].get("keys").index("points")
-            rebounds_index = items[0].get("statistics")[0].get("keys").index("rebounds")
-            assists_index = items[0].get("statistics")[0].get("keys").index("assists")
-            steals_index = items[0].get("statistics")[0].get("keys").index("steals")
-            blocks_index = items[0].get("statistics")[0].get("keys").index("blocks")
-            turnovers_index = items[0].get("statistics")[0].get("keys").index("turnovers")
-            three_point_index = items[0].get("statistics")[0].get("keys").index("threePointFieldGoalsMade-threePointFieldGoalsAttempted")
-
-
-            stat_index = [points_index, rebounds_index, assists_index, steals_index, blocks_index, turnovers_index, three_point_index]
-
-            for item in athletes:
-                player_id = item.get("athlete").get("id")
-                print(stat_index)
-                try:
-                    points, rebounds, assists, steals, blocks, turnovers, three_point_field_goals = [item.get("stats")[i] for i in stat_index]
-                    three_point_made, _ = three_point_field_goals.split("-")
-
-                    total_stats["stats"]["player_id"] = {"points": points, "rebounds": rebounds, "assists": assists, "steals": steals, "blocks": blocks, "turnovers": turnovers, "three_pointers_made": three_point_made, "double_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 else 0, "triple_doubles": 1 if int(rebounds) >= 10 and int(points) >= 10 and int(assists) >= 10 else 0}
-        
-                except IndexError as e:
-                    print(f"IndexError: {e} for player {player_id}")                
+                    except IndexError as e:
+                        print(f"IndexError: {e} for player {player_id}")                
 
         # Also have to do the same thing for college football lol
         elif league == "nfl": 
@@ -447,7 +463,7 @@ def get_daily_stats(sport : str, league : str, day=None):
                 if "Field Goal Good" in event.get("type").get("text"):
                     for participant in event.get("participants"):
                         if participant.get("type") == "scorer":
-                            player_id = participant.get("athlete").get("$ref").split("/")[-1].split("?")[0]
+                            player_id = "nfl" + participant.get("athlete").get("$ref").split("/")[-1].split("?")[0]
                             yards = [int(word) for word in event.get("shortText").split() if word.isdigit()]
                             yards = yards[0] if yards else 0
 
@@ -461,14 +477,14 @@ def get_daily_stats(sport : str, league : str, day=None):
                 if "Blocked" in event.get("type").get("text"):
                     ref = event.get("team").get("$ref")
                     data = requests.get(ref).json()
-                    player_id = -int(data.get("id"))
+                    player_id = "nfl" + str(-int(data.get("id")))
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                     total_stats["stats"][player_id]["blocked_kicks"] = total_stats["stats"][player_id].get("blocked_kicks", 0) + 1
                 
                 if "Safety" in event.get("type").get("text"):
                     ref = event.get("team").get("$ref")
                     data = requests.get(ref).json()
-                    player_id = -int(data.get("id"))
+                    player_id = "nfl" + str(-int(data.get("id")))
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                     total_stats["stats"][player_id]["safeties"] = total_stats["stats"][player_id].get("safeties", 0) + 1
 
@@ -492,9 +508,9 @@ def get_daily_stats(sport : str, league : str, day=None):
             
 
             for item in passing:
-                player_id = item.get("athlete").get("id")
+                player_id = "nfl" + item.get("athlete").get("id")
                 try:
-                    pass_yds, pass_td, ints = [item.get("stats")[i] for i in [pass_yd_index, pass_td_index, int_index]]
+                    pass_yds, pass_td, ints = [int(item.get("stats")[i]) for i in [pass_yd_index, pass_td_index, int_index]]
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                     total_stats["stats"][player_id]["passing_yds"] = pass_yds
                     total_stats["stats"][player_id]["passing_tds"] = pass_td
@@ -508,9 +524,9 @@ def get_daily_stats(sport : str, league : str, day=None):
                     total_stats["stats"][player_id]["interceptions"] = 0
             
             for item in rushing:
-                player_id = item.get("athlete").get("id")
+                player_id = "nfl" + item.get("athlete").get("id")
                 try:
-                    rush_yds, rush_td = [item.get("stats")[i] for i in [rush_yd_index, rush_td_index]]
+                    rush_yds, rush_td = [int(item.get("stats")[i]) for i in [rush_yd_index, rush_td_index]]
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                     total_stats["stats"][player_id]["rushing_yds"] = rush_yds
                     total_stats["stats"][player_id]["rushing_tds"] = rush_td
@@ -522,9 +538,9 @@ def get_daily_stats(sport : str, league : str, day=None):
                     total_stats["stats"][player_id]["rushing_tds"] = 0
             
             for item in receiving:
-                player_id = item.get("athlete").get("id")
+                player_id = "nfl" + item.get("athlete").get("id")
                 try:
-                    rec_yds, rec_td, rec = [item.get("stats")[i] for i in [rec_yd_index, rec_td_index, receptions_index]]
+                    rec_yds, rec_td, rec = [int(item.get("stats")[i]) for i in [rec_yd_index, rec_td_index, receptions_index]]
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                     total_stats["stats"][player_id]["receiving_yds"] = rec_yds
                     total_stats["stats"][player_id]["receiving_tds"] = rec_td
@@ -538,9 +554,9 @@ def get_daily_stats(sport : str, league : str, day=None):
                     total_stats["stats"][player_id]["receptions"] = 0
             
             for item in fumbles:
-                player_id = item.get("athlete").get("id")
+                player_id = "nfl" + item.get("athlete").get("id")
                 try:
-                    fumbles_lost = item.get("stats")[fumbles_index]
+                    fumbles_lost = int(item.get("stats")[fumbles_index])
                     total_stats["stats"][player_id] = total_stats["stats"].get(player_id, {})
                     total_stats["stats"][player_id]["fumbles_lost"] = fumbles_lost
                 except IndexError as e:
@@ -550,7 +566,7 @@ def get_daily_stats(sport : str, league : str, day=None):
                     total_stats["stats"][player_id]["fumbles_lost"] = 0
 
             for item in kickers:
-                player_id = item.get("athlete").get("id")
+                player_id = "nfl" + item.get("athlete").get("id")
                 try:
                     field_goals_made, field_goals_attempted = item.get("stats")[0].split("/")
                     extra_points_made, extra_points_attempted = item.get("stats")[3].split("/")
@@ -571,20 +587,20 @@ def get_daily_stats(sport : str, league : str, day=None):
                 team_id = -int(item.get("team").get("id"))
                 totals = item.get("statistics")[4].get("totals")
                 total_stats["stats"][team_id] = total_stats["stats"].get(team_id, {})
-                total_stats["stats"][team_id]["sacks"] = totals[sacks_index]
-                total_stats["stats"][team_id]["defensive_tds"] = totals[def_td_index]
+                total_stats["stats"][team_id]["sacks"] = int(totals[sacks_index])
+                total_stats["stats"][team_id]["defensive_tds"] = int(totals[def_td_index])
                 if len(item.get("statistics")[5].get("totals")) > 0:
-                    total_stats["stats"][team_id]["interceptions"] = item.get("statistics")[5].get("totals")[def_int_index]
+                    total_stats["stats"][team_id]["interceptions"] = int(item.get("statistics")[5].get("totals")[def_int_index])
                 else:
                     total_stats["stats"][team_id]["interceptions"] = 0
                 
                 if len(item.get("statistics")[6].get("totals")) > 0:
-                    kr_total = item.get("statistics")[6].get("totals")[kr_td_index]
+                    kr_total = int(item.get("statistics")[6].get("totals")[kr_td_index])
                 else:
                     kr_total = 0
 
                 if len(item.get("statistics")[7].get("totals")) > 0:
-                    pr_total = item.get("statistics")[7].get("totals")[punt_td_index]
+                    pr_total = int(item.get("statistics")[7].get("totals")[punt_td_index])
                 else:
                     pr_total = 0
                 total_stats["stats"][team_id]["kick_return_tds"] = kr_total
@@ -601,9 +617,9 @@ def get_daily_stats(sport : str, league : str, day=None):
 
             home_score, away_score = summary_data.get("scoringPlays")[-1].get("homeScore"), summary_data.get("scoringPlays")[-1].get("awayScore")
             total_stats["stats"][home_team_id] = total_stats["stats"].get(home_team_id, {})
-            total_stats["stats"][home_team_id]["points_allowed"] = away_score
+            total_stats["stats"][home_team_id]["points_allowed"] = int(away_score)
             total_stats["stats"][away_team_id] = total_stats["stats"].get(away_team_id, {})
-            total_stats["stats"][away_team_id]["points_allowed"] = home_score
+            total_stats["stats"][away_team_id]["points_allowed"] = int(home_score)
             
         # college football
         elif league == "college-football":

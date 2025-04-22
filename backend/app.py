@@ -20,6 +20,7 @@ sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+first_request = True
 
 last_refresh = datetime.now() - timedelta(hours = 1)
 # 🔐 Security settings (change for production)
@@ -51,31 +52,154 @@ jwt = JWTManager(app)
 
 
 
-def update_player_stats():
-    print(f"Task executed at {datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-    hockey_stats = get_daily_stats("hockey", "nhl")
-    basketball_stats = get_daily_stats("basketball", "nba")
-    football_stats = get_daily_stats("football", "nfl")
-    baseball_stats = get_daily_stats("baseball", "mlb")
 
-    # Hockey handler
-    #for player_id, stats in hockey_stats["stats"].items():
-    #    player = Player.query.filter_by(id=player_id).first()
-    #    if player:
-    #        daily_stats = DailyStatsHockey.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
-    #        if not daily_stats:
-    #            daily_stats = DailyStatsHockey(player_id=player_id, date=datetime.now().date(), **stats)
-    #            db.session.add(daily_stats)
-    #        for key, value in stats.items():
-    #            setattr(daily_stats, key, value)
-    #        db.session.commit()
+def update_player_stats():
+    with app.app_context():
+        print("Updating player stats...")
+        print(f"Task executed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        hockey_stats = get_daily_stats("hockey", "nhl")
+        basketball_stats = get_daily_stats("basketball", "nba")
+        football_stats = get_daily_stats("football", "nfl")
+        baseball_stats = get_daily_stats("baseball", "mlb")  
+        hockey_populated = False
+        basketball_populated = False
+        football_populated = False
+        baseball_populated = False
+
+        # Hockey handler
+        count = 0
+        if hockey_stats is not None:
+            for player_id, stats in hockey_stats["stats"].items():
+                player = Player.query.filter_by(id=player_id).first()
+                if player:
+                    daily_stats = DailyStatsHockey.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
+                    if not daily_stats:
+                        daily_stats = DailyStatsHockey(player_id=player_id, date=datetime.now().date(), **stats)
+                        db.session.add(daily_stats)
+                    for key, value in stats.items():
+                        setattr(daily_stats, key, value)
+                    db.session.commit()
+                else:
+                    count += 1
+                    print(f"Player with ID {player_id} not found in the database: count: {count}")
+                    
+                    if not hockey_populated:
+                        populate_player_table("nhl")
+
+                    hockey_populated = True
+                    player = Player.query.filter_by(id=player_id).first()
+                    # redo insertion
+                    if player:
+                        daily_stats = DailyStatsHockey.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
+                        if not daily_stats:
+                            daily_stats = DailyStatsHockey(player_id=player_id, date=(datetime.now() - timedelta(days=1)).date(), **stats)
+                            db.session.add(daily_stats)
+                        for key, value in stats.items():
+                            setattr(daily_stats, key, value)
+                        db.session.commit()
+        if basketball_stats is not None:
+            for player_id, stats in basketball_stats["stats"].items():
+                print(player_id)
+                player = Player.query.filter_by(id=player_id).first()
+                if player:
+                    daily_stats = DailyStatsBasketball.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
+                    if not daily_stats:
+                        daily_stats = DailyStatsBasketball(player_id=player_id, date=(datetime.now()).date(), **stats)
+                        db.session.add(daily_stats)
+                    for key, value in stats.items():
+                        setattr(daily_stats, key, value)
+                    db.session.commit()
+                else:
+                    count += 1
+                    print(f"Player with ID {player_id} not found in the database: count: {count}")
+                    if not basketball_populated:
+                        populate_player_table("nba")
+                    
+                    basketball_populated = True
+                    player = Player.query.filter_by(id=player_id).first()
+                    # redo insertion
+                    if player:
+                        daily_stats = DailyStatsBasketball.query.filter_by(player_id=player_id, date=(datetime.now()).date()).first()
+                        if not daily_stats:
+                            daily_stats = DailyStatsBasketball(player_id=player_id, date=datetime.now().date(), **stats)
+                            db.session.add(daily_stats)
+                        for key, value in stats.items():
+                            setattr(daily_stats, key, value)
+                        db.session.commit()
+        if football_stats is not None:
+            for player_id, stats in football_stats["stats"].items():
+                player = Player.query.filter_by(id=player_id).first()
+                if player:
+                    weekly_stats = WeeklyStatsFootball.query.filter_by(player_id=player_id, week_num=get_week_number(2025, "football", "nfl")).first()
+                    if not weekly_stats:
+                        weekly_stats = WeeklyStatsFootball(player_id=player_id, week_num=get_week_number(2025, "football", "nfl"), **stats)
+                        db.session.add(weekly_stats)
+                    for key, value in stats.items():
+                        setattr(weekly_stats, key, value)
+                    db.session.commit()
+                else:
+                    count += 1
+                    print(f"Player with ID {player_id} not found in the database: count: {count}")
+                    if not football_populated:
+                        populate_player_table("nfl")
+                    
+                    football_populated = True
+                    player = Player.query.filter_by(id=player_id).first()
+                    # redo insertion
+                    if player:
+                        weekly_stats = WeeklyStatsFootball.query.filter_by(player_id=player_id, week_num=get_week_number()).first()
+                        if not weekly_stats:
+                            weekly_stats = WeeklyStatsFootball(player_id=player_id, week_num=get_week_number(), **stats)
+                            db.session.add(weekly_stats)
+                        for key, value in stats.items():
+                            setattr(weekly_stats, key, value)
+                        db.session.commit()
+        if baseball_stats is not None:
+            for player_id, stats in baseball_stats["stats"].items():
+                player = Player.query.filter_by(id=player_id).first()
+                if player:
+                    daily_stats = DailyStatsBaseball.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
+                    if not daily_stats:
+                        daily_stats = DailyStatsBaseball(player_id=player_id, date=datetime.now().date(), **stats)
+                        db.session.add(daily_stats)
+                    for key, value in stats.items():
+                        setattr(daily_stats, key, value)
+                    db.session.commit()
+                else:
+                    count += 1
+                    print(f"Player with ID {player_id} not found in the database: count: {count}")
+                    if not baseball_populated:
+                        populate_player_table("mlb")
+                    
+                    baseball_populated = True
+                    player = Player.query.filter_by(id=player_id).first()
+                    # redo insertion
+                    if player:
+                        daily_stats = DailyStatsBaseball.query.filter_by(player_id=player_id, date=datetime.now().date()).first()
+                        if not daily_stats:
+                            daily_stats = DailyStatsBaseball(player_id=player_id, date=datetime.now().date(), **stats)
+                            db.session.add(daily_stats)
+                        for key, value in stats.items():
+                            setattr(daily_stats, key, value)
+                        db.session.commit()
+    
+    print(f"Count of players not found in the database: {count}")
+        
+def clean_up_daily_data():
+    pass
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=update_player_stats, trigger="interval", minutes=20)
+scheduler.add_job(func=clean_up_daily_data, trigger="interval", days=1)
 
-@app.before_first_request
+@app.before_request
 def start_scheduler():
-    scheduler.start()
+    global first_request
+    if first_request:
+        # Code to be executed before the first request
+        print("Scheduler started")
+        first_request = False
+        scheduler.start()
     
 
 # 👤 User Model
@@ -111,7 +235,7 @@ class Team(db.Model):
 
 class TeamPlayer(db.Model):
     __tablename__ = 'team_players'
-    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), primary_key=True)
+    player_id = db.Column(db.String(20), db.ForeignKey("players.id"), primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
     team_id = db.Column(db.Integer, db.ForeignKey("teams.id"))
     starting_position = db.Column(db.String(3), default="BEN")  # bench default
@@ -128,7 +252,7 @@ class Matchup(db.Model):
 
 class RulesetFootball(db.Model):
     __tablename__ = 'rulesets_football'
-    league_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     points_passtd = db.Column(db.Float, default=4.0)  # Passing TD
     points_passyd = db.Column(db.Float, default=0.04)  # Passing yard
     points_2pt_passtd = db.Column(db.Float, default=2.0)  # 2-point conversion (pass)
@@ -168,7 +292,7 @@ class RulesetFootball(db.Model):
 
 class RulesetBasketball(db.Model):
     __tablename__ = 'rulesets_basketball'
-    league_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     points_point = db.Column(db.Float, default=1.0)  # Points scored
     points_rebound = db.Column(db.Float, default=1.2)  # Rebound
     points_assist = db.Column(db.Float, default=1.5)  # Assist
@@ -213,7 +337,7 @@ class RulesetHockey(db.Model):
 
 class Player(db.Model):
     __tablename__ = 'players'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(20), primary_key=True)
     sport = db.Column(db.String(15), nullable=False)
     position = db.Column(db.String(3), nullable=False)
     team_name = db.Column(db.String, default="FA")
@@ -223,7 +347,7 @@ class Player(db.Model):
 class WeeklyStatsFootball(db.Model):
     __tablename__ = 'weekly_stats_football'
     week_num = db.Column(db.Integer, nullable=False, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+    player_id = db.Column(db.String(20), db.ForeignKey("players.id"), nullable=False, primary_key=True)
     passing_tds = db.Column(db.Integer, default=0)
     passing_yds = db.Column(db.Integer, default=0)
     interceptions = db.Column(db.Integer, default=0)
@@ -303,7 +427,7 @@ class WeeklyStatsFootball(db.Model):
 class DailyStatsHockey(db.Model):
     __tablename__ = 'daily_stats_hockey'
     date = db.Column(db.Date, nullable=False, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+    player_id = db.Column(db.String(20), db.ForeignKey("players.id"), nullable=False, primary_key=True)
 
     goals = db.Column(db.Integer, default=0)
     assists = db.Column(db.Integer, default=0)
@@ -335,7 +459,7 @@ class DailyStatsHockey(db.Model):
 class DailyStatsBasketball(db.Model):
     __tablename__ = 'daily_stats_basketball'
     date = db.Column(db.Date, nullable=False, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+    player_id = db.Column(db.String(20), db.ForeignKey("players.id"), nullable=False, primary_key=True)
 
     points = db.Column(db.Integer, default=0)
     rebounds = db.Column(db.Integer, default=0)
@@ -364,7 +488,7 @@ class DailyStatsBasketball(db.Model):
 class DailyStatsBaseball(db.Model):
     __tablename__ = 'daily_stats_baseball'
     date = db.Column(db.Date, nullable=False, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), nullable=False, primary_key=True)
+    player_id = db.Column(db.String(20), db.ForeignKey("players.id"), nullable=False, primary_key=True)
 
     runs = db.Column(db.Integer, default=0)
     hits = db.Column(db.Integer, default=0)
@@ -404,7 +528,7 @@ class DailyStatsBaseball(db.Model):
 class TeamPlayerPerformance(db.Model):
     __tablename__ = 'team_player_performances'
     week_num = db.Column(db.Integer, nullable=False, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey("players.id"), primary_key=True)
+    player_id = db.Column(db.String(20), db.ForeignKey("players.id"), primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey("leagues.id"), primary_key=True)
     starting_position = db.Column(db.String(3), default="BEN")
     fantasy_points = db.Column(db.Float, default=0)
@@ -903,10 +1027,12 @@ def populate_player_table(league : str):
             db.session.add(new_player)
         else:
             existing_player = Player.query.filter_by(id=player.get('id')).first()
-            db.session.delete(existing_player)
-            db.session.commit()
             new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
-            db.session.add(new_player)
+            existing_player.position = new_player.position
+            existing_player.team_name = new_player.team_name
+            existing_player.last_name = new_player.last_name
+            existing_player.first_name = new_player.first_name
+            existing_player.sport = new_player.sport
         
     db.session.commit()
 
@@ -915,6 +1041,6 @@ if __name__ == '__main__':
     sleep(2)
     with app.app_context():
         db.create_all()
-        print(get_daily_stats("hockey", "nhl", datetime.now() - timedelta(days=1))) # for debug, for now
+        update_player_stats()
     app.run(host='0.0.0.0', port=5000)
     
