@@ -607,6 +607,54 @@ def handle_send_message(data):
     except Exception as e:
         emit("error", {"message": str(e)})
 
+
+@socketio.on("send_direct_message")
+def handle_send_direct_message(data):
+    print("Received send_direct_message", data)
+    try:
+        verify_jwt_in_request(locations=["query_string"])
+        sender_id = get_jwt_identity()
+        receiver_id = data.get("receiver_id")
+        content = data.get("content")
+        if not receiver_id or not content:
+            emit("error", {"message": "Invalid direct message data"})
+            return
+
+        message = DirectMessage(sender_id=sender_id, receiver_id=receiver_id, content=content)
+        db.session.add(message)
+        db.session.commit()
+
+        # Emit to both sender and receiver (if connected)
+        emit("receive_direct_message", {
+            "id": message.id,
+            "sender_id": sender_id,
+            "receiver_id": receiver_id,
+            "content": content,
+            "timestamp": message.timestamp.isoformat()
+        }, room=f"user_{receiver_id}")
+        emit("receive_direct_message", {
+            "id": message.id,
+            "sender_id": sender_id,
+            "receiver_id": receiver_id,
+            "content": content,
+            "timestamp": message.timestamp.isoformat()
+        }, room=f"user_{sender_id}")
+    except Exception as e:
+        print("Error in send_direct_message:", e)
+        emit("error", {"message": str(e)})
+
+@socketio.on("connect")
+def on_connect():
+    print("Socket connect attempt")
+    try:
+        verify_jwt_in_request(locations=["query_string"])
+        user_id = get_jwt_identity()
+        print(f"User {user_id} connected to socket")
+        join_room(f"user_{user_id}")
+    except Exception as e:
+        print("Socket connect failed:", e)
+        disconnect()
+
 @app.route("/api/chat/league/init", methods=["POST"])
 @cross_origin(origin='*')
 @jwt_required()
@@ -722,7 +770,7 @@ def fetch_direct_messages():
     other_user_id = data.get("other_user_id")
 
     if not other_user_id:
-        return jsonify({"error": "Other user ID required"}), 400
+        return jsonify([]), 200  # Always return an array
 
     messages = DirectMessage.query.filter(
         db.or_(

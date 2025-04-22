@@ -47,21 +47,28 @@ const DirectMessages = () => {
 
     // Load direct messages for the current user
     useEffect(() => {
-        if (!token) return;
+        if (!token || !selectedUserId) return; // Only fetch if a user is selected
 
         fetch("/api/chat/direct/messages", {
-            method: "GET",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: "Bearer " + token,
             },
+            body: JSON.stringify({ other_user_id: selectedUserId })
         })
-            .then((res) => res.json())
-            .then((data) => {
-                setMessages(data);
+            .then((res) => {
+                if (!res.ok) return []; // Return empty array on error
+                return res.json();
             })
-            .catch((err) => console.error("Error loading direct messages:", err));
-    }, [token]);
+            .then((data) => {
+                setMessages(Array.isArray(data) ? data : []); // Defensive: always set an array
+            })
+            .catch((err) => {
+                setMessages([]); // Defensive: always set an array
+                console.error("Error loading direct messages:", err);
+            });
+    }, [token, selectedUserId]);
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -81,14 +88,23 @@ const DirectMessages = () => {
 
     // Send a message to the selected user
     const handleSend = () => {
-        if (!input.trim() || !selectedUserId) return;
+        if (!input.trim() || !selectedUserId) {
+            console.log('Input or selected user missing.');
+            return;
+        }
+
+        console.log('Emitting send_direct_message', { receiver_id: selectedUserId, content: input });
 
         socket.emit("send_direct_message", {
             receiver_id: selectedUserId,
             content: input,
+        }, (response) => {
+            console.log("Acknowledgment from backend:", response);
         });
+
         setInput("");
     };
+
 
     return (
         <div className="direct-chat-container">
