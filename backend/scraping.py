@@ -137,6 +137,12 @@ def get_daily_games(sport : str, league : str, day=datetime.datetime.now()):
     return ids
 
 def get_daily_stats(sport : str, league : str, day=None):
+
+    def index(lst, value, default=-1):
+        try:
+            return lst.index(value)
+        except ValueError:
+            return default
     if day is None:
         daily_ids = get_daily_games(sport, league)
     else:
@@ -181,20 +187,16 @@ def get_daily_stats(sport : str, league : str, day=None):
             pitching = []
             if len(athletes[0][0].get("athletes")) != 0:
                 # get index of batting stats (idk if this is random but this probably is the best way to do it)
-                hit_index = athletes[0][0].get("names").index("H")
-                hr_index = athletes[0][0].get("names").index("HR")
-                rbi_index = athletes[0][0].get("names").index("RBI")
-                walk_index = athletes[0][0].get("names").index("BB")
-                strikeout_index = athletes[0][0].get("names").index("K")
-                try:
-                    run_index = athletes[0][0].get("names").index("R")
-                except ValueError:
-                    run_index = -1
                 
-                if run_index == -1:
-                    batting_stat_list = [hit_index, hr_index, rbi_index, walk_index, strikeout_index]
-                else:
-                    batting_stat_list = [hit_index, hr_index, rbi_index, run_index, walk_index, strikeout_index]
+                hit_index = index(athletes[0][0].get("names"), "H")
+                hr_index = index(athletes[0][0].get("names"), "HR")
+                rbi_index = index(athletes[0][0].get("names"), "RBI")
+                walk_index = index(athletes[0][0].get("names"), "BB")
+                strikeout_index = index(athletes[0][0].get("names"), "K")
+                run_index = index(athletes[0][0].get("names"), "R")
+                
+                
+                batting_stat_list = [hit_index, hr_index, rbi_index, run_index, walk_index, strikeout_index]
 
                 # get index of pitching stats
                 ip_index = athletes[0][1].get("names").index("IP")
@@ -214,24 +216,20 @@ def get_daily_stats(sport : str, league : str, day=None):
                     last_name = item.get("athlete").get("displayName").split(" ")[-1]
                     player_id = "mlb" + item.get("athlete").get("id")
                     try:
-                        if run_index == -1:
-                            # if run index is not found, set it to 0
-                            runs = 0
-                            hits, home_runs, rbis, walks, strikeouts = [item.get("stats")[i] for i in batting_stat_list]
-                        else:
-                            hits, home_runs, rbis, runs, walks, strikeouts = [item.get("stats")[i] for i in batting_stat_list]
+                        hits, home_runs, rbis, runs, walks, strikeouts = [0 if i == -1 else item.get("stats")[i] for i in batting_stat_list]
                         stolen_bases, caught_stealing = 0, 0
                         # given player id: (awful way to do this, but whatever)
-                        for event in data.get("gamepackageJSON").get("plays"):
-                            # this does not see if a person steals home, that's something we can handle later lol
-                            # I LOVE INLINE FOR LOOPS (i am going insane)
-                            if event.get("type").get("abbreviation") == "SB" and player_id in [participant.get("athlete").get("id") for participant in event.get("participants") if participant.get("type") == "onSecond" or participant.get("type") == "onThird"]:
-                                stolen_bases += 1
-                            if event.get("type").get("abbreviation") == "CS" and last_name in event.get("text"):
-                                caught_stealing += 1
+                        if data.get("gamepackageJSON").get("plays") is not None:
+                            for event in data.get("gamepackageJSON").get("plays"):
+                                # this does not see if a person steals home, that's something we can handle later lol
+                                # I LOVE INLINE FOR LOOPS (i am going insane)
+                                if event.get("type").get("abbreviation") == "SB" and player_id in [participant.get("athlete").get("id") for participant in event.get("participants") if participant.get("type") == "onSecond" or participant.get("type") == "onThird"]:
+                                    stolen_bases += 1
+                                if event.get("type").get("abbreviation") == "CS" and last_name in event.get("text"):
+                                    caught_stealing += 1
 
-                        # IMPORTANT: when accessing, use get() method with default value of 0, otherwise it will throw an error if the key does not exist
-                        total_stats["stats"][player_id] = {"runs": int(runs), "hits": int(hits), "home_runs": int(home_runs), "rbis": int(rbis), "walks": int(walks), "strikeouts": int(strikeouts), "stolen_bases": int(stolen_bases), "caught_stealing": int(caught_stealing)}
+                            # IMPORTANT: when accessing, use get() method with default value of 0, otherwise it will throw an error if the key does not exist
+                            total_stats["stats"][player_id] = {"runs": int(runs), "hits": int(hits), "home_runs": int(home_runs), "rbis": int(rbis), "walks": int(walks), "strikeouts": int(strikeouts), "stolen_bases": int(stolen_bases), "caught_stealing": int(caught_stealing)}
                     except IndexError as e:
                         print(f"IndexError: {e} for player {player_id}")
                         # Handle the case where the index is not found
@@ -251,10 +249,23 @@ def get_daily_stats(sport : str, league : str, day=None):
                     try:
                         innings_pitched, earned_runs, pitching_strikeouts = [item.get("stats")[i] for i in pitching_stat_list]
                         if "." in innings_pitched:
+                            print(innings_pitched)
                             innings_pitched, partial_out = innings_pitched.split(".")
+                            if "-" in innings_pitched:
+                                innings_pitched = 0
+                            if "-" in partial_out:
+                                partial_out = 0
                             innings_pitched = float(innings_pitched) + (float(partial_out) / 3 if partial_out else 0)
+                        elif innings_pitched == "--":
+                            innings_pitched = 0
                         else:
                             innings_pitched = float(innings_pitched)
+                        
+                        if earned_runs == "--":
+                            earned_runs = 0
+                        
+                        if pitching_strikeouts == "--":
+                            pitching_strikeouts = 0
                         wins = 1 if "W" in item.get("notes", [{}])[0].get("text", "") else 0
                         quality_starts = 1 if float(innings_pitched) >= 6 and int(earned_runs) <= 3 else 0
                         saves = 1 if "S" in item.get("notes", [{}])[0].get("text", "") else 0
@@ -324,7 +335,7 @@ def get_daily_stats(sport : str, league : str, day=None):
                 for item in forwards:
                     player_id = "nhl" + item.get("athlete").get("id")
                     try:
-                        goals, assists, plus_minus, shots, hits, blocks = [item.get("stats")[i] for i in fw_def_index_list]
+                        goals, assists, plus_minus, shots, hits, blocks = [0 if i == -1 else item.get("stats")[i] for i in fw_def_index_list]
                         pp_points = power_play_points.get(str(player_id), 0)
                         sh_points = short_handed_points.get(str(player_id), 0)
                     
@@ -648,4 +659,4 @@ def get_daily_stats(sport : str, league : str, day=None):
 
 if __name__ == "__main__":
     # testing
-    print(get_daily_stats("football", "nfl", day=datetime.datetime(year=2024, month=9, day=30)))
+    print(get_daily_stats("baseball", "mlb"))   
