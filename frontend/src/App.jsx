@@ -121,9 +121,7 @@ function Layout() {
 function App() {
   useEffect(() => {
     import("./socket").then(({ default: socket }) => {
-      if (getAuthToken()) {
-        socket.connect();
-      }
+      socket.connect();
     });
   }, []);
 

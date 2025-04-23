@@ -78,6 +78,7 @@ const DirectMessages = () => {
     // Listen for real-time direct messages
     useEffect(() => {
         socket.on("receive_direct_message", (msg) => {
+            console.log("Received direct message:", msg);
             setMessages((prev) => [...prev, msg]);
         });
 
@@ -88,22 +89,22 @@ const DirectMessages = () => {
 
     // Send a message to the selected user
     const handleSend = () => {
-        if (!input.trim() || !selectedUserId) {
-            console.log('Input or selected user missing.');
-            return;
-        }
+    if (!input.trim() || !selectedUserId) {
+        console.log('Input or selected user missing.');
+        return;
+    }
 
-        console.log('Emitting send_direct_message', { receiver_id: selectedUserId, content: input });
+    console.log('Emitting send_direct_message', { receiver_id: selectedUserId, content: input });
 
-        socket.emit("send_direct_message", {
-            receiver_id: selectedUserId,
-            content: input,
-        }, (response) => {
-            console.log("Acknowledgment from backend:", response);
-        });
+    socket.emit("send_direct_message", {
+        receiver_id: selectedUserId,
+        content: input,
+    }, (response) => {
+        console.log("Acknowledgment from backend:", response);
+    });
 
-        setInput("");
-    };
+    setInput("");
+};
 
 
     return (

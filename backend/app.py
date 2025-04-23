@@ -20,7 +20,8 @@ sqids = Sqids(min_length=7)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*")  # use eventlet by default
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
 
 # 🔐 Security settings (change for production)
 app.secret_key = os.getenv("SECRET_KEY", "your-secret-key")
@@ -610,12 +611,15 @@ def handle_send_message(data):
 
 @socketio.on("send_direct_message")
 def handle_send_direct_message(data):
-    print("Received send_direct_message", data)
+    print("Data received from frontend:", data)
     try:
         verify_jwt_in_request(locations=["query_string"])
         sender_id = get_jwt_identity()
         receiver_id = data.get("receiver_id")
         content = data.get("content")
+
+        print(f"Sender ID: {sender_id}, Receiver ID: {receiver_id}, Content: '{content}'")
+
         if not receiver_id or not content:
             emit("error", {"message": "Invalid direct message data"})
             return
@@ -624,7 +628,6 @@ def handle_send_direct_message(data):
         db.session.add(message)
         db.session.commit()
 
-        # Emit to both sender and receiver (if connected)
         emit("receive_direct_message", {
             "id": message.id,
             "sender_id": sender_id,
@@ -632,6 +635,7 @@ def handle_send_direct_message(data):
             "content": content,
             "timestamp": message.timestamp.isoformat()
         }, room=f"user_{receiver_id}")
+
         emit("receive_direct_message", {
             "id": message.id,
             "sender_id": sender_id,
@@ -639,9 +643,13 @@ def handle_send_direct_message(data):
             "content": content,
             "timestamp": message.timestamp.isoformat()
         }, room=f"user_{sender_id}")
+
+        # Add this to acknowledge the frontend
+        return {"status": "ok", "id": message.id}
     except Exception as e:
         print("Error in send_direct_message:", e)
         emit("error", {"message": str(e)})
+        return {"status": "error", "message": str(e)}
 
 @socketio.on("connect")
 def on_connect():
@@ -805,6 +813,7 @@ def get_current_user():
         "username": user.username,
         "email": user.email
     }), 200
+
 
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run
