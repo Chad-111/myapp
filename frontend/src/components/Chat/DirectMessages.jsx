@@ -6,48 +6,41 @@ import { getAuthToken } from "../utils/auth";
 import "./DirectMessages.css";
 
 const DirectMessages = () => {
-    const [messages, setMessages] = useState([]);
-    const [input, setInput] = useState("");
-    const [users, setUsers] = useState([]);
+    const [usersList, setUsersList] = useState([]);
+    const [messagesByUser, setMessagesByUser] = useState({});
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
+    const [input, setInput] = useState("");
+    const [view, setView] = useState("list"); // "list" or "chat"
     const messagesEndRef = useRef(null);
 
     const token = getAuthToken();
 
-    // Fetch available users and current user's ID
+    // Fetch current user and all users
     useEffect(() => {
         if (!token) return;
 
-        // Get current user info
         fetch("/api/me", {
-            method: "GET",
-            headers: {
-                Authorization: "Bearer " + token,
-            },
+            headers: { Authorization: "Bearer " + token },
         })
             .then((res) => res.json())
-            .then((data) => {
-                setCurrentUserId(data.id);
-            });
+            .then((data) => setCurrentUserId(data.id));
 
-        // Get list of all users
         fetch("/api/users", {
-            method: "GET",
-            headers: {
-                Authorization: "Bearer " + token,
-            },
+            headers: { Authorization: "Bearer " + token },
         })
             .then((res) => res.json())
             .then((data) => {
-                setUsers(data);
-            })
-            .catch((err) => console.error("Error loading users:", err));
-    }, [token]);
+                setUsersList(data.filter(u => u.id !== currentUserId).map(u => ({
+                    ...u,
+                    latestMessage: "",
+                })));
+            });
+    }, [token, currentUserId]);
 
-    // Load direct messages for the current user
+    // Load direct messages for the selected user
     useEffect(() => {
-        if (!token || !selectedUserId) return; // Only fetch if a user is selected
+        if (!token || !selectedUserId) return;
 
         fetch("/api/chat/direct/messages", {
             method: "POST",
@@ -57,90 +50,112 @@ const DirectMessages = () => {
             },
             body: JSON.stringify({ other_user_id: selectedUserId })
         })
-            .then((res) => {
-                if (!res.ok) return []; // Return empty array on error
-                return res.json();
-            })
+            .then((res) => res.json())
             .then((data) => {
-                setMessages(Array.isArray(data) ? data : []); // Defensive: always set an array
-            })
-            .catch((err) => {
-                setMessages([]); // Defensive: always set an array
-                console.error("Error loading direct messages:", err);
+                setMessagesByUser(prev => ({
+                    ...prev,
+                    [selectedUserId]: Array.isArray(data) ? data : [],
+                }));
+                if (data && data.length > 0) {
+                    const lastMsg = data[data.length - 1];
+                    setUsersList(prev =>
+                        prev.map(u =>
+                            u.id === selectedUserId
+                                ? { ...u, latestMessage: lastMsg.content }
+                                : u
+                        )
+                    );
+                }
             });
     }, [token, selectedUserId]);
 
-    // Scroll to bottom on new messages
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    }, [messagesByUser, selectedUserId]);
 
-    // Listen for real-time direct messages
     useEffect(() => {
         socket.on("receive_direct_message", (msg) => {
-            console.log("Received direct message:", msg);
-            setMessages((prev) => [...prev, msg]);
+            const otherId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
+            setMessagesByUser(prev => ({
+                ...prev,
+                [otherId]: [...(prev[otherId] || []), msg],
+            }));
+            setUsersList(prev =>
+                prev.map(u =>
+                    u.id === otherId
+                        ? { ...u, latestMessage: msg.content }
+                        : u
+                )
+            );
         });
+        return () => socket.off("receive_direct_message");
+    }, [currentUserId]);
 
-        return () => {
-            socket.off("receive_direct_message");
-        };
-    }, []);
-
-    // Send a message to the selected user
     const handleSend = () => {
-    if (!input.trim() || !selectedUserId) {
-        console.log('Input or selected user missing.');
-        return;
+        if (!input.trim() || !selectedUserId) return;
+        socket.emit("send_direct_message", {
+            receiver_id: selectedUserId,
+            content: input,
+        });
+        setInput("");
+    };
+
+    // --- RENDER ---
+
+    // User List View
+    if (view === "list") {
+        return (
+            <div className="user-list-scrollable" style={{ maxHeight: 400, overflowY: "auto" }}>
+                {usersList.map(user => (
+                    <div
+                        key={user.id}
+                        className={`user-list-item`}
+                        onClick={() => {
+                            setSelectedUserId(user.id);
+                            setView("chat");
+                        }}
+                        style={{ cursor: "pointer", padding: 12, borderBottom: "1px solid #eee" }}
+                    >
+                        <div className="username" style={{ fontWeight: "bold" }}>{user.username}</div>
+                        <div className="preview" style={{ color: "#888", fontSize: "0.9em" }}>
+                            {user.latestMessage}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
     }
 
-    console.log('Emitting send_direct_message', { receiver_id: selectedUserId, content: input });
-
-    socket.emit("send_direct_message", {
-        receiver_id: selectedUserId,
-        content: input,
-    }, (response) => {
-        console.log("Acknowledgment from backend:", response);
-    });
-
-    setInput("");
-};
-
-
+    // Chat View
     return (
-        <div className="direct-chat-container">
-            {/* User selector */}
-            <div className="dm-select-user">
-                <label>Select User:</label>
-                <select
-                    onChange={(e) => setSelectedUserId(parseInt(e.target.value))}
-                    value={selectedUserId || ""}
+        <div style={{ width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                <button
+                    onClick={() => setView("list")}
+                    style={{
+                        marginRight: 12,
+                        background: "none",
+                        border: "none",
+                        fontSize: 22,
+                        cursor: "pointer"
+                    }}
+                    aria-label="Back to user list"
                 >
-                    <option value="" disabled>
-                        Select a user
-                    </option>
-                    {users
-                        .filter((u) => u.id !== currentUserId)
-                        .map((u) => (
-                            <option key={u.id} value={u.id}>
-                                {u.username}
-                            </option>
-                        ))}
-                </select>
+                    ←
+                </button>
+                <span style={{ fontWeight: "bold", fontSize: 18 }}>
+                    {usersList.find(u => u.id === selectedUserId)?.username || "Chat"}
+                </span>
             </div>
-
-            {/* Messages display */}
-            <div className="direct-chat-messages">
-                {messages.map((msg) => (
+            <div className="direct-chat-messages" style={{ minHeight: 200, maxHeight: 300, overflowY: "auto", padding: 12, background: "#fff", borderRadius: 4, marginBottom: 8 }}>
+                {(messagesByUser[selectedUserId] || []).map((msg) => (
                     <div key={msg.id || Math.random()} className="message">
                         <strong>User {msg.sender_id}:</strong> {msg.content}
                     </div>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
-
-            {/* Input + send button */}
-            <div className="direct-chat-input-row">
+            <div className="direct-chat-input-row" style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <input
                     type="text"
                     value={input}
@@ -148,11 +163,20 @@ const DirectMessages = () => {
                     className="direct-chat-input"
                     placeholder="Type a direct message..."
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                    style={{ flex: 1, padding: 8, border: "1px solid #ccc", borderRadius: 4 }}
                 />
                 <button
                     onClick={handleSend}
                     className="direct-chat-send"
                     disabled={!selectedUserId}
+                    style={{
+                        padding: "8px 16px",
+                        background: "#1976d2",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: "pointer"
+                    }}
                 >
                     Send
                 </button>
