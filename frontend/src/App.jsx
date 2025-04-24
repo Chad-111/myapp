@@ -6,6 +6,7 @@ import DarkModeTwoToneIcon from '@mui/icons-material/DarkModeTwoTone';
 import { motion, AnimatePresence } from "framer-motion";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
+import socket from "./socket";
 import { getAuthToken } from "./components/utils/auth";
 
 
@@ -44,6 +45,13 @@ function Layout() {
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
   }, [theme]);
+
+  // Check if the user is logged in and connect to the socket
+  useEffect(() => {
+    if (getAuthToken()) {
+      socket.connect();
+    }
+  }, []);
 
   return (
     <>
@@ -119,12 +127,6 @@ function Layout() {
 }
 
 function App() {
-  useEffect(() => {
-    import("./socket").then(({ default: socket }) => {
-      socket.connect();
-    });
-  }, []);
-
   return (
     <Router>
       <div className="App">

@@ -4,6 +4,7 @@ import './Start.scss';
 import { RedirectContext } from '../App';
 import { setAuthToken } from '../components/utils/auth';
 import { ToastContainer, toast } from 'react-toastify';
+import socket from "../socket";
 
 function Form({ option }) {
     const [username, setUsername] = useState('');
@@ -77,6 +78,9 @@ function Form({ option }) {
             if (!response.ok) throw new Error(data.error || 'An error occurred');
             if (option === 1 || option === 2) {
                 setAuthToken(data.access_token);
+                // Disconnect any previous socket connection, then connect with the new token
+                socket.disconnect();
+                socket.connect();
                 navigate(redirectLocation);
                 setRedirectLocation('/dashboard');
             }

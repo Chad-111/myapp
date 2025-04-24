@@ -7,7 +7,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
-.direct-chat-messages {
+.chat-messages {
     flex: 1;
     min-height: 200px;
     max-height: 300px;
@@ -18,20 +18,20 @@
     margin-bottom: 8px;
 }
 
-.direct-chat-input-row {
+.chat-input-row {
     display: flex;
     gap: 8px;
     margin-top: 8px;
 }
 
-.direct-chat-input {
+.chat-input {
     flex: 1;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-.direct-chat-send {
+.chat-send {
     padding: 8px 16px;
     background: #1976d2;
     color: #fff;
@@ -41,7 +41,7 @@
     transition: background 0.2s;
 }
 
-.direct-chat-send:disabled {
+.chat-send:disabled {
     background: #aaa;
     cursor: not-allowed;
 }
@@ -82,9 +82,13 @@
 }
 
 .message {
+    width: 100%;
     margin-bottom: 8px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    background: #f1f1f1;
-    display: inline-block;
+    display: flex;
+}
+.my-message {
+    justify-content: flex-end;
+}
+.their-message {
+    justify-content: flex-start;
 }

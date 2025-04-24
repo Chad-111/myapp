@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import "./Login.css"; // Import the CSS for your Login component
 import { RedirectContext } from "../App";
 import { setAuthToken } from "../components/utils/auth";
+import socket from "../socket";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
+  const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -33,6 +34,10 @@ function Login() {
       // Store access token in local storage
       setAuthToken(data.access_token);
 
+      // Disconnect any previous socket connection, then connect with the new token
+      console.log("Socket connected?", socket.connected);
+      socket.disconnect();
+      socket.connect();
 
       // Redirect to the home page or another page
       navigate(redirectLocation);

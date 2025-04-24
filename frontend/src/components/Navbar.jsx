@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react"
 import "./Navbar.css";
 import { getAuthToken, removeAuthToken, isLoggedIn as checkLogin } from "./utils/auth";
+import socket from "../socket";
 
 function Navbar() {
   const location = useLocation();
@@ -39,6 +40,9 @@ function Navbar() {
       // Remove access token from context
       removeAuthToken();
       setIsLoggedIn(false);
+      
+      // Disconnect from the socket server
+      socket.disconnect();
 
       // Redirect to the home page or another page
       navigate("/");

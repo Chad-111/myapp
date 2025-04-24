@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import socket from "../../socket";
 import { getAuthToken } from "../utils/auth";
-import "./DirectMessages.css";
+import "./Chat.css";
 
 const DirectMessages = () => {
     const [usersList, setUsersList] = useState([]);
@@ -97,6 +97,16 @@ const DirectMessages = () => {
             receiver_id: selectedUserId,
             content: input,
         });
+
+        // Optimistically update latestMessage for the selected user
+        setUsersList(prev =>
+            prev.map(u =>
+                u.id === selectedUserId
+                    ? { ...u, latestMessage: input }
+                    : u
+            )
+        );
+
         setInput("");
     };
 
@@ -109,7 +119,7 @@ const DirectMessages = () => {
                 {usersList.map(user => (
                     <div
                         key={user.id}
-                        className={`user-list-item`}
+                        className="user-list-item"
                         onClick={() => {
                             setSelectedUserId(user.id);
                             setView("chat");
@@ -147,27 +157,56 @@ const DirectMessages = () => {
                     {usersList.find(u => u.id === selectedUserId)?.username || "Chat"}
                 </span>
             </div>
-            <div className="direct-chat-messages" style={{ minHeight: 200, maxHeight: 300, overflowY: "auto", padding: 12, background: "#fff", borderRadius: 4, marginBottom: 8 }}>
-                {(messagesByUser[selectedUserId] || []).map((msg) => (
-                    <div key={msg.id || Math.random()} className="message">
-                        <strong>User {msg.sender_id}:</strong> {msg.content}
-                    </div>
-                ))}
+            <div className="chat-messages" style={{ minHeight: 200, maxHeight: 300, overflowY: "auto", padding: 12, background: "#fff", borderRadius: 4, marginBottom: 8 }}>
+                {(messagesByUser[selectedUserId] || []).map((msg) => {
+                    const isMe = msg.sender_id === currentUserId;
+                    const senderName = isMe
+                        ? "You"
+                        : usersList.find(u => u.id === msg.sender_id)?.username || "Unknown";
+                    return (
+                        <div
+                            key={msg.id || Math.random()}
+                            className={`message ${isMe ? "my-message" : "their-message"}`}
+                            style={{
+                                display: "flex",
+                                justifyContent: isMe ? "flex-end" : "flex-start",
+                                marginBottom: 8,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    background: isMe ? "#1976d2" : "#f1f1f1",
+                                    color: isMe ? "#fff" : "#222",
+                                    borderRadius: 8,
+                                    padding: "8px 14px",
+                                    maxWidth: "70%",
+                                    wordBreak: "break-word",
+                                    textAlign: isMe ? "right" : "left",
+                                }}
+                            >
+                                <div style={{ fontWeight: "bold", fontSize: 13, marginBottom: 2 }}>
+                                    {senderName}
+                                </div>
+                                {msg.content}
+                            </div>
+                        </div>
+                    );
+                })}
                 <div ref={messagesEndRef} />
             </div>
-            <div className="direct-chat-input-row" style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <div className="chat-input-row" style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="direct-chat-input"
+                    className="chat-input"
                     placeholder="Type a direct message..."
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     style={{ flex: 1, padding: 8, border: "1px solid #ccc", borderRadius: 4 }}
                 />
                 <button
                     onClick={handleSend}
-                    className="direct-chat-send"
+                    className="chat-send"
                     disabled={!selectedUserId}
                     style={{
                         padding: "8px 16px",
