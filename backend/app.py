@@ -186,7 +186,14 @@ def update_player_stats():
     print(f"Count of players not found in the database: {count}")
         
 def clean_up_daily_data():
-    pass
+    with app.app_context():
+        print("Cleaning up daily data...")
+        print(f"Task executed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        week_ago = datetime.now().date() - timedelta(days=7)
+        DailyStatsHockey.query.filter(DailyStatsHockey.date < week_ago).delete()
+        DailyStatsBasketball.query.filter(DailyStatsBasketball.date < week_ago).delete()
+        DailyStatsBaseball.query.filter(DailyStatsBaseball.date < week_ago).delete()
+        db.session.commit()
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=update_player_stats, trigger="interval", minutes=20)
@@ -740,11 +747,10 @@ def league_search():
 
     return jsonify({"message": response}), 200
 
-
-@app.route("/api/league/create", methods=["POST"])
+@app.route("/api/league/update-ruleset", methods=["POST"])
 @cross_origin(origin='*')
 @jwt_required()
-def league_create():
+def update_ruleset(data=None):
     fields_football = [
         "points_passtd",
         "points_passyd",
@@ -824,22 +830,18 @@ def league_create():
     def build_ruleset_filter(model_cls, ruleset, fields):
         filters = {field: getattr(ruleset, field) for field in fields}
         return model_cls.query.filter_by(**filters)
-    
-    data = request.json
+    standalone_call = False
     if not data:
-        return jsonify({"error": "No data provided"}), 400
-    
-    commissioner_id = get_jwt_identity()
-    name = data.get("league_name")
-    sport = data.get("sport")
-    team_name = data.get("team_name")
+        standalone_call = True
+        data = request.json
 
+    sport = data.get("sport")
     ruleset = None
     ruleset_id = None
     if data.get("ruleset"):
-        # logic should be handled - TODO
+        # logic should be handled
         if sport == "nfl":
-            ruleset = RulesetFootball()
+            ruleset = RulesetFootball(**data.get("ruleset"))
             if build_ruleset_filter(RulesetFootball, ruleset, fields_football).count() == 0:
                 db.session.add(ruleset)
                 db.session.commit()
@@ -847,7 +849,7 @@ def league_create():
                 ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
                 ruleset_id = ruleset.id
         elif sport == "nba":
-            ruleset = RulesetBasketball()
+            ruleset = RulesetBasketball(**data.get("ruleset"))
             if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
                 db.session.add(ruleset)
                 db.session.commit()
@@ -855,14 +857,14 @@ def league_create():
                 ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
                 ruleset_id = ruleset.id
         elif sport == "mlb":
-            ruleset = RulesetBaseball()
+            ruleset = RulesetBaseball(**data.get("ruleset"))
             if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
                 db.session.add(ruleset)
                 db.session.commit()
             else:
                 ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
         elif sport == "nhl":
-            ruleset = RulesetHockey()
+            ruleset = RulesetHockey(**data.get("ruleset"))
             if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
                 db.session.add(ruleset)
                 db.session.commit()
@@ -906,9 +908,41 @@ def league_create():
     else:
         return jsonify({"error": "Invalid sport"}), 400
     
+    # called on update, not on league creation, so have to update db
+    if standalone_call:
+        league_id = data.get("league_id")
+        league = League.query.filter_by(id=league_id).first()
+        if sport == "nfl":
+            league.football_ruleset_id = ruleset_id
+        elif sport == "nba":
+            league.basketball_ruleset_id = ruleset_id
+        elif sport == "mlb":
+            league.baseball_ruleset_id = ruleset_id
+        elif sport == "nhl":
+            league.hockey_ruleset_id = ruleset_id
+        db.session.commit()
+        return jsonify({"message": "Ruleset successfully updated."})
+    return ruleset, ruleset_id
 
-
-    ruleset_id = ruleset.id
+@app.route("/api/league/create", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def league_create():
+    
+    
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    try:
+        ruleset, ruleset_id = update_ruleset(data)
+    except Exception as e:
+        print(e)
+        return jsonify({"error": e}), 400
+    commissioner_id = get_jwt_identity()
+    name = data.get("league_name")
+    sport = data.get("sport")
+    team_name = data.get("team_name")
+    
     
 
     print(ruleset_id)
@@ -1021,7 +1055,7 @@ def get_league():
     team_data = [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank, "owner_id": User.query.get(team.owner_id).username, "wins" : team.wins, "losses" : team.losses} for team in Team.query.filter_by(league_id=id).order_by(Team.rank).all()]
     
     league = League.query.filter_by(id=id).one()
-    league_data = {"name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count(), "commissioner" : league.commissioner_id}
+    league_data = {"id": id, "name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count(), "commissioner" : league.commissioner_id}
     return jsonify({"teams" : team_data, "league": league_data}), 200
 
 @app.route("/api/league/verify_commissioner", methods=["POST"])

@@ -4,17 +4,46 @@ import { RedirectContext } from "../../App";
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getAuthToken } from "../../components/utils/auth";
 
+const rulesetOptions = {
+    nfl: [
+        { value: "default", label: "Default (PPR)" },
+        { value: "half-ppr", label: "Half-PPR" },
+        { value: "custom", label: "Custom" }
+    ],
+    ncaaf: [
+        { value: "default", label: "Default (PPR)" },
+        { value: "half-ppr", label: "Half-PPR" },
+        { value: "custom", label: "Custom" }
+    ],
+    nhl: [
+        { value: "default", label: "Default" },
+        { value: "custom", label: "Custom" }
+    ],
+    nba: [
+        { value: "default", label: "Default" },
+        { value: "custom", label: "Custom" }
+    ],
+    mlb: [
+        { value: "default", label: "Default" },
+        { value: "custom", label: "Custom" }
+    ]
+};
 
 function LeagueCreation() {
     const location = useLocation();
-    const [name, setName] = useState("");
     const [teamName, setTeamName] = useState("");
     const [leagueName, setLeagueName] = useState("");
     const [error, setError] = useState("");
     const [sport, setSport] = useState("");
     const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
+    const [ruleset, setRuleset] = useState("default");
     const navigate = useNavigate();
     const authToken = getAuthToken();
+
+    useEffect(() => {
+        // Reset ruleset when sport changes
+        setRuleset("");
+    }, [sport]);
 
 
 
@@ -22,36 +51,47 @@ function LeagueCreation() {
         e.preventDefault();
         // Handle league creation logic here
         try {
+            let ruleset_specs = {}
+            if (ruleset == "custom") {
+                setRedirectLocation("/fantasy/dashboard");
+                navigate("/fantasy/create-ruleset", {state: {creation: true, sport : sport, league_name : leagueName, team_name : teamName}}) // need to create
 
-
-
-            const response = await fetch("/api/league/create", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": 'Bearer ' + authToken
-                },
-                body: JSON.stringify({
-                    "access_token": authToken,
-                    "league_name": leagueName,
-                    "sport": sport,
-                    "team_name": teamName
-                }),
-            });
-
-            if (!response.ok) {
-                if (response.status == 422) {
-                    setRedirectLocation(location.pathname);
-                    navigate("/login")
-                } else {
-                    throw new Error("League get failed");
+            } else { 
+                if (ruleset == "half-ppr") {
+                    ruleset_specs = {"points_reception": 0.5}
                 }
+                console.log("Ruleset", ruleset)
+
+                
+                const response = await fetch("/api/league/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({
+                        "access_token": authToken,
+                        "league_name": leagueName,
+                        "sport": sport,
+                        "team_name": teamName,
+                        "ruleset": ruleset_specs
+                    }),
+                });
+
+                if (!response.ok) {
+                    if (response.status == 422) {
+                        setRedirectLocation(location.pathname);
+                        navigate("/login")
+                    } else {
+                        throw new Error("League get failed");
+                    }
+                }
+
+                const data = await response.json();
+                console.log("Message", data);
+
+                navigate("/fantasy/dashboard")
             }
-
-            const data = await response.json();
-            console.log("Message", data);
-
-            navigate("/fantasy/dashboard")
 
 
         } catch (error) {
@@ -115,6 +155,23 @@ function LeagueCreation() {
                                 onChange={(e) => setTeamName(e.target.value)}
                             />
                             <label htmlFor="team_name">Your Team Name</label>
+                        </div>
+
+                        <div className="form-floating mb-5">
+                        <select
+                                className="form-select"
+                                id="sport"
+                                required
+                                value={ruleset}
+                                onChange={(e) => setRuleset(e.target.value)}
+                            >
+                                <option value="" disabled>Select a ruleset</option>
+                                {sport && rulesetOptions[sport]?.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold">

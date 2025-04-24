@@ -29,6 +29,7 @@ import LeagueRoster from "./pages/Fantasy/League/Rosters";
 import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
 import Join from "./pages/Fantasy/Join";
+import CreateRuleset from "./pages/Fantasy/CreateRuleset";
 
 export const RedirectContext = createContext("/dashboard");
 
@@ -98,6 +99,7 @@ function Layout() {
             <Route path="/fantasy/draft" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
             <Route path="/fantasy/myteam" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
             <Route path="/fantasy/create" element={<ProtectedRoute><LeagueCreation /></ProtectedRoute>} />
+            <Route path="/fantasy/create-ruleset" element={<ProtectedRoute><CreateRuleset /></ProtectedRoute>} />
             <Route path="/league/home/*" element={<ProtectedRoute><LeagueHome /></ProtectedRoute>} />
             <Route path="/league/matchups/*" element={<ProtectedRoute><Matchups /></ProtectedRoute>} />
             <Route path="/league/members/*" element={<ProtectedRoute><LeagueMembers /></ProtectedRoute>} />
