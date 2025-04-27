@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 
-
+import { LeagueProvider } from "./components/utils/LeagueContext";
 import ProtectedRoute from "./components/utils/ProtectedRoute";
 // Components
 import Navbar from "./components/Navbar";
@@ -16,7 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Start from './pages/Start';
 // !User Specific! -> Overall Fantasy Pages
 import FantasyDashboard from "./pages/Fantasy/Dashboard";
-import Draft from "./pages/Fantasy/Draft";
+import Draft from "./pages/Fantasy/League/Draft";
 import MyTeams from "./pages/Fantasy/MyTeam";
 import LeagueCreation from "./pages/Fantasy/LeagueCreation";
 // !League Specific! -> Fantasy League Pages
@@ -30,6 +30,7 @@ import LeagueSchedule from "./pages/Fantasy/League/Schedule";
 import LeagueSettings from "./pages/Fantasy/League/Settings";
 import Join from "./pages/Fantasy/Join";
 import CreateRuleset from "./pages/Fantasy/CreateRuleset";
+import Unauthorized from "./pages/Unauthorized";
 
 export const RedirectContext = createContext("/dashboard");
 
@@ -46,72 +47,73 @@ function Layout() {
   return (
     <>
       <RedirectContext.Provider value={{ redirectLocation, setRedirectLocation }}>
-        <Navbar />
-        <IconButton
-          color="primary"
-          className="position-fixed bottom-0 end-0 m-3 z-3"
-          aria-label={`switch to ${theme === "light" ? "dark" : "light"} mode`}
-          onClick={() => setTheme(prev => (prev === "light" ? "dark" : "light"))}
-          disableRipple={true} // disables the ripple effect on click
-          disableFocusRipple={true} // disables the focus ripple effect when tabbed to
-          sx={{
-            color: theme === "dark" ? "#ffda6a" : "#2e4482", // set custom color
-            '&:hover': {
-              backgroundColor: 'transparent', // disables blue hover bg
-              color: theme === "dark" ? "#ffda6a" : "#2e4482", // hover color
-            }
-          }}
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            {theme === "light" ? (
-              <motion.div
-                key="dark-icon"
-                initial={{ opacity: 0, rotate: -90 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: 90 }}
-                transition={{ duration: 0.3 }}
-              >
-                <DarkModeTwoToneIcon fontSize="large" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="light-icon"
-                initial={{ opacity: 0, rotate: -90 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: 90 }}
-                transition={{ duration: 0.3 }}
-              >
-                <LightModeTwoToneIcon fontSize="large" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </IconButton>
+        <LeagueProvider>
+          <Navbar />
+          <IconButton
+            color="primary"
+            className="position-fixed bottom-0 end-0 m-3 z-3"
+            aria-label={`switch to ${theme === "light" ? "dark" : "light"} mode`}
+            onClick={() => setTheme(prev => (prev === "light" ? "dark" : "light"))}
+            disableRipple={true} // disables the ripple effect on click
+            disableFocusRipple={true} // disables the focus ripple effect when tabbed to
+            sx={{
+              color: theme === "dark" ? "#ffda6a" : "#2e4482", // set custom color
+              '&:hover': {
+                backgroundColor: 'transparent', // disables blue hover bg
+                color: theme === "dark" ? "#ffda6a" : "#2e4482", // hover color
+              }
+            }}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {theme === "light" ? (
+                <motion.div
+                  key="dark-icon"
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <DarkModeTwoToneIcon fontSize="large" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="light-icon"
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <LightModeTwoToneIcon fontSize="large" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </IconButton>
 
 
-        <main className={`container-fluid ${isFantasyRoute ? 'with-sidebar' : 'standard-padding'}`}>
-          <Routes>
-            {/* Public Route */}
-            <Route path="/" element={<Start />} />
-
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/fantasy/dashboard" element={<ProtectedRoute><FantasyDashboard /></ProtectedRoute>} />
-            <Route path="/fantasy/draft" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
-            <Route path="/fantasy/myteam" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
-            <Route path="/fantasy/create" element={<ProtectedRoute><LeagueCreation /></ProtectedRoute>} />
-            <Route path="/fantasy/create-ruleset" element={<ProtectedRoute><CreateRuleset /></ProtectedRoute>} />
-            <Route path="/league/home/*" element={<ProtectedRoute><LeagueHome /></ProtectedRoute>} />
-            <Route path="/league/matchups/*" element={<ProtectedRoute><Matchups /></ProtectedRoute>} />
-            <Route path="/league/members/*" element={<ProtectedRoute><LeagueMembers /></ProtectedRoute>} />
-            <Route path="/league/portal/*" element={<ProtectedRoute><TradePortal /></ProtectedRoute>} />
-            <Route path="/league/brackets/*" element={<ProtectedRoute><Brackets /></ProtectedRoute>} />
-            <Route path="/league/rosters/*" element={<ProtectedRoute><LeagueRoster /></ProtectedRoute>} />
-            <Route path="/league/schedule/*" element={<ProtectedRoute><LeagueSchedule /></ProtectedRoute>} />
-            <Route path="/league/settings/:code" element={<ProtectedRoute><LeagueSettings /></ProtectedRoute>} />
-            <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
-            <Route path="/unauthorized" element={<h1>403 – You are not authorized to view this page.</h1>} />
-          </Routes>
-        </main>
+          <main className={`container-fluid ${isFantasyRoute ? 'with-sidebar' : 'standard-padding'}`}>
+            <Routes>
+              {/* Public Route */}
+              <Route path="/" element={<Start />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/fantasy/dashboard" element={<ProtectedRoute><FantasyDashboard /></ProtectedRoute>} />
+              <Route path="/fantasy/myteam" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
+              <Route path="/fantasy/create" element={<ProtectedRoute><LeagueCreation /></ProtectedRoute>} />
+              <Route path="/fantasy/create-ruleset" element={<ProtectedRoute><CreateRuleset /></ProtectedRoute>} />
+              <Route path="/league/home/*" element={<ProtectedRoute><LeagueHome /></ProtectedRoute>} />
+              <Route path="/league/matchups/:code" element={<ProtectedRoute><Matchups /></ProtectedRoute>} />
+              <Route path="/league/members/:code" element={<ProtectedRoute><LeagueMembers /></ProtectedRoute>} />
+              <Route path="/league/portal/:code" element={<ProtectedRoute><TradePortal /></ProtectedRoute>} />
+              <Route path="/league/brackets/*" element={<ProtectedRoute><Brackets /></ProtectedRoute>} />
+              <Route path="/league/rosters/:code" element={<ProtectedRoute><LeagueRoster /></ProtectedRoute>} />
+              <Route path="/league/schedule/:code" element={<ProtectedRoute><LeagueSchedule /></ProtectedRoute>} />
+              <Route path="/league/settings/:code" element={<ProtectedRoute><LeagueSettings /></ProtectedRoute>} />
+              <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
+              <Route path="/league/draft/:code" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
+            </Routes>
+          </main>
+        </LeagueProvider>
       </RedirectContext.Provider>
     </>
   );

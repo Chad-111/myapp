@@ -928,8 +928,6 @@ def update_ruleset(data=None):
 @cross_origin(origin='*')
 @jwt_required()
 def league_create():
-    
-    
     data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -1078,6 +1076,115 @@ def verify_commissioner():
 
     return jsonify({"message": "Authorized"}), 200
 
+@app.route("/api/players/<league>", methods=["GET"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_players_by_league(league):
+    if league not in ["nfl", "nba", "mlb", "nhl"]:
+        return jsonify({"error": "Invalid league"}), 400
+    
+    # Make sure players are populated for this league
+    sport = SPORTS.get(league)
+    if Player.query.filter_by(sport=sport).count() == 0:
+        populate_player_table(league)
+    
+    # Get all players for the sport
+    players = Player.query.filter_by(sport=sport).all()
+    
+    player_list = [{
+        "id": player.id,
+        "first_name": player.first_name,
+        "last_name": player.last_name,
+        "position": player.position,
+        "team_name": player.team_name
+    } for player in players]
+    
+    return jsonify({"players": player_list}), 200
+
+@app.route("/api/draft/finalize", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def finalize_draft():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    league_id = data.get("leagueId")
+    teams = data.get("teams")
+    
+    if not league_id or not teams:
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    try:
+        # Clear any existing team players for this league
+        TeamPlayer.query.filter_by(league_id=league_id).delete()
+        
+        # Add new player assignments from the draft
+        for team_data in teams:
+            team_id = team_data.get("teamId")
+            players = team_data.get("players")
+            
+            for player in players:
+                player_id = player.get("id")
+                
+                # Create a new team player record
+                team_player = TeamPlayer(
+                    player_id=player_id,
+                    league_id=league_id,
+                    team_id=team_id,
+                    starting_position="BEN"  # Default all to bench
+                )
+                db.session.add(team_player)
+        
+        db.session.commit()
+        return jsonify({"message": "Draft finalized successfully"}), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error finalizing draft: {str(e)}")
+        return jsonify({"error": f"Failed to finalize draft: {str(e)}"}), 500
+
+@app.route("/api/league/rosters", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_league_rosters():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    league_id = data.get("leagueId")
+    if not league_id:
+        return jsonify({"error": "League ID is required"}), 400
+    
+    try:
+        # Query all team_players for this league
+        team_players = db.session.query(
+            TeamPlayer, Player
+        ).join(
+            Player, TeamPlayer.player_id == Player.id
+        ).filter(
+            TeamPlayer.league_id == league_id
+        ).all()
+        
+        # Format the response
+        roster_data = []
+        for tp, player in team_players:
+            roster_data.append({
+                "player_id": player.id,
+                "first_name": player.first_name,
+                "last_name": player.last_name,
+                "position": player.position,
+                "team_name": player.team_name,
+                "team_id": tp.team_id,
+                "starting_position": tp.starting_position
+            })
+        
+        return jsonify({"rosters": roster_data}), 200
+    
+    except Exception as e:
+        print(f"Error getting league rosters: {str(e)}")
+        return jsonify({"error": "Failed to retrieve league rosters"}), 500
+    
 
 @app.route('/api/request-reset', methods=['POST'])
 @cross_origin(origin='*')

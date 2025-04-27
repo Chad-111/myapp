@@ -159,16 +159,6 @@ function Navbar() {
               <div className="d-lg-none">
                 <hr />
                 <li className="fw-semibold text-uppercase small px-2 text-muted">Fantasy</li>
-                {/* <li><NavLink to="/fantasy/create" className="nav-link" onClick={closeOffcanvas}>Create League</NavLink></li> */}
-                <li><NavLink to="/league/members" className="nav-link" onClick={closeOffcanvas}>Members</NavLink></li>
-                <li><NavLink to="/league/rosters" className="nav-link" onClick={closeOffcanvas}>Rosters</NavLink></li>
-                <li><NavLink to="/league/schedule" className="nav-link" onClick={closeOffcanvas}>Schedule</NavLink></li>
-                <li><NavLink to="/league/matchups" className="nav-link" onClick={closeOffcanvas}>Matchups</NavLink></li>
-                <li><NavLink to="/league/portal" className="nav-link" onClick={closeOffcanvas}>Trade Portal</NavLink></li>
-                <li><NavLink to="/league/draft" className="nav-link" onClick={closeOffcanvas}>Live Draft</NavLink></li>
-                <li><NavLink to="/league/brackets" className="nav-link" onClick={closeOffcanvas}>Brackets</NavLink></li>
-                {/* <li><NavLink to="/league/settings" className="nav-link" onClick={closeOffcanvas}>Settings</NavLink></li> */}
-
               </div>
             )}
             <li className="mt-3">
@@ -179,26 +169,6 @@ function Navbar() {
           </ul>
         </div>
       </div>
-
-      {/* Fantasy Subnavbar - only for large screens */}
-      {isFantasyRoute && (
-        <nav className="FantasySubnav bg-dark py-2 d-none d-lg-flex">
-          <div className="container-fluid d-flex flex-wrap gap-3 justify-content-evenly">
-            <NavLink to="/fantasy/dashboard" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Home</NavLink>
-            {/* <NavLink to="/fantasy/create" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Create League</NavLink> */}
-            <NavLink to="/league/members" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Members</NavLink>
-            <NavLink to="/league/rosters" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Rosters</NavLink>
-            <NavLink to="/league/schedule" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Schedule</NavLink>
-            <NavLink to="/league/matchups" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Matchups</NavLink>
-            <NavLink to="/league/portal" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Trade Portal</NavLink>
-            <NavLink to="/league/draft" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Live Draft</NavLink>
-            <NavLink to="/league/brackets" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Brackets</NavLink>
-            {/* <NavLink to="/league/settings" className={({ isActive }) => isActive ? "subnav-link active" : "subnav-link"}>Settings</NavLink> */}
-
-          </div>
-        </nav>
-      )}
-
     </div>
   );
 }
