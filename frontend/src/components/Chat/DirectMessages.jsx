@@ -5,6 +5,23 @@ import { getAuthToken } from "../utils/auth";
 import socket from "../../socket";
 import "./Chat.css";
 
+function formatMessageMeta(name, timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date >= today) {
+        return `${name} · ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (date >= yesterday) {
+        return `${name} · Yesterday, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+        return `${name} · ${date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+}
+
 const DirectMessages = () => {
     const [usersList, setUsersList] = useState([]);
     const [messagesByUser, setMessagesByUser] = useState({});
@@ -30,10 +47,46 @@ const DirectMessages = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-                setUsersList(data.filter(u => u.id !== currentUserId).map(u => ({
+                const filteredUsers = data.filter(u => u.id !== currentUserId).map(u => ({
                     ...u,
                     latestMessage: "",
-                })));
+                    latestMeta: "",
+                }));
+                setUsersList(filteredUsers);
+
+                // Fetch latest message for each user
+                filteredUsers.forEach((user) => {
+                    fetch("/api/chat/direct/messages", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer " + token,
+                        },
+                        body: JSON.stringify({ other_user_id: user.id })
+                    })
+                        .then((res) => res.json())
+                        .then((messages) => {
+                            if (messages && messages.length > 0) {
+                                const lastMsg = messages[messages.length - 1];
+                                setUsersList(prev =>
+                                    prev.map(u =>
+                                        u.id === user.id
+                                            ? {
+                                                ...u,
+                                                latestMessage: lastMsg.content,
+                                                latestMeta: formatMessageMeta(
+                                                    lastMsg.sender_id === currentUserId
+                                                        ? "You"
+                                                        : user.username,
+                                                    lastMsg.timestamp
+                                                )
+                                            }
+                                            : u
+                                    )
+                                );
+                            }
+                        });
+                });
             });
     }, [token, currentUserId]);
 
@@ -84,7 +137,14 @@ const DirectMessages = () => {
             setUsersList((prev) =>
                 prev.map((u) =>
                     u.id === (msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id)
-                        ? { ...u, latestMessage: msg.content }
+                        ? {
+                            ...u,
+                            latestMessage: msg.content,
+                            latestMeta: formatMessageMeta(
+                                msg.sender_id === currentUserId ? "You" : u.username,
+                                msg.timestamp
+                            )
+                        }
                         : u
                 )
             );
@@ -94,10 +154,23 @@ const DirectMessages = () => {
 
     const handleSend = () => {
         if (!input.trim() || !selectedUserId) return;
+        const now = new Date();
         socket.emit("send_direct_message", {
             receiver_id: selectedUserId,
             content: input,
         });
+        // Optimistically update latestMessage and latestMeta for the selected user
+        setUsersList((prev) =>
+            prev.map((u) =>
+                u.id === selectedUserId
+                    ? {
+                        ...u,
+                        latestMessage: input,
+                        latestMeta: formatMessageMeta("You", now)
+                    }
+                    : u
+            )
+        );
         setInput("");
     };
 
@@ -111,7 +184,10 @@ const DirectMessages = () => {
                         className="user-list-item"
                         onClick={() => setSelectedUserId(user.id)}
                     >
-                        <div className="username">{user.username}</div>
+                        <div className="user-list-row">
+                            <div className="username">{user.username}</div>
+                            <div className="meta">{user.latestMeta}</div>
+                        </div>
                         <div className="preview">{user.latestMessage}</div>
                     </div>
                 ))}
@@ -143,11 +219,16 @@ const DirectMessages = () => {
                             className={`message ${isMe ? "my-message" : "their-message"}`}
                         >
                             <div className="message-bubble">
-                                <div className="message-sender">
-                                    {isMe ? "You" : usersList.find(u => u.id === msg.sender_id)?.username || msg.sender_id}
-                                </div>
                                 {msg.content}
                             </div>
+                            {msg.timestamp && (
+                                <div className="message-meta">
+                                    {formatMessageMeta(
+                                        isMe ? "You" : usersList.find(u => u.id === msg.sender_id)?.username || msg.sender_id,
+                                        msg.timestamp
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}

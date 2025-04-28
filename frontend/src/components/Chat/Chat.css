@@ -3,11 +3,11 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  height: 400px; /* Adjust as needed */
+  height: 400px; 
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  overflow: hidden; /* Prevent double scrollbars */
+  overflow: hidden; 
 }
 
 /* Header (back arrow and title) */
@@ -47,15 +47,16 @@
 /* Message bubbles */
 .message {
   display: flex;
+  flex-direction: column;
   margin-bottom: 8px;
 }
 
 .my-message {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .their-message {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .message-bubble {
@@ -74,11 +75,19 @@
   text-align: right;
 }
 
-/* Sender name */
-.message-sender {
-  font-weight: bold;
-  font-size: 13px;
-  margin-bottom: 2px;
+.message-meta {
+  display: block;
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+  margin-bottom: 8px;
+  margin-left: 0;
+  margin-right: 0;
+  text-align: left;
+}
+
+.my-message .message-meta {
+  text-align: right;
 }
 
 /* Input row */
@@ -111,19 +120,49 @@
 .user-list-scrollable {
   max-height: 400px;
   overflow-y: auto;
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 8px 0;
 }
 
 .user-list-item {
+  border: 1px solid #1976d2;
+  border-radius: 8px;
   cursor: pointer;
   padding: 12px;
-  border-bottom: 1px solid #eee;
+  margin: 10px;
+  background: #f9f9f9;
+  transition: background 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-list-row {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
 }
 
 .username {
   font-weight: bold;
+  font-size: 16px;
+}
+
+.meta {
+  color: #888;
+  font-size: 0.7em;
+  margin-left: 12px;
+  white-space: nowrap;
 }
 
 .preview {
   color: #888;
-  font-size: 0.9em;
+  font-size: 0.95em;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
 }

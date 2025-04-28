@@ -601,7 +601,7 @@ def handle_send_message(data):
             "league_id": league_id,
             "content": content,
             "timestamp": new_message.timestamp.isoformat(),
-        }, to=f"league_{league_id}")
+        }, room=f"league_{league_id}")
     except NoAuthorizationError:
         emit("error", {"message": "Unauthorized"})
         disconnect()
