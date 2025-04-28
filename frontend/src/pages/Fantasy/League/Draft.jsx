@@ -4,6 +4,15 @@ import { useParams, useLocation } from "react-router-dom";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
 
 function Draft() {
+  // initial player limits:
+  const playerLimits = {
+    // these r kinda arbitrary but it works based on what positions we have
+    nfl: 21,
+    nba: 18,
+    mlb: 24,
+    nhl: 21,
+    ncaaf: 21
+  }
   // State for league information
   const [league, setLeague] = useState(null);
   // State for teams in the league
@@ -26,6 +35,7 @@ function Draft() {
   const [positionFilter, setPositionFilter] = useState("All");
   // State for user's team
   const [userTeam, setUserTeam] = useState(null);
+  const [sport, setSport] = useState(null);
 
   // Get league code from URL parameters or query string
   const { code } = useParams();
@@ -95,6 +105,7 @@ function Draft() {
 
           // Fetch players next
           await fetchPlayers(response.data.league.sport);
+          setSport(response.data.league.sport);
 
         } catch (error) {
           console.error("Error fetching league:", error);
@@ -285,6 +296,10 @@ function Draft() {
 
     // Determine next team based on snake draft rules if enabled
     let nextTeamIndex;
+    // if draft should be over (make the logic better in the future)
+    if (currentPick/totalTeams > playerLimits[sport]) {
+      endDraft();
+    }
     if (draftStatus.isSnakeDraft) {
       const currentRound = Math.floor(currentPick / totalTeams);
       const isEvenRound = currentRound % 2 === 1;
@@ -340,7 +355,8 @@ function Draft() {
       // Save draft results to backend using the new endpoint
       await axios.post("/api/draft/finalize", {
         leagueId: league.id,
-        teams: teamRosters
+        teams: teamRosters,
+        sport: sport
       }, {
         headers: {
           'Authorization': `Bearer ${token}`

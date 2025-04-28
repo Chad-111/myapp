@@ -32,21 +32,21 @@ const FantasyDashboard = () => {
         }
     };
 
-    const navToLeagueHub = async (league) => {
+    const navToTeamHub = async (team) => {
         try {
-            const response = await fetch("/api/league/geturl", {
+            const response = await fetch("/api/team/geturl", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": 'Bearer ' + authToken
                 },
-                body: JSON.stringify({ "league_id": league.league_id }),
+                body: JSON.stringify({ "team_id": team.id }),
             });
 
             const data = await response.json();
-            navigate("/league/home/" + data.code);
+            navigate("/team/home/" + data.code);
         } catch (error) {
-            console.error("Error navigating to league:", error);
+            console.error("Error navigating to team:", error);
         }
     };
 
@@ -120,7 +120,7 @@ const FantasyDashboard = () => {
                             <div
                                 className="card h-100 shadow-sm"
                                 style={{ cursor: 'pointer' }}
-                                onClick={() => navToLeagueHub(league)}
+                                onClick={() => navToTeamHub(league)}
                             >
                                 <div className="card-body d-flex flex-column">
                                     <h5 className="card-title">{league.league_name}</h5>

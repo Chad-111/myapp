@@ -3,42 +3,69 @@ import { useParams, useLocation } from "react-router-dom";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
 import useLeagueData from "../../../components/utils/LeagueHook";
 import { useLeagueContext } from "../../../components/utils/LeagueContext";
+import { getAuthToken } from "../../../components/utils/auth";
 
 function LeagueSchedule() {
-  // Extract league code from params or query string
   const { code } = useParams();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const leagueCode = code || queryParams.get("code");
 
-  // Use the league data hook
   const { league, teams, loading, error } = useLeagueData(leagueCode);
-
-  // Use the context
   const { setCurrentLeagueCode } = useLeagueContext();
 
-  // Update the context when the page loads
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [schedule, setSchedule] = useState([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleError, setScheduleError] = useState(null);
+
   useEffect(() => {
     if (leagueCode) {
       setCurrentLeagueCode(leagueCode);
     }
   }, [leagueCode, setCurrentLeagueCode]);
 
-  // Week selection state
-  const [selectedWeek, setSelectedWeek] = useState(1);
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      if (!league || !league.id) return;
 
-  // Mock schedule data - would be replaced with actual data from API
-  const mockSchedule = [
-    { id: 1, week: 1, homeTeam: "Team Alpha", awayTeam: "Team Beta", date: "2025-05-03", time: "1:00 PM" },
-    { id: 2, week: 1, homeTeam: "Team Charlie", awayTeam: "Team Delta", date: "2025-05-03", time: "4:30 PM" },
-    { id: 3, week: 2, homeTeam: "Team Beta", awayTeam: "Team Charlie", date: "2025-05-10", time: "1:00 PM" },
-    { id: 4, week: 2, homeTeam: "Team Delta", awayTeam: "Team Alpha", date: "2025-05-10", time: "4:30 PM" }
-  ];
+      setScheduleLoading(true);
+      setScheduleError(null);
 
-  // Filter schedule by selected week
-  const filteredSchedule = mockSchedule.filter(game => game.week === selectedWeek);
+      try {
+        const authToken = getAuthToken();
+        const response = await fetch('/api/league/getmatchups', {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            leagueId: league.id,
+            week: selectedWeek
+          })
+        });
 
-  // Loading state
+        const data = await response.json();
+        if (response.ok) {
+          setSchedule(data.matchups || []);
+        } else {
+          setScheduleError(data.error || 'Failed to fetch schedule.');
+        }
+      } catch (err) {
+        setScheduleError('Error fetching schedule.');
+      } finally {
+        setScheduleLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, [league, selectedWeek]);
+
+  const availableWeeks = [...new Set(schedule.map(game => game.week))].sort((a, b) => a - b);
+
+  const filteredSchedule = schedule.filter(game => game.week === selectedWeek);
+
   if (loading) {
     return (
       <div className="container-fluid mt-3">
@@ -55,7 +82,6 @@ function LeagueSchedule() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="container-fluid mt-3">
@@ -108,7 +134,7 @@ function LeagueSchedule() {
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
             >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(week => (
+              {availableWeeks.map(week => (
                 <option key={week} value={week}>Week {week}</option>
               ))}
             </select>
@@ -122,37 +148,46 @@ function LeagueSchedule() {
           <strong>Week {selectedWeek} Schedule</strong>
         </div>
         <div className="card-body p-0">
-          <div className="table-responsive">
-            <table className="table table-hover mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Home Team</th>
-                  <th>Away Team</th>
-                  <th>Location</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSchedule.map(game => (
-                  <tr key={game.id}>
-                    <td>{game.date}</td>
-                    <td>{game.time}</td>
-                    <td><strong>{game.homeTeam}</strong></td>
-                    <td>{game.awayTeam}</td>
-                    <td>Home Field</td>
-                  </tr>
-                ))}
-                {filteredSchedule.length === 0 && (
+          {scheduleLoading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : scheduleError ? (
+            <div className="alert alert-danger">{scheduleError}</div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-hover mb-0">
+                <thead className="table-light">
                   <tr>
-                    <td colSpan="5" className="text-center py-3">
-                      No games scheduled for Week {selectedWeek}
-                    </td>
+                    <th>Home Team</th>
+                    <th>Home Score</th>
+                    <th>Away Team</th>
+                    <th>Away Score</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredSchedule.length > 0 ? (
+                    filteredSchedule.map(game => (
+                      <tr key={game.id}>
+                        <td><strong>{game.home_team}</strong></td>
+                        <td>{game.home_team_score}</td>
+                        <td>{game.away_team}</td>
+                        <td>{game.away_team_score}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="text-center py-3">
+                        No games scheduled for Week {selectedWeek}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
@@ -161,11 +196,9 @@ function LeagueSchedule() {
         <div className="card-header bg-light">Implementation Notes</div>
         <div className="card-body">
           <ul className="text-muted">
-            <li>This page displays the full league schedule by week</li>
-            <li>The schedule above contains placeholder data and should be replaced with real data from the API</li>
-            <li>The schedule should be generated based on the league settings (number of weeks, teams, etc.)</li>
-            <li>Each game should link to a detailed matchup page</li>
-            <li>Consider adding filters for viewing a specific team's schedule</li>
+            <li>This page displays the full league schedule by week using real API data.</li>
+            <li>It updates dynamically when switching weeks.</li>
+            <li>It handles loading and error states gracefully.</li>
           </ul>
         </div>
       </div>

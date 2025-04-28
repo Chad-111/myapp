@@ -112,6 +112,21 @@ def get_season_start_end_date(year, sport, league):
 
     return {"start_date" : data.get("type").get("startDate"), "end_date" : data.get("type").get("endDate")}
 
+def get_week_start_end_date():
+    today = datetime.datetime.now().date()
+
+    weekday = today.weekday()  # Monday=0, Tuesday=1, etc.
+
+    if weekday == 1:
+        start_date = today
+    else:
+        # How many days to subtract to get back to last Tuesday
+        days_since_tuesday = (weekday - 1) % 7
+        start_date = today - datetime.timedelta(days=days_since_tuesday)
+
+    end_date = start_date + datetime.timedelta(days=7)
+    return start_date, end_date
+
 def get_week_number(year, sport, league):
     start_date, end_date = get_season_start_end_date(year, sport, league).values()
     start_date = datetime.datetime.strptime(start_date, "%Y-%m-%dT%H:%MZ")
@@ -121,6 +136,8 @@ def get_week_number(year, sport, league):
     if start_date <= current_date <= end_date:
         week_number = (current_date - start_tuesday).days // 7 + 1
         return week_number
+    elif start_date > current_date:
+        return 0
     else:
         return None
 
@@ -299,18 +316,17 @@ def get_daily_stats(sport : str, league : str, day=None):
                 defense = []
                 goalies = []
                 # get index of stats
-                goal_index = data.get("boxscore").get("players")[0].get("statistics")[0].get("keys").index("goals")
-                assist_index = data.get("boxscore").get("players")[0].get("statistics")[0].get("keys").index("assists")
-                plus_minus_index = data.get("boxscore").get("players")[0].get("statistics")[0].get("keys").index("plusMinus")
-                shots_index = data.get("boxscore").get("players")[0].get("statistics")[0].get("keys").index("shotsTotal")
-                hit_index = data.get("boxscore").get("players")[0].get("statistics")[0].get("keys").index("hits")
-                block_index = data.get("boxscore").get("players")[0].get("statistics")[0].get("keys").index("blockedShots")    
+                goal_index = index(data.get("boxscore").get("players")[0].get("statistics")[0].get("keys"), "goals")
+                assist_index = index(data.get("boxscore").get("players")[0].get("statistics")[0].get("keys"), "assists")
+                plus_minus_index = index(data.get("boxscore").get("players")[0].get("statistics")[0].get("keys"), "plusMinus")
+                shots_index = index(data.get("boxscore").get("players")[0].get("statistics")[0].get("keys"), "shotsTotal")
+                hit_index = index(data.get("boxscore").get("players")[0].get("statistics")[0].get("keys"), "hits")
+                block_index = index(data.get("boxscore").get("players")[0].get("statistics")[0].get("keys"), "blockedShots")
                 fw_def_index_list = [goal_index, assist_index, plus_minus_index, shots_index, hit_index, block_index]
 
-
                 # get index of goalie stats
-                saves_index = data.get("boxscore").get("players")[0].get("statistics")[2].get("keys").index("saves")
-                goals_against_index = data.get("boxscore").get("players")[0].get("statistics")[2].get("keys").index("goalsAgainst")
+                saves_index = index(data.get("boxscore").get("players")[0].get("statistics")[2].get("keys"), "saves")
+                goals_against_index = index(data.get("boxscore").get("players")[0].get("statistics")[2].get("keys"), "goalsAgainst")
                 # power play points calculated via events
                 power_play_points = {}
                 short_handed_points = {}
@@ -355,7 +371,7 @@ def get_daily_stats(sport : str, league : str, day=None):
                 for item in defense:
                     player_id = "nhl" + item.get("athlete").get("id")
                     try:
-                        goals, assists, plus_minus, shots, hits, blocks = [int(item.get("stats")[i]) for i in fw_def_index_list]
+                        goals, assists, plus_minus, shots, hits, blocks = [0 if i == -1 else int(item.get("stats")[i]) for i in fw_def_index_list]
                         pp_points = power_play_points.get(str(player_id), 0)
                         sh_points = short_handed_points.get(str(player_id), 0)
 
@@ -376,8 +392,8 @@ def get_daily_stats(sport : str, league : str, day=None):
                 for item in goalies:
                     player_id = "nhl" + item.get("athlete").get("id")
                     try:
-                        saves, goals_against = [int(item.get("stats")[i]) for i in [saves_index, goals_against_index]]
-                        shutouts = 1 if goals_against == "0" else 0
+                        saves, goals_against = [ 0 if i == -1 else int(item.get("stats")[i]) for i in [saves_index, goals_against_index]]
+                        shutouts = 1 if goals_against == 0 else 0
                         total_stats["stats"][player_id] = {"saves": saves, "goals_against": goals_against, "shutouts": shutouts}
                     except IndexError as e:
                         print(f"IndexError: {e} for player {player_id}")

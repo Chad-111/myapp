@@ -52,6 +52,7 @@ function LeagueCreation() {
         // Handle league creation logic here
         try {
             let ruleset_specs = {}
+            let response;
             if (ruleset == "custom") {
                 setRedirectLocation("/fantasy/dashboard");
                 navigate("/fantasy/create-ruleset", {state: {creation: true, sport : sport, league_name : leagueName, team_name : teamName}}) // need to create
@@ -59,25 +60,37 @@ function LeagueCreation() {
             } else { 
                 if (ruleset == "half-ppr") {
                     ruleset_specs = {"points_reception": 0.5}
-                }
-                console.log("Ruleset", ruleset)
+                    response = await fetch("/api/league/create", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": 'Bearer ' + authToken
+                        },
+                        body: JSON.stringify({
+                            "access_token": authToken,
+                            "league_name": leagueName,
+                            "sport": sport,
+                            "team_name": teamName,
+                            "ruleset": ruleset_specs
+                        }),
+                    });
+                } else {
 
                 
-                const response = await fetch("/api/league/create", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": 'Bearer ' + authToken
-                    },
-                    body: JSON.stringify({
-                        "access_token": authToken,
-                        "league_name": leagueName,
-                        "sport": sport,
-                        "team_name": teamName,
-                        "ruleset": ruleset_specs
-                    }),
-                });
-
+                    response = await fetch("/api/league/create", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": 'Bearer ' + authToken
+                        },
+                        body: JSON.stringify({
+                            "access_token": authToken,
+                            "league_name": leagueName,
+                            "sport": sport,
+                            "team_name": teamName
+                        }),
+                    });
+                }
                 if (!response.ok) {
                     if (response.status == 422) {
                         setRedirectLocation(location.pathname);

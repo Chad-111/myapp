@@ -1,4 +1,5 @@
 import json
+import traceback
 from time import sleep
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS, cross_origin
@@ -14,13 +15,48 @@ import requests
 from sqids import Sqids
 from random import randint
 from flask_mail import Mail, Message
-from scraping import get_daily_stats, return_all_player_details, get_week_number, get_daily_games  # Ensure scraping.py is in the same directory or in the Python path
+from scraping import get_daily_stats, return_all_player_details, get_week_number, get_daily_games, get_week_start_end_date  # Ensure scraping.py is in the same directory or in the Python path
 import requests
+from sqlalchemy import and_
+
 sqids = Sqids(min_length=7)
+
+POSITION_LIMITS = {
+    "football" : {
+        "QB": 1,
+        "RB": 2,
+        "WR": 2,
+        "TE": 1,
+        "FLX": 1,
+        "DST": 1,
+        "K": 1
+    },
+    "hockey": {
+        "F": 4,
+        "C": 2,
+        "D": 4,
+        "G": 2
+    },
+    "basketball": {
+        "PG": 2,
+        "SG": 2,
+        "SF": 2,
+        "PF": 2,
+        "C": 2
+    },
+    "baseball": {
+        "IF" : 6,
+        "OF": 4,
+        "P": 5,
+        "C": 2
+    }
+}
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 first_request = True
+SPORTS = {"nhl": "hockey", "nfl": "football", "mlb": "baseball", "nba": "basketball"}
+
 
 last_refresh = datetime.now() - timedelta(hours = 1)
 # 🔐 Security settings (change for production)
@@ -50,7 +86,238 @@ migrate = Migrate(app, db)  # Add Migrate
 
 jwt = JWTManager(app)
 
+        
+def update_scores():
+    with app.app_context():
+        print("Updating fantasy scores...")
+        print(f"Task executed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
+        # --- HOCKEY ---
+        hockey_teams = Team.query.join(League).filter(League.sport == "nhl").all()
+        week_num = get_week_number(datetime.now().year, "hockey", "nhl")
+        for team in hockey_teams:
+            league = League.query.get(team.league_id)
+            start_date, end_date = get_week_start_end_date()
+            players = TeamPlayer.query.filter_by(team_id=team.id, league_id=team.league_id).all()
+
+            for player in players:
+                stats = DailyStatsHockey.query.filter(
+                    and_(
+                        DailyStatsHockey.player_id == player.player_id,
+                        DailyStatsHockey.date >= start_date,
+                        DailyStatsHockey.date < end_date
+                    )
+                ).all()
+
+                ruleset = RulesetHockey.query.get(league.hockey_ruleset_id)
+                if not ruleset:
+                    continue
+
+                ruleset_dict = {col.name: getattr(ruleset, col.name) for col in RulesetHockey.__table__.columns}
+
+                total_points = 0
+                for stat in stats:
+                    total_points += stat.calculate_fantasy_points(ruleset_dict)
+
+                # Update or create TeamPlayerPerformance
+                performance = TeamPlayerPerformance.query.filter_by(
+                    week_num=week_num,
+                    player_id=player.player_id,
+                    league_id=team.league_id
+                ).first()
+
+                if performance:
+                    performance.fantasy_points = total_points
+                else:
+                    performance = TeamPlayerPerformance(
+                        week_num=week_num,
+                        player_id=player.player_id,
+                        league_id=team.league_id,
+                        starting_position=player.starting_position,
+                        fantasy_points=total_points
+                    )
+                    db.session.add(performance)
+        # Now update Matchup scores
+        current_matchups = Matchup.query.filter_by(week_num=week_num).join(League).filter(League.sport == "nhl").all()
+
+        for matchup in current_matchups:
+            home_team_id = matchup.home_team_id
+            away_team_id = matchup.away_team_id
+
+            # Home team: sum fantasy points for all non-bench players
+            home_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
+                TeamPlayer.team_id == home_team_id,
+                TeamPlayerPerformance.week_num == week_num,
+                TeamPlayerPerformance.starting_position != "BEN"
+            ).all()
+
+            home_total_points = sum(player.fantasy_points for player in home_players)
+
+            # Away team: sum fantasy points for all non-bench players
+            away_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
+                TeamPlayer.team_id == away_team_id,
+                TeamPlayerPerformance.week_num == week_num,
+                TeamPlayerPerformance.starting_position != "BEN"
+            ).all()
+
+            away_total_points = sum(player.fantasy_points for player in away_players)
+
+            # Update matchup scores
+            matchup.home_team_score = home_total_points
+            matchup.away_team_score = away_total_points
+
+
+        # --- BASKETBALL ---
+        basketball_teams = Team.query.join(League).filter(League.sport == "nba").all()
+        week_num = get_week_number(datetime.now().year, "basketball", "nba")
+        for team in basketball_teams:
+            league = League.query.get(team.league_id)
+            start_date, end_date = get_week_start_end_date()
+            players = TeamPlayer.query.filter_by(team_id=team.id, league_id=team.league_id).all()
+
+            for player in players:
+                stats = DailyStatsBasketball.query.filter(
+                    and_(
+                        DailyStatsBasketball.player_id == player.player_id,
+                        DailyStatsBasketball.date >= start_date,
+                        DailyStatsBasketball.date < end_date
+                    )
+                ).all()
+
+                ruleset = RulesetBasketball.query.get(league.basketball_ruleset_id)
+                if not ruleset:
+                    continue
+
+                ruleset_dict = {col.name: getattr(ruleset, col.name) for col in RulesetBasketball.__table__.columns}
+
+                total_points = 0
+                for stat in stats:
+                    total_points += stat.calculate_fantasy_points(ruleset_dict)
+
+                performance = TeamPlayerPerformance.query.filter_by(
+                    week_num=week_num,
+                    player_id=player.player_id,
+                    league_id=team.league_id
+                ).first()
+
+                if performance:
+                    performance.fantasy_points = total_points
+                else:
+                    performance = TeamPlayerPerformance(
+                        week_num=week_num,
+                        player_id=player.player_id,
+                        league_id=team.league_id,
+                        starting_position=player.starting_position,
+                        fantasy_points=total_points
+                    )
+                    db.session.add(performance)
+
+        # Now update Matchup scores
+        current_matchups = Matchup.query.filter_by(week_num=week_num).join(League).filter(League.sport == "nba").all()
+
+        for matchup in current_matchups:
+            home_team_id = matchup.home_team_id
+            away_team_id = matchup.away_team_id
+
+            # Home team: sum fantasy points for all non-bench players
+            home_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
+                TeamPlayer.team_id == home_team_id,
+                TeamPlayerPerformance.week_num == week_num,
+                TeamPlayerPerformance.starting_position != "BEN"
+            ).all()
+
+            home_total_points = sum(player.fantasy_points for player in home_players)
+
+            # Away team: sum fantasy points for all non-bench players
+            away_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
+                TeamPlayer.team_id == away_team_id,
+                TeamPlayerPerformance.week_num == week_num,
+                TeamPlayerPerformance.starting_position != "BEN"
+            ).all()
+
+            away_total_points = sum(player.fantasy_points for player in away_players)
+
+            # Update matchup scores
+            matchup.home_team_score = home_total_points
+            matchup.away_team_score = away_total_points
+
+
+        # --- BASEBALL ---
+        baseball_teams = Team.query.join(League).filter(League.sport == "mlb").all()
+        week_num = get_week_number(datetime.now().year, "baseball", "mlb")
+        for team in baseball_teams:
+            league = League.query.get(team.league_id)
+            start_date, end_date = get_week_start_end_date()
+            players = TeamPlayer.query.filter_by(team_id=team.id, league_id=team.league_id).all()
+
+            for player in players:
+                stats = DailyStatsBaseball.query.filter(
+                    and_(
+                        DailyStatsBaseball.player_id == player.player_id,
+                        DailyStatsBaseball.date >= start_date,
+                        DailyStatsBaseball.date < end_date
+                    )
+                ).all()
+
+                ruleset = RulesetBaseball.query.get(league.baseball_ruleset_id)
+                if not ruleset:
+                    continue
+
+                ruleset_dict = {col.name: getattr(ruleset, col.name) for col in RulesetBaseball.__table__.columns}
+
+                total_points = 0
+                for stat in stats:
+                    total_points += stat.calculate_fantasy_points(ruleset_dict)
+
+                performance = TeamPlayerPerformance.query.filter_by(
+                    week_num=week_num,
+                    player_id=player.player_id,
+                    league_id=team.league_id
+                ).first()
+
+                if performance:
+                    performance.fantasy_points = total_points
+                else:
+                    performance = TeamPlayerPerformance(
+                        week_num=week_num,
+                        player_id=player.player_id,
+                        league_id=team.league_id,
+                        starting_position=player.starting_position,
+                        fantasy_points=total_points
+                    )
+                    db.session.add(performance)
+
+        current_matchups = Matchup.query.filter_by(week_num=week_num).join(League).filter(League.sport == "mlb").all()
+
+        for matchup in current_matchups:
+            home_team_id = matchup.home_team_id
+            away_team_id = matchup.away_team_id
+
+            # Home team: sum fantasy points for all non-bench players
+            home_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
+                TeamPlayer.team_id == home_team_id,
+                TeamPlayerPerformance.week_num == week_num,
+                TeamPlayerPerformance.starting_position != "BEN"
+            ).all()
+
+            home_total_points = sum(player.fantasy_points for player in home_players)
+
+            # Away team: sum fantasy points for all non-bench players
+            away_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
+                TeamPlayer.team_id == away_team_id,
+                TeamPlayerPerformance.week_num == week_num,
+                TeamPlayerPerformance.starting_position != "BEN"
+            ).all()
+
+            away_total_points = sum(player.fantasy_points for player in away_players)
+
+            # Update matchup scores
+            matchup.home_team_score = home_total_points
+            matchup.away_team_score = away_total_points
+
+
+        db.session.commit()
+        print("Finished updating fantasy scores.")
 
 
 def update_player_stats():
@@ -184,6 +451,8 @@ def update_player_stats():
                         db.session.commit()
     
     print(f"Count of players not found in the database: {count}")
+
+    update_scores()
         
 def clean_up_daily_data():
     with app.app_context():
@@ -229,6 +498,7 @@ class League(db.Model):
     baseball_ruleset_id = db.Column(db.Integer, db.ForeignKey('rulesets_baseball.id'), nullable=True)
     hockey_ruleset_id = db.Column(db.Integer, db.ForeignKey('rulesets_hockey.id'), nullable=True)
     draft_time = db.Column(db.DateTime, nullable=True)  # Draft time for the league
+    membership_locked = db.Column(db.Boolean, default=False)
 
 class Team(db.Model):
     __tablename__ = 'teams'
@@ -728,6 +998,7 @@ def league_search():
         return jsonify({"error": "No data provided"}), 400
 
     id = get_jwt_identity()
+    print(f"user_id in league_search: {id}")
 
     teams = Team.query.filter_by(owner_id=id).all()
     response = []
@@ -745,12 +1016,12 @@ def league_search():
                 "league_name": league.name
             })
 
-    return jsonify({"message": response}), 200
+    return jsonify({"message": response, "user_id" : id, "num_teams" : len(teams)}), 200
 
 @app.route("/api/league/update-ruleset", methods=["POST"])
 @cross_origin(origin='*')
 @jwt_required()
-def update_ruleset(data=None):
+def update_ruleset():
     fields_football = [
         "points_passtd",
         "points_passyd",
@@ -830,10 +1101,8 @@ def update_ruleset(data=None):
     def build_ruleset_filter(model_cls, ruleset, fields):
         filters = {field: getattr(ruleset, field) for field in fields}
         return model_cls.query.filter_by(**filters)
-    standalone_call = False
-    if not data:
-        standalone_call = True
-        data = request.json
+    
+    data = request.json
 
     sport = data.get("sport")
     ruleset = None
@@ -847,7 +1116,6 @@ def update_ruleset(data=None):
                 db.session.commit()
             else:
                 ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
-                ruleset_id = ruleset.id
         elif sport == "nba":
             ruleset = RulesetBasketball(**data.get("ruleset"))
             if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
@@ -855,7 +1123,6 @@ def update_ruleset(data=None):
                 db.session.commit()
             else:
                 ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
-                ruleset_id = ruleset.id
         elif sport == "mlb":
             ruleset = RulesetBaseball(**data.get("ruleset"))
             if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
@@ -888,7 +1155,7 @@ def update_ruleset(data=None):
             db.session.commit()
         else:
             ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
-            
+
     elif sport == "mlb":
         ruleset = RulesetBaseball()
         if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
@@ -909,33 +1176,197 @@ def update_ruleset(data=None):
         return jsonify({"error": "Invalid sport"}), 400
     
     # called on update, not on league creation, so have to update db
-    if standalone_call:
-        league_id = data.get("league_id")
-        league = League.query.filter_by(id=league_id).first()
+
+    league_id = data.get("league_id")
+    league = League.query.filter_by(id=league_id).first()
+    if sport == "nfl":
+        league.football_ruleset_id = ruleset_id
+    elif sport == "nba":
+        league.basketball_ruleset_id = ruleset_id
+    elif sport == "mlb":
+        league.baseball_ruleset_id = ruleset_id
+    elif sport == "nhl":
+        league.hockey_ruleset_id = ruleset_id
+    db.session.commit()
+    return jsonify({"message": "Ruleset successfully updated."})
+
+
+
+
+# Non-standalone
+def update_ruleset(data):
+    fields_football = [
+        "points_passtd",
+        "points_passyd",
+        "points_2pt_passtd",
+        "points_2pt_rushtd",
+        "points_2pt_rectd",
+        "points_int",
+        "points_rushtd",
+        "points_rushyd",
+        "points_rectd",
+        "points_recyd",
+        "points_reception",
+        "points_fumble",
+        "points_sack",
+        "points_int_def",
+        "points_fumble_def",
+        "points_safety",
+        "points_def_td",
+        "points_block_kick",
+        "points_shutout",
+        "points_1_6_pa",
+        "points_7_13_pa",
+        "points_14_20_pa",
+        "points_21_27_pa",
+        "points_28_34_pa",
+        "points_35plus_pa",
+        "points_kick_return_td",
+        "points_punt_return_td",
+        "points_fg_0_39",
+        "points_fg_40_49",
+        "points_fg_50plus",
+        "points_fg_miss",
+        "points_xp",
+        "points_xp_miss"
+    ]
+
+    fields_basketball = [
+        "points_point",
+        "points_rebound",
+        "points_assist",
+        "points_steal",
+        "points_block",
+        "points_turnover",
+        "points_three_pointer",
+        "points_double_double",
+        "points_triple_double"
+    ]
+
+    fields_baseball = [
+        "points_hit",
+        "points_home_run",
+        "points_rbi",
+        "points_run",
+        "points_walk",
+        "points_strikeout",
+        "points_sb",
+        "points_cs",
+        "points_ip",
+        "points_pitcher_strikeout",
+        "points_win",
+        "points_save",
+        "points_earned_run"
+    ]
+
+    fields_hockey = [
+        "points_goal",
+        "points_assist",
+        "points_shot",
+        "points_hit",
+        "points_block",
+        "points_pp_point",
+        "points_sh_point",
+        "points_shutout",
+        "points_goal_against",
+        "points_save"
+    ]
+    def build_ruleset_filter(model_cls, ruleset, fields):
+        filters = {field: getattr(ruleset, field) for field in fields}
+        return model_cls.query.filter_by(**filters)
+    
+    sport = data.get("sport")
+    ruleset = None
+    if data.get("ruleset"):
+        # logic should be handled
         if sport == "nfl":
-            league.football_ruleset_id = ruleset_id
+            ruleset = RulesetFootball(**data.get("ruleset"))
+            if build_ruleset_filter(RulesetFootball, ruleset, fields_football).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
         elif sport == "nba":
-            league.basketball_ruleset_id = ruleset_id
+            ruleset = RulesetBasketball(**data.get("ruleset"))
+            if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
         elif sport == "mlb":
-            league.baseball_ruleset_id = ruleset_id
+            ruleset = RulesetBaseball(**data.get("ruleset"))
+            if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
         elif sport == "nhl":
-            league.hockey_ruleset_id = ruleset_id
-        db.session.commit()
-        return jsonify({"message": "Ruleset successfully updated."})
-    return ruleset, ruleset_id
+            ruleset = RulesetHockey(**data.get("ruleset"))
+            if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
+                db.session.add(ruleset)
+                db.session.commit()
+            else:
+                ruleset = build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).first()
+        else:
+            return jsonify({"error": "Invalid sport"}), 400
+        pass
+    elif sport == "nfl":
+        ruleset = RulesetFootball()
+        if build_ruleset_filter(RulesetFootball, ruleset, fields_football).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetFootball, ruleset, fields_football).first()
+            
+    elif sport == "nba":
+        ruleset = RulesetBasketball()
+        if build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetBasketball, ruleset, fields_basketball).first()
+
+    elif sport == "mlb":
+        ruleset = RulesetBaseball()
+        if build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetBaseball, ruleset, fields_baseball).first()
+            
+    elif sport == "nhl":
+        ruleset = RulesetHockey()
+        if build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).count() == 0:
+            db.session.add(ruleset)
+            db.session.commit()
+        else:
+            ruleset = build_ruleset_filter(RulesetHockey, ruleset, fields_hockey).first()
+            
+    else:
+        return jsonify({"error": "Invalid sport"}), 400
+    
+    return ruleset.id
 
 @app.route("/api/league/create", methods=["POST"])
 @cross_origin(origin='*')
 @jwt_required()
 def league_create():
     data = request.json
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
+    
+    commissioner_id = get_jwt_identity()
+    name = data.get("league_name")
+    sport = data.get("sport")
+    team_name = data.get("team_name")
+    if League.query.filter_by(commissioner_id=commissioner_id, name=name).count() != 0:
+        return jsonify({"error": "You already own a league with that name. Rename your league and try again."}), 400
     try:
-        ruleset, ruleset_id = update_ruleset(data)
+        ruleset_id = update_ruleset(data)
     except Exception as e:
         print(e)
-        return jsonify({"error": e}), 400
+        return jsonify({"error": traceback.format_exc()}), 400
     commissioner_id = get_jwt_identity()
     name = data.get("league_name")
     sport = data.get("sport")
@@ -1038,6 +1469,60 @@ def league_get_code():
 
     return jsonify({"message" : "League code generated.", "code" : code}), 201
 
+@app.route("/api/team/geturl", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_team_url():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    url = sqids.encode([data.get("team_id")])
+    return jsonify({"message": "Team URL successfully generated", "code": url})
+
+
+@app.route("/api/team/getteam", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_team():
+    data = request.json
+    print(data.get("code"))
+    if not data:
+        return jsonify({"error": "No data provided."}), 400
+    
+    id = sqids.decode(data.get("code"))[0]
+    roster = TeamPlayer.query.filter_by(team_id=id).all()
+    roster_list = []
+    for player in roster:
+        player_object = Player.query.filter_by(id=player.player_id).first()
+        roster_list.append({"player_id" : player.player_id, 
+                            "position" : player.starting_position, 
+                            "default_position" : player_object.position, 
+                            "team" : player_object.team_name, 
+                            "first_name" : player_object.first_name, 
+                            "last_name" : player_object.last_name})
+    
+    team = Team.query.filter_by(id=id).first()
+    sport = League.query.filter_by(id=team.league_id).first().sport
+    return jsonify({"message" : "Team successfully found.", "roster" : roster_list, "team_name" : team.name, "team_wins" : team.wins, "team_losses" : team.losses, "league_id" : team.league_id, "team_id": id, "sport": sport})
+
+
+@app.route("/api/team/changelineup", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def change_lineup():
+    data = request.json
+    if not data:
+        return jsonify({"error": "No data provided."}), 400
+    
+    team_id = data.get("team_id")
+    players = data.get("lineup")
+
+    for player in players:
+        team_player = TeamPlayer.query.filter_by(player_id=player.get("player_id"), team_id=team_id).first()
+        team_player.starting_position = player.get("new_position")
+    db.session.commit()
+
+    return jsonify({"message": "Lineup successfully saved."})
 
 @app.route("/api/league/getleague", methods=["POST"])
 @cross_origin(origin='*')
@@ -1051,7 +1536,8 @@ def get_league():
     id = sqids.decode(data.get("code"))[0]
     print(data.get("code"), id)
     team_data = [{"id": team.id, "name": team.name, "league_id": team.league_id, "league_rank" : team.rank, "owner_id": User.query.get(team.owner_id).username, "wins" : team.wins, "losses" : team.losses} for team in Team.query.filter_by(league_id=id).order_by(Team.rank).all()]
-    
+    if League.query.filter_by(id=id).count() == 0:
+        return jsonify({"error": "League with that id does not exist."}), 400
     league = League.query.filter_by(id=id).one()
     league_data = {"id": id, "name" : league.name, "sport" : league.sport, "num_teams" : Team.query.filter_by(league_id=id).count(), "commissioner" : league.commissioner_id}
     return jsonify({"teams" : team_data, "league": league_data}), 200
@@ -1101,6 +1587,7 @@ def get_players_by_league(league):
     
     return jsonify({"players": player_list}), 200
 
+
 @app.route("/api/draft/finalize", methods=["POST"])
 @cross_origin(origin="*")
 @jwt_required()
@@ -1137,12 +1624,54 @@ def finalize_draft():
                 db.session.add(team_player)
         
         db.session.commit()
+
+        team_ids = [team_data.get("teamId") for team_data in teams]
+        sport = data.get("sport")
+        matchups = create_matchups({"teams": team_ids, "sport": sport})
+
+        # adding matchups to database
+        for week_num, weekly_matchups in matchups.items():
+            for matchup in weekly_matchups:
+                matchup_item = Matchup(league_id = league_id, week_num=week_num, away_team_id = matchup.get("away"), home_team_id = matchup.get("home"))
+                db.session.add(matchup_item)
+        db.session.commit()
+
         return jsonify({"message": "Draft finalized successfully"}), 200
     
     except Exception as e:
         db.session.rollback()
         print(f"Error finalizing draft: {str(e)}")
         return jsonify({"error": f"Failed to finalize draft: {str(e)}"}), 500
+
+@app.route("/api/league/getmatchups", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_league_matchups():
+    data = request.json
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    league_id = data.get("leagueId")
+    if not league_id:
+        return jsonify({"error": "League ID is required"}), 400
+    
+    try:
+        matchups = Matchup.query.filter_by(league_id = league_id).all()
+        formatted_matchups = [{"id": matchup.id, 
+                               "week": matchup.week_num, 
+                               "away_team" : Team.query.filter_by(id=matchup.away_team_id).first().name, 
+                               "away_team_score": matchup.away_team_score,
+                               "home_team" : Team.query.filter_by(id=matchup.home_team_id).first().name,
+                               "home_team_score": matchup.home_team_score} for matchup in matchups]
+
+        return jsonify({"matchups": formatted_matchups}), 200
+
+        
+    except Exception as e:
+        print(f"Error getting league matchups: {str(e)}")
+        return jsonify({"error": "Failed to retrieve league matchups"}), 500
+
 
 @app.route("/api/league/rosters", methods=["POST"])
 @cross_origin(origin="*")
@@ -1184,7 +1713,66 @@ def get_league_rosters():
     except Exception as e:
         print(f"Error getting league rosters: {str(e)}")
         return jsonify({"error": "Failed to retrieve league rosters"}), 500
+
+
+# given dictionary of team names, sport
+def create_matchups(data : dict | None = None) -> dict | None:
+    if data is None or data.get("sport") is None or data.get("teams") is None:
+        print("Missing data in create_matchups.")
+        return
     
+    SEASON_WEEKS = {
+        "nhl": 21,
+        "nfl": 18,
+        "ncaaf": 16,
+        "mlb": 26,
+        "nba": 19
+    }
+
+    game = SPORTS[data.get("sport")]
+    # only works in season
+    current_week_num = get_week_number(datetime.now().year, game, data.get("sport"))
+
+    weeks_in_fantasy_season = SEASON_WEEKS[data.get("sport")]
+    # teams should be list of team ids.
+
+    num_teams = len(data.get("teams"))
+
+    teams = data.get("teams")
+    num_byes = num_teams % 2
+    matchups = {}
+    # Round-robin algorithm
+    rotation = teams.copy()
+    fixed_team = rotation.pop(0)  # Fix first team in place
+
+    for week in range(current_week_num, weeks_in_fantasy_season + 1):
+        weekly_matchups = []
+
+        # Pair the fixed team
+        if rotation:
+            home = fixed_team
+            away = rotation[-1]
+            if home != "BYE" and away != "BYE":
+                weekly_matchups.append({"home": home, "away": away})
+        
+        # Pair the rest
+        for i in range(num_teams // 2 - 1):
+            home = rotation[i]
+            away = rotation[-i - 2]
+            if home != "BYE" and away != "BYE":
+                weekly_matchups.append({"home": home, "away": away})
+        
+        matchups[week] = weekly_matchups
+
+        # Rotate teams for next week (clockwise)
+        rotation = [rotation[-1]] + rotation[:-1]
+
+    return matchups
+
+    
+
+
+
 
 @app.route('/api/request-reset', methods=['POST'])
 @cross_origin(origin='*')
@@ -1314,7 +1902,6 @@ def instantiate_players(league_id : int, sport : str, draft : dict):
     
     db.session.commit()
 
-SPORTS = {"nhl": "hockey", "nfl": "football", "mlb": "baseball", "nba": "basketball"}
 
 # Should populate the player table with all eligible players.
 def populate_player_table(league : str):
@@ -1343,6 +1930,7 @@ if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run
     sleep(2)
     with app.app_context():
+                
         db.create_all()
         update_player_stats()
     app.run(host='0.0.0.0', port=5000)
