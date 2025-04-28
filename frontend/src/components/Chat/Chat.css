@@ -1,13 +1,22 @@
 /* Main chat window layout */
 .chat-window {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  height: 400px; 
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  overflow: hidden; 
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s;
+    will-change: transform, opacity;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 400px; 
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    overflow: hidden; 
+}
+
+.chat-window.active {
+  transform: translateX(0);
+  opacity: 1;
 }
 
 /* Header (back arrow and title) */
@@ -137,6 +146,12 @@
   transition: background 0.2s;
   display: flex;
   flex-direction: column;
+}
+
+.user-list-item:hover {
+  background: #e3f0fc;
+  border-color: #1565c0;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .user-list-row {

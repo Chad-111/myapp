@@ -50,6 +50,10 @@ const LeagueChat = () => {
                 users.forEach(u => { map[u.id] = u.username; });
                 setUserMap(map);
             });
+    }, [token]);
+
+    useEffect(() => {
+        if (!token || !currentUserId || Object.keys(userMap).length === 0) return;
 
         fetch("/api/league/search", {
             method: "POST",
@@ -99,7 +103,7 @@ const LeagueChat = () => {
                         });
                 });
             });
-    }, [token, currentUserId]);
+    }, [token, currentUserId, userMap]);
 
     // Load messages for the selected league
     useEffect(() => {
@@ -137,7 +141,15 @@ const LeagueChat = () => {
     }, [token, selectedLeagueId]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        // Instant scroll when switching chats
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }, [selectedLeagueId]);
+
+    useEffect(() => {
+        // Smooth scroll when new messages arrive in the current chat
+        if (messagesByLeague[selectedLeagueId]?.length > 0) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
     }, [messagesByLeague, selectedLeagueId]);
 
     useEffect(() => {
@@ -214,7 +226,7 @@ const LeagueChat = () => {
 
     // League Chat View
     return (
-        <div className="chat-window">
+        <div className="chat-window active">
             <div className="chat-header">
                 <button
                     onClick={() => setSelectedLeagueId(null)}
