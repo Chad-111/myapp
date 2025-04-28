@@ -127,6 +127,8 @@ def update_scores():
                 ).first()
 
                 if performance:
+                    if performance.fantasy_points == 0: # if player has not already accrued points (has not played)
+                        performance.starting_position = player.starting_position
                     performance.fantasy_points = total_points
                 else:
                     performance = TeamPlayerPerformance(
@@ -139,6 +141,7 @@ def update_scores():
                     db.session.add(performance)
         # Now update Matchup scores
         current_matchups = Matchup.query.filter_by(week_num=week_num).join(League).filter(League.sport == "nhl").all()
+        print(f"NHL: Current matchups: {len(current_matchups)}")
 
         for matchup in current_matchups:
             home_team_id = matchup.home_team_id
@@ -146,18 +149,24 @@ def update_scores():
 
             # Home team: sum fantasy points for all non-bench players
             home_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
-                TeamPlayer.team_id == home_team_id,
-                TeamPlayerPerformance.week_num == week_num,
-                TeamPlayerPerformance.starting_position != "BEN"
+                and_(
+                    TeamPlayer.team_id == home_team_id,
+                    TeamPlayerPerformance.week_num == week_num,
+                    TeamPlayerPerformance.starting_position != "BEN",
+                    TeamPlayerPerformance.league_id == matchup.league_id
+                )
             ).all()
 
             home_total_points = sum(player.fantasy_points for player in home_players)
 
             # Away team: sum fantasy points for all non-bench players
             away_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
-                TeamPlayer.team_id == away_team_id,
-                TeamPlayerPerformance.week_num == week_num,
-                TeamPlayerPerformance.starting_position != "BEN"
+                and_(
+                    TeamPlayer.team_id == away_team_id,
+                    TeamPlayerPerformance.week_num == week_num,
+                    TeamPlayerPerformance.starting_position != "BEN",
+                    TeamPlayerPerformance.league_id == matchup.league_id
+                )
             ).all()
 
             away_total_points = sum(player.fantasy_points for player in away_players)
@@ -201,6 +210,8 @@ def update_scores():
                 ).first()
 
                 if performance:
+                    if performance.fantasy_points == 0: # if player has not already accrued points (has not played)
+                        performance.starting_position = player.starting_position
                     performance.fantasy_points = total_points
                 else:
                     performance = TeamPlayerPerformance(
@@ -214,6 +225,7 @@ def update_scores():
 
         # Now update Matchup scores
         current_matchups = Matchup.query.filter_by(week_num=week_num).join(League).filter(League.sport == "nba").all()
+        print(f"NBA: Current matchups: {len(current_matchups)}")
 
         for matchup in current_matchups:
             home_team_id = matchup.home_team_id
@@ -221,18 +233,22 @@ def update_scores():
 
             # Home team: sum fantasy points for all non-bench players
             home_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
-                TeamPlayer.team_id == home_team_id,
-                TeamPlayerPerformance.week_num == week_num,
-                TeamPlayerPerformance.starting_position != "BEN"
+                and_(
+                    TeamPlayer.team_id == home_team_id,
+                    TeamPlayerPerformance.week_num == week_num,
+                    TeamPlayerPerformance.starting_position != "BEN"),
+                    TeamPlayerPerformance.league_id == matchup.league_id
             ).all()
 
             home_total_points = sum(player.fantasy_points for player in home_players)
 
             # Away team: sum fantasy points for all non-bench players
             away_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
-                TeamPlayer.team_id == away_team_id,
-                TeamPlayerPerformance.week_num == week_num,
-                TeamPlayerPerformance.starting_position != "BEN"
+                and_(
+                    TeamPlayer.team_id == away_team_id,
+                    TeamPlayerPerformance.week_num == week_num,
+                    TeamPlayerPerformance.starting_position != "BEN"),
+                    TeamPlayerPerformance.league_id == matchup.league_id
             ).all()
 
             away_total_points = sum(player.fantasy_points for player in away_players)
@@ -276,6 +292,8 @@ def update_scores():
                 ).first()
 
                 if performance:
+                    if performance.fantasy_points == 0: # if player has not already accrued points (has not played)
+                        performance.starting_position = player.starting_position
                     performance.fantasy_points = total_points
                 else:
                     performance = TeamPlayerPerformance(
@@ -288,25 +306,31 @@ def update_scores():
                     db.session.add(performance)
 
         current_matchups = Matchup.query.filter_by(week_num=week_num).join(League).filter(League.sport == "mlb").all()
-
+        print(f"MLB: Current matchups: {len(current_matchups)}")
         for matchup in current_matchups:
             home_team_id = matchup.home_team_id
             away_team_id = matchup.away_team_id
 
             # Home team: sum fantasy points for all non-bench players
             home_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
-                TeamPlayer.team_id == home_team_id,
-                TeamPlayerPerformance.week_num == week_num,
-                TeamPlayerPerformance.starting_position != "BEN"
+                and_(
+                    TeamPlayer.team_id == home_team_id,
+                    TeamPlayerPerformance.week_num == week_num,
+                    TeamPlayerPerformance.starting_position != "BEN",
+                    TeamPlayerPerformance.league_id == matchup.league_id
+                )
             ).all()
 
             home_total_points = sum(player.fantasy_points for player in home_players)
 
             # Away team: sum fantasy points for all non-bench players
             away_players = TeamPlayerPerformance.query.join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id).filter(
-                TeamPlayer.team_id == away_team_id,
-                TeamPlayerPerformance.week_num == week_num,
-                TeamPlayerPerformance.starting_position != "BEN"
+                and_(
+                    TeamPlayer.team_id == away_team_id,
+                    TeamPlayerPerformance.week_num == week_num,
+                    TeamPlayerPerformance.starting_position != "BEN",
+                    TeamPlayerPerformance.league_id == matchup.league_id
+                )
             ).all()
 
             away_total_points = sum(player.fantasy_points for player in away_players)
