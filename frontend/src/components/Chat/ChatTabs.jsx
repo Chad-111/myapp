@@ -1,3 +1,5 @@
+// src/components/Chat/ChatInput.jsx
+
 export default function ChatTabs({ activeTab, setActiveTab }) {
     return (
         <div className="chat-tabs">

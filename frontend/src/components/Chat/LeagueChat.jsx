@@ -1,3 +1,5 @@
+// src/components/Chat/LeagueChat.jsx
+
 import React, { useState, useEffect, useRef } from "react";
 import socket from "../../socket";
 import { getAuthToken } from "../utils/auth";
@@ -226,7 +228,7 @@ const LeagueChat = () => {
 
     // League Chat View
     return (
-        <div className="chat-window active">
+        <div className="chat-window">
             <div className="chat-header">
                 <button
                     onClick={() => setSelectedLeagueId(null)}

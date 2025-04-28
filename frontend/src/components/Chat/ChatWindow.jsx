@@ -1,3 +1,5 @@
+// src/components/Chat/ChatInput.jsx
+
 import React, { useState } from 'react';
 import ChatTabs from './ChatTabs';
 import ChatMessages from './ChatMessages';

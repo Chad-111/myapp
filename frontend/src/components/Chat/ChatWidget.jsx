@@ -1,9 +1,9 @@
 // src/components/ChatWidget.jsx
 
 import React, { useState } from "react";
+import LeagueChat from "./LeagueChat";
+import DirectMessages from "./DirectMessages";
 import "./ChatWidget.css";
-import LeagueChat from "./LeagueChat"; // to be created
-import DirectMessages from "./DirectMessages"; // to be created
 
 const ChatWidget = () => {
     const [visible, setVisible] = useState(false);

@@ -24,7 +24,6 @@ function formatMessageMeta(name, timestamp) {
 
 const DirectMessages = () => {
     const [usersList, setUsersList] = useState([]);
-    const [userMap, setUserMap] = useState({});
     const [messagesByUser, setMessagesByUser] = useState({});
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
@@ -55,11 +54,6 @@ const DirectMessages = () => {
                 }));
                 setUsersList(filteredUsers);
 
-                // Build userMap for O(1) lookups
-                const map = {};
-                filteredUsers.forEach(u => { map[u.id] = u.username; });
-                setUserMap(map);
-
                 // Fetch latest message for each user
                 filteredUsers.forEach((user) => {
                     fetch("/api/chat/direct/messages", {
@@ -83,7 +77,7 @@ const DirectMessages = () => {
                                                 latestMeta: formatMessageMeta(
                                                     lastMsg.sender_id === currentUserId
                                                         ? "You"
-                                                        : map[lastMsg.sender_id] || lastMsg.sender_id,
+                                                        : user.username,
                                                     lastMsg.timestamp
                                                 )
                                             }
@@ -211,7 +205,7 @@ const DirectMessages = () => {
 
     // Direct Chat View
     return (
-        <div className="chat-window active">
+        <div className="chat-window">
             <div className="chat-header">
                 <button
                     onClick={() => setSelectedUserId(null)}
@@ -238,7 +232,7 @@ const DirectMessages = () => {
                             {msg.timestamp && (
                                 <div className="message-meta">
                                     {formatMessageMeta(
-                                        isMe ? "You" : userMap[msg.sender_id] || msg.sender_id,
+                                        isMe ? "You" : usersList.find(u => u.id === msg.sender_id)?.username || msg.sender_id,
                                         msg.timestamp
                                     )}
                                 </div>
