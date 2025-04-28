@@ -1,8 +1,8 @@
 // src/components/Chat/DirectMessages.jsx
 
-import React, { useEffect, useState, useRef } from "react";
-import socket from "../../socket";
+import React, { useState, useEffect, useRef } from "react";
 import { getAuthToken } from "../utils/auth";
+import socket from "../../socket";
 import "./Chat.css";
 
 const DirectMessages = () => {
@@ -11,12 +11,11 @@ const DirectMessages = () => {
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [input, setInput] = useState("");
-    const [view, setView] = useState("list"); // "list" or "chat"
     const messagesEndRef = useRef(null);
 
     const token = getAuthToken();
 
-    // Fetch current user and all users
+    // Fetch current user and users list
     useEffect(() => {
         if (!token) return;
 
@@ -75,14 +74,16 @@ const DirectMessages = () => {
 
     useEffect(() => {
         socket.on("receive_direct_message", (msg) => {
-            const otherId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
-            setMessagesByUser(prev => ({
+            setMessagesByUser((prev) => ({
                 ...prev,
-                [otherId]: [...(prev[otherId] || []), msg],
+                [msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id]: [
+                    ...(prev[msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id] || []),
+                    msg,
+                ],
             }));
-            setUsersList(prev =>
-                prev.map(u =>
-                    u.id === otherId
+            setUsersList((prev) =>
+                prev.map((u) =>
+                    u.id === (msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id)
                         ? { ...u, latestMessage: msg.content }
                         : u
                 )
@@ -97,95 +98,53 @@ const DirectMessages = () => {
             receiver_id: selectedUserId,
             content: input,
         });
-
-        // Optimistically update latestMessage for the selected user
-        setUsersList(prev =>
-            prev.map(u =>
-                u.id === selectedUserId
-                    ? { ...u, latestMessage: input }
-                    : u
-            )
-        );
-
         setInput("");
     };
 
-    // --- RENDER ---
-
     // User List View
-    if (view === "list") {
+    if (!selectedUserId) {
         return (
-            <div className="user-list-scrollable" style={{ maxHeight: 400, overflowY: "auto" }}>
-                {usersList.map(user => (
+            <div className="user-list-scrollable">
+                {usersList.map((user) => (
                     <div
                         key={user.id}
                         className="user-list-item"
-                        onClick={() => {
-                            setSelectedUserId(user.id);
-                            setView("chat");
-                        }}
-                        style={{ cursor: "pointer", padding: 12, borderBottom: "1px solid #eee" }}
+                        onClick={() => setSelectedUserId(user.id)}
                     >
-                        <div className="username" style={{ fontWeight: "bold" }}>{user.username}</div>
-                        <div className="preview" style={{ color: "#888", fontSize: "0.9em" }}>
-                            {user.latestMessage}
-                        </div>
+                        <div className="username">{user.username}</div>
+                        <div className="preview">{user.latestMessage}</div>
                     </div>
                 ))}
             </div>
         );
     }
 
-    // Chat View
+    // Direct Chat View
     return (
-        <div style={{ width: "100%" }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+        <div className="chat-window">
+            <div className="chat-header">
                 <button
-                    onClick={() => setView("list")}
-                    style={{
-                        marginRight: 12,
-                        background: "none",
-                        border: "none",
-                        fontSize: 22,
-                        cursor: "pointer"
-                    }}
+                    onClick={() => setSelectedUserId(null)}
+                    className="chat-back-btn"
                     aria-label="Back to user list"
                 >
                     ←
                 </button>
-                <span style={{ fontWeight: "bold", fontSize: 18 }}>
-                    {usersList.find(u => u.id === selectedUserId)?.username || "Chat"}
+                <span className="chat-title">
+                    {usersList.find((u) => u.id === selectedUserId)?.username || "Direct Message"}
                 </span>
             </div>
-            <div className="chat-messages" style={{ minHeight: 200, maxHeight: 300, overflowY: "auto", padding: 12, background: "#fff", borderRadius: 4, marginBottom: 8 }}>
+            <div className="chat-messages">
                 {(messagesByUser[selectedUserId] || []).map((msg) => {
                     const isMe = msg.sender_id === currentUserId;
-                    const senderName = isMe
-                        ? "You"
-                        : usersList.find(u => u.id === msg.sender_id)?.username || "Unknown";
                     return (
                         <div
                             key={msg.id || Math.random()}
                             className={`message ${isMe ? "my-message" : "their-message"}`}
-                            style={{
-                                display: "flex",
-                                justifyContent: isMe ? "flex-end" : "flex-start",
-                                marginBottom: 8,
-                            }}
                         >
-                            <div
-                                style={{
-                                    background: isMe ? "#1976d2" : "#f1f1f1",
-                                    color: isMe ? "#fff" : "#222",
-                                    borderRadius: 8,
-                                    padding: "8px 14px",
-                                    maxWidth: "70%",
-                                    wordBreak: "break-word",
-                                    textAlign: isMe ? "right" : "left",
-                                }}
-                            >
-                                <div style={{ fontWeight: "bold", fontSize: 13, marginBottom: 2 }}>
-                                    {senderName}
+                            <div className="message-bubble">
+                                <div className="message-sender">
+                                    {isMe ? "You" : usersList.find(u => u.id === msg.sender_id)?.username || msg.sender_id}
                                 </div>
                                 {msg.content}
                             </div>
@@ -194,28 +153,19 @@ const DirectMessages = () => {
                 })}
                 <div ref={messagesEndRef} />
             </div>
-            <div className="chat-input-row" style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <div className="chat-input-row">
                 <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     className="chat-input"
-                    placeholder="Type a direct message..."
+                    placeholder="Type a message..."
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                    style={{ flex: 1, padding: 8, border: "1px solid #ccc", borderRadius: 4 }}
                 />
                 <button
                     onClick={handleSend}
                     className="chat-send"
                     disabled={!selectedUserId}
-                    style={{
-                        padding: "8px 16px",
-                        background: "#1976d2",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 4,
-                        cursor: "pointer"
-                    }}
                 >
                     Send
                 </button>

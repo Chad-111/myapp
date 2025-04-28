@@ -11,6 +11,7 @@ const LeagueChat = () => {
     const [input, setInput] = useState("");
     const [view, setView] = useState("list"); // "list" or "chat"
     const messagesEndRef = useRef(null);
+    const [userMap, setUserMap] = useState({});
 
     const token = getAuthToken();
 
@@ -23,6 +24,16 @@ const LeagueChat = () => {
         })
             .then((res) => res.json())
             .then((data) => setCurrentUserId(data.id));
+
+        fetch("/api/users", {
+            headers: { Authorization: "Bearer " + token }
+        })
+            .then(res => res.json())
+            .then(users => {
+                const map = {};
+                users.forEach(u => { map[u.id] = u.username; });
+                setUserMap(map);
+            });
 
         fetch("/api/league/search", {
             method: "POST",
@@ -97,7 +108,6 @@ const LeagueChat = () => {
 
     const handleSend = () => {
         if (!input.trim() || !selectedLeagueId) return;
-        console.log("Sending message to league:", selectedLeagueId, "content:", input);
         socket.emit("send_message", {
             league_id: selectedLeagueId,
             content: input,
@@ -111,20 +121,6 @@ const LeagueChat = () => {
                     : l
             )
         );
-
-        // Optimistically add the message to the chat window
-        setMessagesByLeague(prev => ({
-            ...prev,
-            [selectedLeagueId]: [
-                ...(prev[selectedLeagueId] || []),
-                {
-                    id: Date.now(), // temporary id
-                    league_id: selectedLeagueId,
-                    sender_id: currentUserId,
-                    content: input,
-                }
-            ]
-        }));
 
         setInput("");
     };
@@ -155,52 +151,30 @@ const LeagueChat = () => {
 
     // League Chat View
     return (
-        <div style={{ width: "100%" }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+        <div className="chat-window">
+            <div className="chat-header">
                 <button
                     onClick={() => setView("list")}
-                    style={{
-                        marginRight: 12,
-                        background: "none",
-                        border: "none",
-                        fontSize: 22,
-                        cursor: "pointer"
-                    }}
+                    className="chat-back-btn"
                     aria-label="Back to league list"
                 >
                     ←
                 </button>
-                <span style={{ fontWeight: "bold", fontSize: 18 }}>
+                <span className="chat-title">
                     {leagues.find((l) => l.league_id === selectedLeagueId)?.league_name || "League Chat"}
                 </span>
             </div>
-            <div className="chat-messages" style={{ minHeight: 200, maxHeight: 300, overflowY: "auto", padding: 12, background: "#fff", borderRadius: 4, marginBottom: 8 }}>
+            <div className="chat-messages">
                 {(messagesByLeague[selectedLeagueId] || []).map((msg) => {
                     const isMe = msg.sender_id === currentUserId;
-                    // You can fetch usernames if you want, or just show IDs
                     return (
                         <div
                             key={msg.id || Math.random()}
                             className={`message ${isMe ? "my-message" : "their-message"}`}
-                            style={{
-                                display: "flex",
-                                justifyContent: isMe ? "flex-end" : "flex-start",
-                                marginBottom: 8,
-                            }}
                         >
-                            <div
-                                style={{
-                                    background: isMe ? "#1976d2" : "#f1f1f1",
-                                    color: isMe ? "#fff" : "#222",
-                                    borderRadius: 8,
-                                    padding: "8px 14px",
-                                    maxWidth: "70%",
-                                    wordBreak: "break-word",
-                                    textAlign: isMe ? "right" : "left",
-                                }}
-                            >
-                                <div style={{ fontWeight: "bold", fontSize: 13, marginBottom: 2 }}>
-                                    {isMe ? "You" : msg.sender_id}
+                            <div className="message-bubble">
+                                <div className="message-sender">
+                                    {isMe ? "You" : userMap[msg.sender_id] || msg.sender_id}
                                 </div>
                                 {msg.content}
                             </div>
@@ -209,7 +183,7 @@ const LeagueChat = () => {
                 })}
                 <div ref={messagesEndRef} />
             </div>
-            <div className="chat-input-row" style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <div className="chat-input-row">
                 <input
                     type="text"
                     value={input}
@@ -217,20 +191,11 @@ const LeagueChat = () => {
                     className="chat-input"
                     placeholder="Type a message..."
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                    style={{ flex: 1, padding: 8, border: "1px solid #ccc", borderRadius: 4 }}
                 />
                 <button
                     onClick={handleSend}
                     className="chat-send"
                     disabled={!selectedLeagueId}
-                    style={{
-                        padding: "8px 16px",
-                        background: "#1976d2",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 4,
-                        cursor: "pointer"
-                    }}
                 >
                     Send
                 </button>
