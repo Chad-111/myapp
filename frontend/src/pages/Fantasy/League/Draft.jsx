@@ -78,7 +78,7 @@ function Draft() {
           setTeams(response.data.teams);
 
           // Get user's team
-          const userResponse = await axios.get("/api/auth/me", {
+          const userResponse = await axios.get("/api/me", {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -297,7 +297,7 @@ function Draft() {
     // Determine next team based on snake draft rules if enabled
     let nextTeamIndex;
     // if draft should be over (make the logic better in the future)
-    if (currentPick/totalTeams > playerLimits[sport]) {
+    if (currentPick / totalTeams > playerLimits[sport]) {
       endDraft();
     }
     if (draftStatus.isSnakeDraft) {

@@ -45,7 +45,7 @@ function useLeagueData(leagueCode) {
                 setTeams(response.data.teams);
 
                 // Get user's team
-                const userResponse = await axios.get("/api/auth/me", {
+                const userResponse = await axios.get("/api/me", {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

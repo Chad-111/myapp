@@ -80,7 +80,7 @@ function LeagueHome() {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch("/api/me", {
           method: "GET",
           headers: {
             "Authorization": 'Bearer ' + authToken

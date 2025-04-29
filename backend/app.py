@@ -983,13 +983,21 @@ SPORTS_PATHS = {
     "ncaa_mbb": "basketball/mens-college-basketball",
 }
 
-@app.route("/api/auth/me", methods=["GET"])
-@cross_origin(origin="*")
+@app.route("/api/me", methods=["GET"])
+@cross_origin(origin='*')
 @jwt_required()
 def get_current_user():
     user_id = get_jwt_identity()
-    return jsonify({"id": user_id}), 200
+    user = User.query.get(user_id)
 
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    }), 200
 
 @app.route("/api/scoreboard")
 def get_scoreboard():
@@ -2230,23 +2238,6 @@ def fetch_direct_messages():
         }
         for msg in messages
     ]), 200
-
-@app.route("/api/me", methods=["GET"])
-@cross_origin(origin='*')
-@jwt_required()
-def get_current_user():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    return jsonify({
-        "id": user.id,
-        "username": user.username,
-        "email": user.email
-    }), 200
-
 
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run

@@ -17,7 +17,7 @@ function Navbar() {
 
     const fetchUserInfo = async () => {
       try {
-        const response = await fetch("/api/auth/me", {
+        const response = await fetch("/api/me", {
           method: "GET",
           headers: {
             Authorization: "Bearer " + authToken,
@@ -37,7 +37,6 @@ function Navbar() {
     }
 
   }, [location]);
-
 
   useEffect(() => {
     setIsLoggedIn(checkLogin());
@@ -61,7 +60,7 @@ function Navbar() {
 
       removeAuthToken();
       setIsLoggedIn(false);
-      
+
       // Disconnect from the socket server
       socket.disconnect();
 
