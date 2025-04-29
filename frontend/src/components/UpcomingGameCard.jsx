@@ -6,7 +6,6 @@ export default function UpcomingGameCard({ event, onClick }) {
     const comp = event.competitions?.[0];
     const home = comp?.competitors?.find(c => c.homeAway === 'home');
     const away = comp?.competitors?.find(c => c.homeAway === 'away');
-    const odds = comp?.odds?.[0];
     const gameDate = new Date(event.date);
 
     const [startsIn, setStartsIn] = useState("");
@@ -36,7 +35,7 @@ export default function UpcomingGameCard({ event, onClick }) {
             } else if (minutes > 0) {
                 setStartsIn(`Starts in: ${minutes}m ${seconds}s`);
             } else if (minutes === 0 && seconds > 0) {
-                setStartsIn(`Starts in: ${seconds}s`);
+                setStartsIn(`Starting in: ${seconds}s`);
             }
 
             if (diffMins <= 5) setCountdownColor("text-danger");
@@ -46,8 +45,6 @@ export default function UpcomingGameCard({ event, onClick }) {
             setStartsIn("");
         }
     };
-
-
 
     useEffect(() => {
         updateCountdown();
@@ -63,84 +60,71 @@ export default function UpcomingGameCard({ event, onClick }) {
         day: 'numeric',
     });
 
+    function getCroppedLogoUrl(logoUrl, size = 104) {
+        const path = new URL(logoUrl).pathname; // extracts /i/teamlogos/... from full URL
+        return `https://a.espncdn.com/combiner/i?img=${path}&w=${size}&h=${size}`;
+    }
 
     return (
-        <div className="mb-4 h-100">
+        <div className="h-100">
             <div
-                className="card p-3 shadow bg-teritary bg-gradient"
+                className="Dashboard-card card p-1 shadow shadow-md bg-teritary bg-gradient"
                 style={{ cursor: "pointer" }}
                 onClick={() => onClick(event)}
             >
                 <div
-                    className="d-flex justify-content-center align-items-center my-3"
-                    style={{ gap: '1rem' }}
+                    className="d-flex justify-content-center align-items-center my-1"
+                    style={{ gap: '0.2rem' }}
                 >
                     {/* Away Team */}
                     <div
                         className="d-flex flex-column align-items-center"
                         style={{ width: '45%' }} // equal fixed width
                     >
-                        <div className="fw-semibold text-center" style={{ fontSize: 'clamp(12px, 1.5vw, 14px)' }}>
+                        <div className="fs-6">
                             {away?.team?.displayName}
                         </div>
                         <img
-                            src={away?.team?.logo}
+                            src={getCroppedLogoUrl(away?.team?.logo)}
                             alt={away?.team?.displayName}
                             className="img-fluid mt-2"
                             style={{
-                                height: 'clamp(50px, 8vw, 60px)',
-                                width: 'clamp(50px, 8vw, 60px)',
-                                objectFit: 'contain',
-                                aspectRatio: '1 / 1'
+                                width: '50px',
                             }}
                         />
+
                     </div>
 
                     {/* @ Symbol */}
-                    <div style={{ fontSize: 'clamp(12px, 1.5vw, 16px)', fontWeight: 600 }}>@</div>
+                    <div style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>@</div>
 
                     {/* Home Team */}
                     <div
                         className="d-flex flex-column align-items-center"
                         style={{ width: '45%' }} // exact same fixed width
                     >
-                        <div className="fw-semibold text-center" style={{ fontSize: 'clamp(12px, 1.5vw, 14px)' }}>
+                        <div className="fs-6">
                             {home?.team?.displayName}
                         </div>
                         <img
-                            src={home?.team?.logo}
+                            src={getCroppedLogoUrl(home?.team?.logo)}
                             alt={home?.team?.displayName}
                             className="img-fluid mt-2"
                             style={{
-                                height: 'clamp(50px, 8vw, 60px)',
-                                width: 'clamp(50px, 8vw, 60px)',
-                                objectFit: 'contain',
-                                aspectRatio: '1 / 1'
+                                width: '50px',
                             }}
                         />
                     </div>
                 </div>
-
-
-
-
                 {startsIn && (
-                    <p className={`text-center fw-semibold fs-6 small my-1 ${countdownColor}`}>
+                    <p className={`text-center fs-6 small my-1 ${countdownColor}`}>
                         {startsIn}
                     </p>
                 )}
                 {showDate && (
-                    <p className="text-center text-muted small mb-1">
+                    <p className="text-center fs-6 small my-1 text-muted">
                         {formattedDate}
                     </p>
-                )}
-
-
-
-                {odds && (
-                    <div className="card-footer text-muted text-center mt-auto">
-                        <div className="fw-semibold">{odds.details}</div>
-                    </div>
                 )}
             </div>
         </div>

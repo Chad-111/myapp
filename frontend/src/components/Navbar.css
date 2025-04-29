@@ -1,239 +1,78 @@
 .Navbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.5rem 1.5rem;
-  height: 56px;
-  background-color: #1c1f26;
-}
-
-.navbar-wrapper-left {
-  position: absolute;
-  left: 0;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding-left: 1rem;
-}
-
-.navbar-wrapper-right {
-  position: absolute;
-  right: 0;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding-left: 1rem;
+  background-color: #111;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .navbar-logo {
   font-size: 1.5rem;
-  font-weight: 900;
-  color: #00d4ff;
-  flex-shrink: 0;
+  font-weight: bold;
 }
 
-.navbar-spacer {
-  width: 2rem;
-}
-
-.navbar-links {
-  list-style: none;
-  display: flex;
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-}
-
+/* Main Navbar links */
 .navbar-links li a {
+  color: #ccc;
+  text-decoration: none;
   padding: 0.5rem 1rem;
-  text-decoration: none;
-  color: #f1f1f1;
-  font-weight: 600;
-  border-radius: 6px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  display: inline-block;
 }
 
-
-.navbar-links li a:hover,
-.navbar-links li a:focus {
-  background-color: #2e323a;
-  color: #00d4ff;
-}
-
-.navbar-spacer {
-  width: 2rem;
-  flex-shrink: 0;
-}
-
-.Navbar.compact {
-  height: 32px;
-  padding: 0.25rem 1rem;
-  justify-content: flex-start;
-  display: none;
-}
-
-.Navbar.compact .navbar-links {
-  display: none;
-}
-
-.Navbar.compact .navbar-logo {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #2d7c8b;
-}
-
-
-/* Dropdown Container */
-.dropdown-content {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: #2e323a;
-  min-width: 200px;
-  border-radius: 6px;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
-  padding: 1rem 0;
-  display: none;
-  flex-direction: column;
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.dropdown-content li {
-  width: 100%;
-}
-
-.dropdown-content li a {
+.navbar-links li a:hover {
+  background-color: #333;
   color: #fff;
-  padding: 1rem 1rem;
 }
 
-.dropdown-content li a:hover {
-  background: #444;
-  color: #00d4ff;
+.navbar-links li a.active {
+  background-color: #007bff;
+  color: #fff;
 }
 
-/* Show class from React */
-.dropdown-content.show {
+.FantasySubnav {
+  font-size: 0.9rem;
+  background-color: #1a1a1a;
+  overflow-x: hidden;
   display: flex;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  nav ul {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  nav a {
-    width: 100%;
-  }
-
-  .dropdown-content {
-    position: static;
-    box-shadow: none;
-    padding-left: 1rem;
-    display: none;
-  }
-
-  .dropdown-content.show {
-    display: block;
-  }
-}
-
-/* Sidebar styles */
-.FantasySidebar {
-  width: 220px;
-  background-color: #1c1f26;
-  color: #f1f1f1;
-  padding: 1.5rem 1rem;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  z-index: 900;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.sidebar-heading {
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  color: #12c3e6d3;
-  padding-left: 0.5rem;
-}
-
-.sidebar-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sidebar-links li a {
-  color: #f1f1f1;
+.subnav-link {
+  color: #ccc;
   text-decoration: none;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.subnav-link:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.subnav-link.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.offcanvas .nav-link {
+  padding: 0.75rem 1rem;
+  color: #333;
   font-weight: 500;
-  display: block;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.sidebar-links li a:hover,
-.sidebar-links li a.active {
-  background-color: #2e323a;
-  color: #00d4ff;
+.offcanvas .nav-link:hover {
+  background-color: #f8f9fa;
+  color: #000;
 }
 
-/* Push content when sidebar exists */
-.layout-wrapper {
-  display: flex;
-}
+/* Navbar.css */
 
-.layout-wrapper .Navbar {
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .FantasySidebar {
-    position: fixed;
-    width: 100%;
-    height: auto;
-    top: auto;
-    bottom: 0;
-    flex-direction: row;
-    justify-content: space-around;
-    padding: 0.75rem 0.5rem;
+@media (max-width: 992px) {
+  .navbar-links {
+    display: none !important;
   }
 
-  .sidebar-heading {
-    display: none;
+  .FantasySubnav {
+    display: none !important;
   }
-
-  .sidebar-links {
-    flex-direction: row;
-    gap: 1rem;
-  }
-
-  .sidebar-links li a {
-    padding: 0.5rem 0.75rem;
-  }
-}
-
-/* For non-fantasy routes */
-.standard-padding {
-  padding: 1.5rem 2rem;
-}
-
-/* When sidebar is present */
-.with-sidebar {
-  padding-top: 1rem;
-  padding-left: 250px;
-  /* Matches sidebar width */
-  padding-right: 1.5rem;
 }

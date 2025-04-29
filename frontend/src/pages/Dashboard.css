@@ -31,13 +31,13 @@
   font-family: 'Open Sans', sans-serif;
 }
 
-.card {
+.Dashboard-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   height: 100%;
   cursor: pointer;
 }
 
-.card:hover {
+.Dashboard-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
@@ -59,7 +59,7 @@
   text-align: center;
 }
 
-.card-img-top {
+.Dashboard-card-img-top {
   object-fit: cover;
   height: 180px;
   width: 100%;
@@ -76,13 +76,13 @@
 .nav-pills .nav-link.active {
   color: #ffffff !important;
   /* active text color */
-  background-color: #12c3e6d3 !important;
+  background-color: #0d6efd !important;
   /* custom active bg (blue-ish) */
   border: none;
 }
 
 .nav-pills .nav-link:hover {
-  background-color: #12c3e641;
+  background-color: #007bff25;
   /* optional hover color */
   color: #000;
 }
@@ -96,7 +96,7 @@
 
 /* Override Bootstrap dropdown hover using CSS variables */
 .dropdown-menu {
-  --bs-dropdown-link-hover-bg: #12c3e641;
+  --bs-dropdown-link-hover-bg: #007bff25;
   /* custom hover background */
   --bs-dropdown-link-hover-color: #000000;
   /* custom hover text color */
@@ -104,7 +104,7 @@
 
 /* Active item styling */
 .dropdown-item.active {
-  background-color: #12c3e6d3 !important;
+  background-color: #007bff !important;
   color: #fff !important;
   border-radius: 5%;
 }

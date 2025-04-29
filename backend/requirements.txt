@@ -19,3 +19,6 @@ sqids
 Flask-Mail
 flask-socketio
 eventlet
+aiohttp
+requests==2.32.3
+apscheduler==3.11.0
