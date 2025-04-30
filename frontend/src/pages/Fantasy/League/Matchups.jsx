@@ -4,9 +4,13 @@ import FantasyHomeButton from "../../../components/FantasyHomeButton";
 import useLeagueData from "../../../components/utils/LeagueHook";
 import { useLeagueContext } from "../../../components/utils/LeagueContext";
 import { getAuthToken } from "../../../components/utils/auth";
+import { useNavigate } from 'react-router-dom';
+
 
 function Matchups() {
   const { code } = useParams();
+  const navigate = useNavigate();
+
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const leagueCode = code || queryParams.get("code");
@@ -18,6 +22,29 @@ function Matchups() {
   const [matchups, setMatchups] = useState([]);
   const [matchupsLoading, setMatchupsLoading] = useState(false);
   const [matchupsError, setMatchupsError] = useState(null);
+
+  const navToMatchup = async (matchId) => {
+    try { 
+      const authToken = getAuthToken();
+      console.log(matchId);
+      const response = await fetch("/api/matchup/getcode", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({matchup_id: matchId})
+      });
+
+      const data = await response.json();
+
+      const code = data.code;
+      navigate(`/matchup/${code}/details`)
+      return
+    } catch (err) {
+      setMatchupsError('Error finding matchup details.');
+    } 
+  };
 
   useEffect(() => {
     if (leagueCode) {
@@ -175,7 +202,12 @@ function Matchups() {
                   </div>
                 </div>
                 <div className="card-footer text-end">
-                  <button className="btn btn-sm btn-outline-primary">View Details</button>
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => navToMatchup(match.id)}>
+                    View Details
+                  </button>
+
                 </div>
               </div>
             </div>
