@@ -60,10 +60,13 @@ const LeagueChat = () => {
         fetch("/api/league/search", {
             method: "POST",
             headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-            body: JSON.stringify({}),
+            body: JSON.stringify({}), // always send a body
         })
             .then((res) => res.json())
             .then((data) => {
+                if (!data.message) {
+                    throw new Error(data.error || "No leagues found");
+                }
                 const leagues = data.message.map((l) => ({
                     ...l,
                     latestMessage: "",
@@ -104,6 +107,9 @@ const LeagueChat = () => {
                             }
                         });
                 });
+            })
+            .catch(e => {
+                console.error(e.message || e);
             });
     }, [token, currentUserId, userMap]);
 

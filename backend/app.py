@@ -1070,9 +1070,10 @@ def get_users():
 @cross_origin(origin="*")
 @jwt_required()
 def league_search():
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
+# Accept empty or missing body
+    # data = request.json
+    # if not data:
+    #     return jsonify({"error": "No data provided"}), 400
 
     id = get_jwt_identity()
     print(f"user_id in league_search: {id}")
