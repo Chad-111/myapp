@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
 import useLeagueData from "../../../components/utils/LeagueHook";
 import { useLeagueContext } from "../../../components/utils/LeagueContext";
 import { getAuthToken } from "../../../components/utils/auth";
 
 function LeagueSchedule() {
+  const navigate = useNavigate();
   const { code } = useParams();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -18,6 +19,31 @@ function LeagueSchedule() {
   const [schedule, setSchedule] = useState([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [scheduleError, setScheduleError] = useState(null);
+
+
+
+  const navToMatchup = async (matchId) => {
+    const authToken = getAuthToken();
+    try {
+      const response = await fetch("/api/matchup/getcode", {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ matchup_id: matchId })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        navigate(`/matchup/${data.code}/details`);
+      } else {
+        alert("Error navigating to matchup details.");
+      }
+    } catch (err) {
+      alert("Error navigating to matchup details.");
+    }
+  };
+
 
   useEffect(() => {
     if (leagueCode) {
@@ -165,6 +191,7 @@ function LeagueSchedule() {
                     <th>Home Score</th>
                     <th>Away Team</th>
                     <th>Away Score</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -175,16 +202,25 @@ function LeagueSchedule() {
                         <td>{game.home_team_score}</td>
                         <td>{game.away_team}</td>
                         <td>{game.away_team_score}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => navToMatchup(game.id)}
+                          >
+                            View Details
+                          </button>
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="text-center py-3">
+                      <td colSpan="5" className="text-center py-3">
                         No games scheduled for Week {selectedWeek}
                       </td>
                     </tr>
                   )}
                 </tbody>
+
               </table>
             </div>
           )}

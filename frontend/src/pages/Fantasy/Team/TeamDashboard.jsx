@@ -97,6 +97,20 @@ const TeamDashboard = () => {
         return <div>{error}</div>;
     }
 
+    const sortedRoster = [...roster].sort((a, b) => {
+        // 1. Prioritize starters (anything not BEN comes before BEN)
+        if (a.position === "BEN" && b.position !== "BEN") return 1;
+        if (a.position !== "BEN" && b.position === "BEN") return -1;
+    
+        // 2. If both same starter/bench status, sort alphabetically by position
+        if (a.position < b.position) return -1;
+        if (a.position > b.position) return 1;
+    
+        // 3. Then sort by last name as tiebreaker
+        return a.last_name.localeCompare(b.last_name);
+    });
+    
+
     return (
         <div>
             <h1>Team Dashboard</h1>
@@ -128,7 +142,7 @@ const TeamDashboard = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {roster.map((player, index) => (
+                        {sortedRoster.map((player, index) => (
                             <tr key={index}>
                                 <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.first_name}</td>
                                 <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.last_name}</td>

@@ -20,6 +20,8 @@ from flask_mail import Mail, Message
 from scraping import get_daily_stats, return_all_player_details, get_week_number, get_daily_games, get_week_start_end_date  # Ensure scraping.py is in the same directory or in the Python path
 import requests
 from sqlalchemy import and_
+from sqlalchemy import asc
+
 
 sqids = Sqids(min_length=7)
 
@@ -1793,6 +1795,73 @@ def get_league_rosters():
         print(f"Error getting league rosters: {str(e)}")
         return jsonify({"error": "Failed to retrieve league rosters"}), 500
 
+@app.route("/api/matchup/getcode", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_matchup_code():
+    data = request.json
+    if not data:
+        return jsonify({"error" : "No data provided."}), 400
+    
+    matchup_id = data.get("matchup_id")
+    if not matchup_id:
+        return jsonify({"error" : "Matchup id required."}), 400
+    
+    return jsonify({"code" : sqids.encode([matchup_id])})
+
+@app.route("/api/matchup/details", methods=["POST"])
+@cross_origin(origin="*")
+@jwt_required()
+def get_matchup_details():
+    data = request.json
+    if not data or "matchup_code" not in data:
+        return jsonify({"error": "matchup_code required"}), 400
+
+    decoded = sqids.decode(data["matchup_code"])
+    if not decoded:
+        return jsonify({"error": "Invalid code"}), 400
+
+    matchup_id = decoded[0]
+    matchup = Matchup.query.get(matchup_id)
+    if not matchup:
+        return jsonify({"error": "Matchup not found"}), 404
+
+    week = matchup.week_num
+    league_id = matchup.league_id
+
+    def get_players(team_id):
+        performances = (
+            TeamPlayerPerformance.query
+            .filter_by(week_num=week, league_id=league_id)
+            .join(TeamPlayer, TeamPlayerPerformance.player_id == TeamPlayer.player_id)
+            .filter(TeamPlayer.team_id == team_id)
+            .order_by(TeamPlayerPerformance.starting_position)
+            .all()
+        )
+        results = []
+        for p in performances:
+            player = Player.query.get(p.player_id)
+            if player:
+                results.append({
+                    "name": f"{player.first_name} {player.last_name}",
+                    "position": p.starting_position,
+                    "points": p.fantasy_points
+                })
+        return results
+
+    return jsonify({
+        "matchup": {
+            "week": matchup.week_num,
+            "home_team": Team.query.get(matchup.home_team_id).name,
+            "away_team": Team.query.get(matchup.away_team_id).name,
+            "home_score": matchup.home_team_score,
+            "away_score": matchup.away_team_score
+        },
+        "home_players": get_players(matchup.home_team_id),
+        "away_players": get_players(matchup.away_team_id)
+    }), 200
+
+
 
 # given dictionary of team names, sport
 def create_matchups(data : dict | None = None) -> dict | None:
@@ -1955,31 +2024,6 @@ def email_test():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# def get_player_list(sport : str):
-#     if Player.query.filter_by(sport=sport).count() == 0:
-#         populate_player_table(sport)
-    
-#     return [dict(player) for player in Player.query.filter_by(sport=sport).all()]
-
-# Not applied now, but building general logic, will be ran on draft creation
-# Draft objest should be dict with key as player_id and value as team_id.
-def instantiate_players(league_id : int, sport : str, draft : dict):
-    if Player.query.filter_by(sport=sport).count() == 0:
-        populate_player_table(sport)
-    
-    if TeamPlayer.query.filter_by(league_id=league_id).count() != 0:
-        raise Exception("League already has players.")
-
-    # instantiate instance of all players
-    for player in Player.query.filter_by(sport=sport).all():
-        if player.id in draft.keys():
-            new_player = TeamPlayer(player_id=player.id, league_id=league_id, team_id=draft[player.id])
-        else:
-            new_player = TeamPlayer(player_id=player.id, league_id=league_id)
-        
-        db.session.add(new_player)
-    
-    db.session.commit()
 
 
 # Messaging API Routes

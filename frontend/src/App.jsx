@@ -37,6 +37,9 @@ import CreateRuleset from "./pages/Fantasy/CreateRuleset";
 import Unauthorized from "./pages/Unauthorized";
 import TeamDashboard from "./pages/Fantasy/Team/TeamDashboard";
 import ManageLineup from "./pages/Fantasy/Team/ManageLineup";
+import MatchupDetails from './pages/Fantasy/League/MatchupDetails';
+
+
 
 export const RedirectContext = createContext("/dashboard");
 
@@ -124,6 +127,7 @@ function Layout() {
               <Route path="/league/settings/:code" element={<ProtectedRoute><LeagueSettings /></ProtectedRoute>} />
               <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
               <Route path="/league/draft/:code" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
+              <Route path="/matchup/:matchupId/details" element={<ProtectedRoute><MatchupDetails /></ProtectedRoute>} />
               <Route path="/team/home/*" element={<ProtectedRoute><TeamDashboard/></ProtectedRoute>} />
               <Route path="/team/managelineup/*" element={<ProtectedRoute><ManageLineup/></ProtectedRoute>} />
             </Routes>

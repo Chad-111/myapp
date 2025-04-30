@@ -23,11 +23,12 @@ const FLEX_MAP = {
 };
 
 const ManageLineup = () => {
+    const [showModal, setShowModal] = useState(false);
+    const [modalPosition, setModalPosition] = useState("");
     const [team, setTeam] = useState();
     const [teamId, setTeamId] = useState();
     const [roster, setRoster] = useState([]);
     const [sport, setSport] = useState("");
-    const [startingLineup, setStartingLineup] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -69,7 +70,6 @@ const ManageLineup = () => {
                     }
                 });
         
-                setStartingLineup(initialLineup);
             } catch (err) {
                 console.log(err);
                 setError('Failed to fetch team data.');
@@ -82,60 +82,68 @@ const ManageLineup = () => {
         fetchTeam();
     }, []);
 
-    const handleToggleStart = (playerIndex) => {
+    const openFillSlotModal = (position) => {
+        setModalPosition(position);
+        setShowModal(true);
+    };
+
+    const handleAssignToSlot = (playerId, position) => {
         const updatedRoster = [...roster];
-        const player = updatedRoster[playerIndex];
+        const index = updatedRoster.findIndex(p => p.player_id === playerId);
+        if (index === -1) return;
+    
+        updatedRoster[index].position = position;
+        setRoster(updatedRoster);
+    
+    
+        setShowModal(false);
+        setModalPosition("");
+    };
+
+    
+    const handleToggleStart = (playerId) => {
+        const updatedRoster = [...roster];
+        const index = updatedRoster.findIndex(p => p.player_id === playerId);
+        if (index === -1) return;
+    
+        const player = updatedRoster[index];
         const playerDefaultPos = player.default_position;
     
         if (player.position !== 'BEN') {
-            // Move player to bench
-            setStartingLineup(prev => ({
-                ...prev,
-                [player.position]: (prev[player.position] || 0) - 1
-            }));
-            updatedRoster[playerIndex].position = "BEN";
+            // Move to bench
+            updatedRoster[index].position = "BEN";
         } else {
-            const currentCount = startingLineup[playerDefaultPos] || 0;
             const maxAllowed = POSITION_LIMITS[sport][playerDefaultPos] || 0;
+            const currentCount = roster.filter(
+                p => p.position === playerDefaultPos
+            ).length;
 
-            console.log(currentCount);
-            console.log(maxAllowed);
-            console.log('sport:', sport);
-            console.log('playerDefaultPos:', playerDefaultPos);
-            console.log('POSITION_LIMITS[sport]:', POSITION_LIMITS[sport]);
-    
             if (currentCount < maxAllowed) {
-                // Start player at their default position
-                setStartingLineup(prev => ({
-                    ...prev,
-                    [playerDefaultPos]: currentCount + 1
-                }));
-                updatedRoster[playerIndex].position = playerDefaultPos;
+                updatedRoster[index].position = playerDefaultPos;
+                setRoster(updatedRoster);
+                return;
             } else {
-                // Try to assign flex
+                // Try flex
                 let assignedFlex = null;
                 const flexOptions = FLEX_MAP[sport];
-    
                 if (flexOptions) {
                     for (const flexPos in flexOptions) {
                         if (flexOptions[flexPos].includes(playerDefaultPos)) {
-                            const flexCurrent = startingLineup[flexPos] || 0;
+                            const flexCurrent = roster.filter(p => p.position === flexPos).length;
                             const flexMax = POSITION_LIMITS[sport][flexPos] || 0;
-    
+
                             if (flexCurrent < flexMax) {
-                                assignedFlex = flexPos;
-                                break;
+                                updatedRoster[index].position = flexPos;
+                                setRoster(updatedRoster);
+                                return;
                             }
+
                         }
                     }
                 }
     
                 if (assignedFlex) {
-                    setStartingLineup(prev => ({
-                        ...prev,
-                        [assignedFlex]: (prev[assignedFlex] || 0) + 1
-                    }));
-                    updatedRoster[playerIndex].position = assignedFlex;
+                    updatedRoster[index].position = assignedFlex;
                 } else {
                     alert(`Cannot start more players at ${playerDefaultPos} or eligible flex.`);
                     return;
@@ -145,6 +153,32 @@ const ManageLineup = () => {
     
         setRoster(updatedRoster);
     };
+    
+
+    const getSortedRosterWithEmptySlots = () => {
+        const positionOrder = Object.keys(POSITION_LIMITS[sport]);
+        const slots = [];
+    
+        // 1. Add starters per position in order
+        positionOrder.forEach(pos => {
+            const max = POSITION_LIMITS[sport][pos];
+            const filled = roster.filter(p => p.position === pos);
+            const numFilled = filled.length;
+    
+            for (let i = 0; i < max; i++) {
+                if (i < numFilled) {
+                    slots.push(filled[i]);  // player in position
+                } else {
+                    slots.push({ empty: true, position: pos });  // empty slot
+                }
+            }
+        });
+    
+        // 2. Add bench players
+        const bench = roster.filter(p => p.position === "BEN");
+        return [...slots, ...bench];
+    };
+    
     
 
     const handleSaveLineup = async () => {
@@ -183,7 +217,20 @@ const ManageLineup = () => {
         return <div>{error}</div>;
     }
 
+    const eligibleBenchPlayers = roster.filter(p => {
+        if (p.position !== "BEN") return false;
+        if (modalPosition === "") return false;
+    
+        // Default position matches slot OR is valid flex
+        const isDirectMatch = p.default_position === modalPosition;
+        const isFlexMatch = FLEX_MAP[sport]?.[modalPosition]?.includes(p.default_position);
+    
+        return isDirectMatch || isFlexMatch;
+    });
+    
+
     return (
+        <>
         <div>
             <h1>Manage Lineup</h1>
             {team ? (
@@ -208,25 +255,85 @@ const ManageLineup = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {roster.map((player, index) => (
-                            <tr key={index}>
-                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.first_name}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.last_name}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.player_id}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.team}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.default_position}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{player.position}</td>
+                        {getSortedRosterWithEmptySlots().map((player, index) => (
+
+                            <tr key={index} style={{ backgroundColor: player.empty ? "#f9f9f9" : (player.position === "BEN" ? "#fff" : "#eaffea") }}>
+
                                 <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                                    <button onClick={() => handleToggleStart(index)}>
-                                        {player.position !== "BEN" ? "Bench" : "Start"}
-                                    </button>
+                                    {player.empty ? "-" : player.first_name}
+                                </td>
+                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                                    {player.empty ? "-" : player.last_name}
+                                </td>
+                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                                    {player.empty ? "-" : player.player_id}
+                                </td>
+                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                                    {player.empty ? "-" : player.team}
+                                </td>
+                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                                    {player.empty ? player.position : player.default_position}
+                                </td>
+                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                                    {player.empty ? player.position : player.position}
+                                </td>
+                                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                                    {player.empty ? (
+                                        <td colSpan="7" style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}>
+                                        <em style={{ color: "#aaa" }}>Empty {player.position} slot</em>
+                                        <button style={{ marginLeft: "10px" }} onClick={() => openFillSlotModal(player.position)}>
+                                            Fill Slot
+                                        </button>
+                                        </td>
+                                    
+                                    ) : (
+                                        <button onClick={() => handleToggleStart(player.player_id)}>
+                                            {player.position !== "BEN" ? "Bench" : "Start"}
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
+
                         ))}
                     </tbody>
                 </table>
             </div>
         </div>
+        <div>{showModal && (
+            <div style={{
+                position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+                backgroundColor: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "center", alignItems: "center"
+            }}>
+                <div style={{
+                    backgroundColor: "#fff",
+                    padding: "25px",
+                    borderRadius: "12px",
+                    width: "600px",              // wider modal
+                    maxHeight: "85vh",           // taller scrollable content
+                    overflowY: "auto",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.2)" // optional subtle shadow
+                }}>
+                    <h4>Select Player for {modalPosition}</h4>
+                    <ul style={{ listStyle: "none", padding: 0 }}>
+                        {eligibleBenchPlayers.length === 0 && <li>No eligible players</li>}
+                        {eligibleBenchPlayers.map((player) => (
+                            <li key={player.player_id} style={{ margin: "10px 0" }}>
+                                {player.first_name} {player.last_name} ({player.default_position}) – {player.team}
+                                <button style={{ float: "right" }} onClick={() => handleAssignToSlot(player.player_id, modalPosition)}>
+                                    Assign
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                    <button onClick={() => setShowModal(false)} style={{ marginTop: "15px" }}>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        )}
+        </div>
+        </>
+        
     );
 };
 
