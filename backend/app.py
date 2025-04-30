@@ -1017,7 +1017,8 @@ def get_scoreboard():
         resp.raise_for_status()
         return jsonify(resp.json())
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error fetching scoreboard: {e}")
+        return jsonify({"error": f"Failed to fetch scoreboard for {sport_key} on {dates}: {str(e)}"}), 502
 
 @app.route("/api/news")
 def get_news():
