@@ -1,6 +1,6 @@
 // src/components/ChatWidget.jsx
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import LeagueChat from "./LeagueChat";
 import DirectMessages from "./DirectMessages";
 import "./ChatWidget.css";
@@ -8,6 +8,15 @@ import "./ChatWidget.css";
 const ChatWidget = () => {
     const [visible, setVisible] = useState(false);
     const [activeTab, setActiveTab] = useState("league");
+    const prevTab = useRef("league");
+
+    // Determine slide direction
+    const getSlideClass = () => {
+        if (activeTab === prevTab.current) return "";
+        const direction = activeTab === "league" ? "slide-left" : "slide-right";
+        prevTab.current = activeTab;
+        return direction;
+    };
 
     return (
         <div className={`chat-widget ${visible ? "open" : ""}`}>
@@ -32,7 +41,7 @@ const ChatWidget = () => {
                         </button>
                     </div>
 
-                    <div className="chat-body">
+                    <div className={`chat-body-transition ${getSlideClass()}`}>
                         {activeTab === "league" ? <LeagueChat /> : <DirectMessages />}
                     </div>
                 </div>
