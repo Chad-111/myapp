@@ -51,7 +51,7 @@ def get_defense_details():
         player = {
             # Using negative id for defense/special teams
             "id": "nfl" + str(-int(team.get("team").get("id"))),
-            "name": f"{team.get("team").get("displayName")} D/ST",
+            "name": f"{team.get('team').get('displayName')} D/ST",
             "first_name": "",
             "last_name": "",
             "position": "DST",
