@@ -89,7 +89,7 @@ def test_matchup_scoring_details(client, user_token):
     code = client.post("/api/league/getcode", headers={"Authorization": f"Bearer {token2}"}, json={"url" : url}).get_json()["code"]
     client.post("/api/league/join", headers={"Authorization": f"Bearer {token2}"}, json={
         "code": code,
-        "team_name": "Team Beta"
+        "name": "Team Beta"
     })
 
     # Create a matchup manually
