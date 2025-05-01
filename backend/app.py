@@ -866,6 +866,13 @@ class LeagueMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+class LeagueMessageRead(db.Model):
+    __tablename__ = 'league_message_reads'
+    id = db.Column(db.Integer, primary_key=True)
+    message_id = db.Column(db.Integer, db.ForeignKey('league_messages.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    read_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
 class DirectMessage(db.Model):
     __tablename__ = 'direct_messages'
     id = db.Column(db.Integer, primary_key=True)
@@ -873,7 +880,7 @@ class DirectMessage(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-
+    read = db.Column(db.Boolean, default=False)
 
 
 # ✅ API Routes
@@ -2178,19 +2185,50 @@ def send_league_message():
 def fetch_league_messages():
     data = request.json
     chat_id = data.get("chat_id")
+    user_id = get_jwt_identity()
     if not chat_id:
         return jsonify({"error": "Chat ID required"}), 400
 
     messages = LeagueMessage.query.filter_by(chat_id=chat_id).order_by(LeagueMessage.timestamp).all()
+    read_ids = set(
+        r.message_id for r in LeagueMessageRead.query.filter_by(user_id=user_id).filter(LeagueMessageRead.message_id.in_([m.id for m in messages])).all()
+    )
 
     return jsonify([
         {
             "id": msg.id,
             "sender_id": msg.sender_id,
             "content": msg.content,
-            "timestamp": msg.timestamp.isoformat()
+            "timestamp": msg.timestamp.isoformat(),
+            "read": msg.id in read_ids
         } for msg in messages
     ]), 200
+
+@app.route("/api/chat/league/mark_read", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def mark_league_messages_read():
+    data = request.json
+    chat_id = data.get("chat_id")
+    user_id = get_jwt_identity()
+    if not chat_id:
+        return jsonify({"error": "Chat ID required"}), 400
+
+    # Get all unread messages for this chat
+    messages = LeagueMessage.query.filter_by(chat_id=chat_id).all()
+    message_ids = [msg.id for msg in messages]
+
+    # Find which messages are already marked as read
+    already_read = set(
+        r.message_id for r in LeagueMessageRead.query.filter_by(user_id=user_id).filter(LeagueMessageRead.message_id.in_(message_ids)).all()
+    )
+
+    # Insert read records for unread messages
+    for msg_id in message_ids:
+        if msg_id not in already_read:
+            db.session.add(LeagueMessageRead(message_id=msg_id, user_id=user_id))
+    db.session.commit()
+    return jsonify({"message": "Messages marked as read"}), 200
 
 @app.route("/api/league/<int:league_id>/messages", methods=["GET"])
 @jwt_required()
@@ -2217,28 +2255,7 @@ def get_league_messages(league_id):
         } for msg in messages]
     })
 
-# Should populate the player table with all eligible players.
-def populate_player_table(league : str):
-    sport = SPORTS.get(league)
-    if not sport:
-        raise Exception("Invalid league specified.")
-
-    player_data = return_all_player_details(sport, league)
-    print(player_data)
-    for player in player_data:
-        if Player.query.filter_by(id=player.get('id')).count() == 0:
-            new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
-            db.session.add(new_player)
-        else:
-            existing_player = Player.query.filter_by(id=player.get('id')).first()
-            new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
-            existing_player.position = new_player.position
-            existing_player.team_name = new_player.team_name
-            existing_player.last_name = new_player.last_name
-            existing_player.first_name = new_player.first_name
-            existing_player.sport = new_player.sport
-        
-    db.session.commit()@app.route("/api/chat/direct/send", methods=["POST"])
+@app.route("/api/chat/direct/send", methods=["POST"])
 @cross_origin(origin='*')
 @jwt_required()
 def send_direct_message():
@@ -2280,10 +2297,52 @@ def fetch_direct_messages():
             "sender_id": msg.sender_id,
             "receiver_id": msg.receiver_id,
             "content": msg.content,
-            "timestamp": msg.timestamp.isoformat()
+            "timestamp": msg.timestamp.isoformat(),
+            "read": msg.read
         }
         for msg in messages
     ]), 200
+
+@app.route("/api/chat/direct/mark_read", methods=["POST"])
+@cross_origin(origin='*')
+@jwt_required()
+def mark_direct_messages_read():
+    data = request.json
+    user_id = get_jwt_identity()
+    other_user_id = data.get("other_user_id")
+    if not other_user_id:
+        return jsonify({"error": "Missing user"}), 400
+
+    DirectMessage.query.filter(
+        DirectMessage.sender_id == other_user_id,
+        DirectMessage.receiver_id == user_id,
+        DirectMessage.read == False
+    ).update({"read": True})
+    db.session.commit()
+    return jsonify({"message": "Messages marked as read"}), 200
+
+# Should populate the player table with all eligible players.
+def populate_player_table(league : str):
+    sport = SPORTS.get(league)
+    if not sport:
+        raise Exception("Invalid league specified.")
+
+    player_data = return_all_player_details(sport, league)
+    print(player_data)
+    for player in player_data:
+        if Player.query.filter_by(id=player.get('id')).count() == 0:
+            new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
+            db.session.add(new_player)
+        else:
+            existing_player = Player.query.filter_by(id=player.get('id')).first()
+            new_player = Player(id=player.get('id'), position=player.get('position'), team_name=player.get('team'), last_name=player.get('last_name'), first_name=player.get('first_name'), sport=sport)
+            existing_player.position = new_player.position
+            existing_player.team_name = new_player.team_name
+            existing_player.last_name = new_player.last_name
+            existing_player.first_name = new_player.first_name
+            existing_player.sport = new_player.sport
+        
+    db.session.commit()
 
 if __name__ == '__main__':
     # create_all does not update tables if they are already in the database, so this should be here for first run

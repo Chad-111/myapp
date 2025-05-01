@@ -1,9 +1,31 @@
 /* src/components/ChatWidget.css */
 
+:root {
+  --chat-bg: #fff;
+  --chat-bg-alt: #f1f1f1;
+  --chat-border: #eee;
+  --chat-text: #222;
+  --chat-input-bg: #fff;
+  --chat-input-border: #eee;
+  --chat-tab-active-bg: #fff;
+  --chat-tab-hover-bg: #e3f0fc;
+}
+
+[data-bs-theme="dark"] {
+  --chat-bg: #181c24;
+  --chat-bg-alt: #232a36;
+  --chat-border: #2c3440;
+  --chat-text: #f1f1f1;
+  --chat-input-bg: #232a36;
+  --chat-input-border: #2c3440;
+  --chat-tab-active-bg: #232a36;
+  --chat-tab-hover-bg: #222f3e;
+}
+
 .chat-widget {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 60px;
   font-family: sans-serif;
   z-index: 999;
 }
@@ -21,13 +43,14 @@
 .chat-container {
   width: 350px;
   height: 400px;
-  background: #fff;
+  background: var(--chat-bg);
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   margin-top: 10px;
   display: flex;
   flex-direction: column;
+  color: var(--chat-text);
 }
 
 .chat-body {
@@ -52,7 +75,8 @@
   width: 100%;
   height: 100%;
   transition: transform 0.4s cubic-bezier(0.77, 0, 0.18, 1);
-  background: #fff;
+  background: var(--chat-bg);
+  color: var(--chat-text);
 }
 
 .slide-left > * {
@@ -83,7 +107,7 @@
 
 .chat-tabs {
   display: flex;
-  background: #f1f1f1;
+  background: var(--chat-bg-alt);
 }
 
 .chat-tabs button {
@@ -93,15 +117,16 @@
   cursor: pointer;
   background: transparent;
   font-weight: bold;
+  color: var(--chat-text);
 }
 
 .chat-tabs button.active {
-  background: white;
+  background: var(--chat-tab-active-bg);
   border-bottom: 2px solid #1d9bf0;
 }
 
 .chat-tabs button:hover:not(.active) {
-  background: #e3f0fc;
+  background: var(--chat-tab-hover-bg);
   color: #1976d2;
   transition: background 0.15s, color 0.15s;
 }
@@ -112,7 +137,8 @@
   overflow-x: hidden;
   padding: 12px;
   min-height: 0;
-  background: #fff;
+  background: var(--chat-bg);
+  color: var(--chat-text);
 }
 
 .chat-header {
@@ -120,8 +146,9 @@
   display: flex;
   align-items: center;
   padding: 8px;
-  border-bottom: 1px solid #eee;
-  background: #fff;
+  border-bottom: 1px solid var(--chat-border);
+  background: var(--chat-bg);
+  color: var(--chat-text);
 }
 
 .chat-input-row {
@@ -129,6 +156,6 @@
   display: flex;
   gap: 8px;
   padding: 8px;
-  border-top: 1px solid #eee;
-  background: #fff;
+  border-top: 1px solid var(--chat-input-border);
+  background: var(--chat-input-bg);
 }
