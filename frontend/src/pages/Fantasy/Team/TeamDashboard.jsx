@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // ← Add this!
+import React, { useEffect, useState, useContext} from 'react';
+import { useNavigate, useLocation } from 'react-router-dom'; // ← Add this!
 import { getAuthToken } from '../../../components/utils/auth';
-
+import { RedirectContext } from '../../../App';
 const TeamDashboard = () => {
+    const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
     const [team, setTeam] = useState();
     const [roster, setRoster] = useState([]);
     const [teamId, setTeamId] = useState();
     const [leagueId, setLeagueId] = useState();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const location = useLocation();
 
     const navigate = useNavigate(); // ← for navigation
 
@@ -80,6 +82,7 @@ const TeamDashboard = () => {
 
             const data = await response.json();
             if (response.ok) {
+                setRedirectLocation(location.pathname);
                 navigate(`/league/home/${data.code}`);
             } else {
                 alert('Failed to navigate to league.');

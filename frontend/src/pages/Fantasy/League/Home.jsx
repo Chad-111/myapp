@@ -159,8 +159,22 @@ function LeagueHome() {
     <div className="container mt-4">
       {/* Navigation section moved to top */}
       <Box mb={4}>
-        <Typography variant="h5" className="text-center mb-3">League Navigation</Typography>
-        <Grid container spacing={2} justifyContent="center">
+      <Typography variant="h5" className="text-center mb-3">League Navigation</Typography>
+
+      {redirectLocation?.includes("team/home") && (
+        <Box textAlign="center" mb={2}>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => navigate(redirectLocation)}
+            startIcon={<GroupsIcon />}
+          >
+            Back to Team Homepage
+          </Button>
+        </Box>
+      )}
+
+      <Grid container spacing={2} justifyContent="center">
           <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%', cursor: 'pointer', transition: '0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 3 } }}
               onClick={() => navigate(`/league/standings/${leagueCode}`)}>

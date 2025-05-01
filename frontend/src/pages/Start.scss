@@ -28,6 +28,16 @@ body {
   }
 }
 
+.password-strength {
+  margin-top: 4px;
+  small {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.85rem;
+  }
+}
+
+
 .header-headings {
   display: flex;
   flex-direction: column;

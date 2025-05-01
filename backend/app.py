@@ -2079,7 +2079,7 @@ def handle_send_message(data):
             "sender_id": user_id,
             "league_id": league_id,
             "content": content,
-            "timestamp": new_message.timestamp.isoformat(),
+            "timestamp": new_message.timestamp.astimezone(timezone.utc).isoformat(),
         }, room=f"league_{league_id}")
     except NoAuthorizationError:
         emit("error", {"message": "Unauthorized"})
@@ -2112,7 +2112,7 @@ def handle_send_direct_message(data):
             "sender_id": sender_id,
             "receiver_id": receiver_id,
             "content": content,
-            "timestamp": message.timestamp.isoformat()
+            "timestamp": message.timestamp.astimezone(timezone.utc).isoformat()
         }, room=f"user_{receiver_id}")
 
         emit("receive_direct_message", {
@@ -2120,7 +2120,7 @@ def handle_send_direct_message(data):
             "sender_id": sender_id,
             "receiver_id": receiver_id,
             "content": content,
-            "timestamp": message.timestamp.isoformat()
+            "timestamp" :message.timestamp.astimezone(timezone.utc).isoformat()
         }, room=f"user_{sender_id}")
 
         return {"status": "ok", "id": message.id}
@@ -2200,7 +2200,7 @@ def fetch_league_messages():
             "id": msg.id,
             "sender_id": msg.sender_id,
             "content": msg.content,
-            "timestamp": msg.timestamp.isoformat(),
+            "timestamp": msg.timestamp.astimezone(timezone.utc).isoformat(),
             "read": msg.id in read_ids
         } for msg in messages
     ]), 200
@@ -2263,7 +2263,7 @@ def league_chat_summary():
             "latestMessage": last_msg.content,
             "latestMeta": {
                 "sender_id": last_msg.sender_id,
-                "timestamp": last_msg.timestamp.isoformat()
+                "timestamp": last_msg.timestamp.astimezone(timezone.utc).isoformat()
             },
             "unreadCount": unread_count
         })
@@ -2290,7 +2290,7 @@ def get_league_messages(league_id):
             "id": msg.id,
             "sender_id": msg.sender_id,
             "content": msg.content,
-            "timestamp": msg.timestamp.isoformat()  
+            "timestamp": msg.timestamp.astimezone(timezone.utc).isoformat()
         } for msg in messages]
     })
 
@@ -2336,7 +2336,7 @@ def fetch_direct_messages():
             "sender_id": msg.sender_id,
             "receiver_id": msg.receiver_id,
             "content": msg.content,
-            "timestamp": msg.timestamp.isoformat(),
+            "timestamp": msg.timestamp.astimezone(timezone.utc).isoformat(),
             "read": msg.read
         }
         for msg in messages

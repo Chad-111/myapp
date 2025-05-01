@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAuthToken } from '../../../components/utils/auth';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const POSITION_LIMITS = {
     nfl: { "QB": 1, "RB": 2, "WR": 2, "TE": 1, "FLX": 1, "DST": 1, "K": 1 },
@@ -23,6 +24,8 @@ const FLEX_MAP = {
 };
 
 const ManageLineup = () => {
+    const navigate = useNavigate();
+    const { code } = useParams();
     const [showModal, setShowModal] = useState(false);
     const [modalPosition, setModalPosition] = useState("");
     const [team, setTeam] = useState();
@@ -238,9 +241,16 @@ const ManageLineup = () => {
             ) : (
                 <p>No team data available.</p>
             )}
+            <button
+                onClick={() => navigate(`/team/home/${code}`)}
+                style={{ marginBottom: "10px", padding: "10px" }}
+            >
+                ← Back to Team Homepage
+            </button>
             <button onClick={handleSaveLineup} style={{ marginBottom: "20px", padding: "10px" }}>
                 Save Lineup
             </button>
+
             <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>

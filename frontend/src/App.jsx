@@ -126,7 +126,7 @@ function Layout() {
               <Route path="/fantasy/myteam" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
               <Route path="/fantasy/create" element={<ProtectedRoute><LeagueCreation /></ProtectedRoute>} />
               <Route path="/fantasy/create-ruleset" element={<ProtectedRoute><CreateRuleset /></ProtectedRoute>} />
-              <Route path="/league/home/*" element={<ProtectedRoute><LeagueHome /></ProtectedRoute>} />
+              <Route path="/league/home/:code" element={<ProtectedRoute><LeagueHome /></ProtectedRoute>} />
               <Route path="/league/matchups/:code" element={<ProtectedRoute><Matchups /></ProtectedRoute>} />
               <Route path="/league/members/:code" element={<ProtectedRoute><LeagueMembers /></ProtectedRoute>} />
               <Route path="/league/portal/:code" element={<ProtectedRoute><TradePortal /></ProtectedRoute>} />
@@ -137,8 +137,8 @@ function Layout() {
               <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
               <Route path="/league/draft/:code" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
               <Route path="/matchup/:matchupId/details" element={<ProtectedRoute><MatchupDetails /></ProtectedRoute>} />
-              <Route path="/team/home/*" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
-              <Route path="/team/managelineup/*" element={<ProtectedRoute><ManageLineup /></ProtectedRoute>} />
+              <Route path="/team/home/:code" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
+              <Route path="/team/managelineup/:code" element={<ProtectedRoute><ManageLineup /></ProtectedRoute>} />
             </Routes>
           </main>
         </LeagueProvider>

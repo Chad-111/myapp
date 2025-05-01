@@ -11,6 +11,7 @@ function Form({ option }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [repeatPassword, setRepeatPassword] = useState('');
+    const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '' });
     const navigate = useNavigate();
     const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
     const [resetStep, setResetStep] = useState(1);
@@ -114,6 +115,26 @@ function Form({ option }) {
         await handleSendResetCode(new Event('resend'));
     };
 
+    const handlePasswordChange = (value) => {
+        setPassword(value);
+        evaluatePasswordStrength(value);
+    };
+    
+    const evaluatePasswordStrength = (pwd) => {
+        let score = 0;
+        if (pwd.length >= 8) score++;
+        if (/[A-Z]/.test(pwd)) score++;
+        if (/[0-9]/.test(pwd)) score++;
+        if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    
+        const labels = ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'];
+        setPasswordStrength({
+            score,
+            label: labels[score]
+        });
+    };
+    
+
     const handleVerifyCode = async (event) => {
         event.preventDefault();
         try {
@@ -187,11 +208,31 @@ function Form({ option }) {
                                     className="form-control"
                                     placeholder="Password"
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => handlePasswordChange(e.target.value)}
                                     required={option === 1 || option === 2}
                                 />
                                 <div className="invalid-feedback">Please enter a password.</div>
                             </div>
+                            {option === 2 && password && (
+                                <div className="password-strength mt-1">
+                                    <div style={{
+                                        height: '6px',
+                                        borderRadius: '3px',
+                                        background: '#e0e0e0',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            width: `${(passwordStrength.score / 4) * 100}%`,
+                                            height: '100%',
+                                            background: ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#198754'][passwordStrength.score],
+                                            transition: 'width 0.3s ease'
+                                        }} />
+                                    </div>
+                                    <small className="text-muted">{passwordStrength.label}</small>
+                                </div>
+                            )}
+
+                            
                             {option === 2 && (
                                 <div className="form-group mb-2 drop-item">
                                     <input
