@@ -83,7 +83,8 @@ def test_matchup_scoring_details(client, user_token):
 
     # Join the league with second team
     leagues = client.post("/api/league/search", headers={"Authorization": f"Bearer {token2}"})
-    code = leagues.get_json()["message"][0]["league_code"]
+    id = leagues.get_json()["message"][0]["league_id"]
+    code = client.post("/api/league/getcode", headers={"Authorization": f"Bearer {token2}"}, json={"url" : code}).get_json()["code"]
     client.post("/api/team/create", headers={"Authorization": f"Bearer {token2}"}, json={
         "code": code,
         "team_name": "Team Beta"
