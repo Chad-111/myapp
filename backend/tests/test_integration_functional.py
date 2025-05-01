@@ -105,7 +105,7 @@ def test_matchup_scoring_details(client, user_token):
         db.session.commit()
 
         # Add synthetic players + performance to home team
-        player = TeamPlayer(team_id=home.id, player_id=1234, starting_position="QB")
+        player = TeamPlayer(team_id=home.id, league_id = id, player_id=1234, starting_position="QB")
         db.session.add(player)
         db.session.commit()
 
