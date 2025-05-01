@@ -1,9 +1,13 @@
-name: Flask Tests
+name: CI/CD Test and Deploy
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
+    name: Run Flask Tests
     runs-on: ubuntu-latest
 
     services:
@@ -35,8 +39,9 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest
 
-      - name: Wait for PostgreSQL to be ready
+      - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432 -U testuser; do sleep 1; done
 
@@ -48,3 +53,26 @@ jobs:
           PYTHONPATH: .
         run: |
           pytest tests/ --maxfail=1 --disable-warnings -v
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: test  # ✅ Waits for test to pass
+    if: success()  # ✅ Only runs if tests succeed
+
+    steps:
+      - name: SSH into Server and Deploy
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf ~/myapp
+            git clone git@github.com:Chad-111/myapp.git ~/myapp
+            cd ~/myapp
+            git pull
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+            docker system prune -f -a --volumes
