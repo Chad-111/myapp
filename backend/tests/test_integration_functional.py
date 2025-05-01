@@ -94,7 +94,6 @@ def test_matchup_scoring_details(client, user_token):
 
     # Create a matchup manually
     from app import Team, Matchup, TeamPlayer, TeamPlayerPerformance
-    from app.utils import sqids  # assuming sqids is accessible under app.utils
 
     with app.app_context():
         teams = Team.query.all()
@@ -114,11 +113,13 @@ def test_matchup_scoring_details(client, user_token):
         db.session.add(perf)
         db.session.commit()
 
-        matchup_code = sqids.encode([matchup.id])
-
+        matchup_id = matchup.id
     # Hit the scoring endpoint
+    code = client.post("/api/matchup/getcode", headers={"Authorization": f"Bearer {user_token}"}, json={
+        "matchup_id" : matchup_id
+    }).get_json()["code"]
     res = client.post("/api/matchup/details", headers={"Authorization": f"Bearer {user_token}"}, json={
-        "matchup_code": matchup_code
+        "matchup_code": code
     })
 
     assert res.status_code == 200
