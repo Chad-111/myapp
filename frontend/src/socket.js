@@ -2,7 +2,7 @@
 import { io } from "socket.io-client";
 import { getAuthToken } from "./components/utils/auth";
 
-const socket = io("http://localhost:5000", {
+const socket = io("https://draftempire.win", {
   autoConnect: false,
   transports: ["websocket"], // force websocket clearly
 });
