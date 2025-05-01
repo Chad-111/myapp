@@ -93,7 +93,7 @@ def test_matchup_scoring_details(client, user_token):
     })
 
     # Create a matchup manually
-    from app import Team, Matchup, TeamPlayer, TeamPlayerPerformance
+    from app import Team, Matchup, TeamPlayer, TeamPlayerPerformance, Player
 
     with app.app_context():
         teams = Team.query.all()
@@ -104,12 +104,13 @@ def test_matchup_scoring_details(client, user_token):
         db.session.add(matchup)
         db.session.commit()
 
+        player = Player(sport="NFL", position="QB", team_name="Los Angeles Rams", last_name="Player", first_name="Test")
         # Add synthetic players + performance to home team
-        player = TeamPlayer(team_id=home.id, league_id = id, player_id=1234, starting_position="QB")
+        team_player = TeamPlayer(team_id=home.id, league_id = id, player_id=player.id, starting_position="QB")
         db.session.add(player)
         db.session.commit()
 
-        perf = TeamPlayerPerformance(week_num=1, league_id=home.league_id, player_id=1234,
+        perf = TeamPlayerPerformance(week_num=1, league_id=home.league_id, player_id=player.id,
                                      fantasy_points=25.3, starting_position="QB")
         db.session.add(perf)
         db.session.commit()
