@@ -2,7 +2,9 @@
 import pytest
 import bcrypt
 import sys
+import os
 sys.path.append("../")
+print(os.getcwd())
 from app import app, db
 from app import User  
 
