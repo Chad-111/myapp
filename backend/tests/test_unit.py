@@ -101,7 +101,23 @@ def test_login_failure(client):
         "password": "wrongpass"
     })
     assert response.status_code == 401
+
+    client.post('/api/signup', json={
+        "username": "newuser",
+        "email": "test@example.com",
+        "password": "secure456"
+    })
+    client.post('/api/logout')
+
+    response2 = client.post('/api/login', json={
+        "username": "newuser",
+        "password": "wrongpass"
+    })
+
     assert "Invalid username or password" in response.get_json()["error"]
+
+    # assert that username enumeration is not possible
+    assert response.get_json()["error"] == response2.get_json()["error"]
 
 def test_create_league_missing_field(client, access_token):
     response = client.post('/api/league/create',
