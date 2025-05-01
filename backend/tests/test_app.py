@@ -1,6 +1,8 @@
 
 import pytest
 import bcrypt
+import sys
+sys.path.append("../")
 from app import app, db
 from app import User  
 
