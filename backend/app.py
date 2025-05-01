@@ -961,11 +961,11 @@ def login():
     # Find user by email
     user = User.query.filter_by(username=username).first()
     if not user:
-        return jsonify({"error": "Invalid credentials"}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
 
     # Check if password matches
     if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-        return jsonify({"error": "Invalid credentials"}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
 
     # Give validated user token
     access_token = create_access_token(identity=user.id)
