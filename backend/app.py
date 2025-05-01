@@ -1447,7 +1447,7 @@ def league_create():
         return jsonify({"error": "No data provided"}), 400
     
     if not data.get("league_name") or not data.get("sport") or not data.get("team_name"):
-        return jsonify({"error": "Missing required data"})
+        return jsonify({"error": "Missing required data"}), 400
     commissioner_id = get_jwt_identity()
     name = data.get("league_name")
     sport = data.get("sport")
