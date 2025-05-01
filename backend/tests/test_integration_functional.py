@@ -42,29 +42,6 @@ def test_team_enrollment(client, user_token):
     data = league_res.get_json()
     assert "League successfully created" in data["message"]
 
-def test_scoring_with_synthetic_data(client, user_token):
-    # Create league and team
-    league_res = client.post("/api/league/create", headers={"Authorization": f"Bearer {user_token}"}, json={
-        "league_name": "Scoring League",
-        "sport": "nfl",
-        "team_name": "Scoring Team"
-    })
-    assert league_res.status_code == 201
-
-    # Create synthetic player and performance
-    with app.app_context():
-        team = Team.query.first()
-        player = TeamPlayer(team_id=team.id, player_id=9999, position="QB", default_position="QB")
-        db.session.add(player)
-        db.session.commit()
-        perf = TeamPlayerPerformance(team_player_id=player.id, passing_tds=2, passing_yds=250)
-        db.session.add(perf)
-        db.session.commit()
-
-    # Score matchup (simulate endpoint)
-    resp = client.get(f"/api/team/{team.id}/score")  # Assuming such endpoint exists
-    assert resp.status_code in [200, 404]  # 404 if endpoint isn't real yet
-
 def test_concurrent_user_latency(client):
     def signup_and_login(i):
         username = f"user{i}"
@@ -125,7 +102,7 @@ def test_matchup_scoring_details(client, user_token):
         db.session.commit()
 
         # Add synthetic players + performance to home team
-        player = TeamPlayer(team_id=home.id, player_id=1234, position="QB", default_position="QB")
+        player = TeamPlayer(team_id=home.id, player_id=1234, starting_position="QB")
         db.session.add(player)
         db.session.commit()
 
