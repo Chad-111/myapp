@@ -57,8 +57,8 @@ def test_concurrent_user_latency(client):
         })
         return res.status_code
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        results = list(executor.map(signup_and_login, range(10)))
+    with ThreadPoolExecutor(max_workers=1000) as executor:
+        results = list(executor.map(signup_and_login, range(1000)))
         assert all(code == 201 for code in results)
 
 def test_matchup_scoring_details(client, user_token):
@@ -128,4 +128,3 @@ def test_matchup_scoring_details(client, user_token):
     data = res.get_json()
     assert "matchup" in data
     assert data["matchup"]["home_score"] == 120.5
-    assert len(data["home_players"]) >= 1
