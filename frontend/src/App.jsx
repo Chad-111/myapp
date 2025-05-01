@@ -49,9 +49,15 @@ function Layout() {
   const [theme, setTheme] = useState("light");
   const isFantasyRoute = location.pathname.startsWith("/league");
   const [redirectLocation, setRedirectLocation] = useState("/dashboard");
+  const [isLoggedIn, setIsLoggedIn] = useState(!!getAuthToken());
+
   useEffect(() => {
     document.body.setAttribute("data-bs-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    setIsLoggedIn(!!getAuthToken());
+  }, [location]);
 
   // Check if the user is logged in and connect to the socket
   useEffect(() => {
@@ -67,12 +73,15 @@ function Layout() {
           <Navbar />
           <IconButton
             color="primary"
-            className="position-fixed bottom-0 end-0 m-3 z-3"
             aria-label={`switch to ${theme === "light" ? "dark" : "light"} mode`}
             onClick={() => setTheme(prev => (prev === "light" ? "dark" : "light"))}
             disableRipple={true} // disables the ripple effect on click
             disableFocusRipple={true} // disables the focus ripple effect when tabbed to
             sx={{
+              position: "fixed",
+              bottom: "10px",
+              left: "10px",
+              zIndex: 1300,
               color: theme === "dark" ? "#ffda6a" : "#2e4482", // set custom color
               '&:hover': {
                 backgroundColor: 'transparent', // disables blue hover bg
@@ -128,12 +137,13 @@ function Layout() {
               <Route path="/league/join/*" element={<ProtectedRoute><Join /></ProtectedRoute>} />
               <Route path="/league/draft/:code" element={<ProtectedRoute><Draft /></ProtectedRoute>} />
               <Route path="/matchup/:matchupId/details" element={<ProtectedRoute><MatchupDetails /></ProtectedRoute>} />
-              <Route path="/team/home/*" element={<ProtectedRoute><TeamDashboard/></ProtectedRoute>} />
-              <Route path="/team/managelineup/*" element={<ProtectedRoute><ManageLineup/></ProtectedRoute>} />
+              <Route path="/team/home/*" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
+              <Route path="/team/managelineup/*" element={<ProtectedRoute><ManageLineup /></ProtectedRoute>} />
             </Routes>
           </main>
         </LeagueProvider>
-        <ChatWidget />
+        {/* Only show chat if logged in */}
+        {isLoggedIn && <ChatWidget />}
       </RedirectContext.Provider>
     </>
   );

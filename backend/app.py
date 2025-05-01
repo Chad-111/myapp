@@ -1092,6 +1092,7 @@ def league_search():
     response = []
     for team in teams:
         league = League.query.filter_by(id=team.league_id).first()
+        chat = LeagueChat.query.filter_by(league_id=team.league_id).first()
         if league:
             response.append({
                 "id": team.id,
@@ -1101,7 +1102,8 @@ def league_search():
                 "wins": team.wins,
                 "losses": team.losses,
                 "sport": league.sport,
-                "league_name": league.name
+                "league_name": league.name,
+                "chat_id": chat.id if chat else None 
             })
 
     return jsonify({"message": response, "user_id" : id, "num_teams" : len(teams)}), 200
@@ -2121,7 +2123,6 @@ def handle_send_direct_message(data):
             "timestamp": message.timestamp.isoformat()
         }, room=f"user_{sender_id}")
 
-        # Add this to acknowledge the frontend
         return {"status": "ok", "id": message.id}
     except Exception as e:
         print("Error in send_direct_message:", e)
@@ -2229,6 +2230,44 @@ def mark_league_messages_read():
             db.session.add(LeagueMessageRead(message_id=msg_id, user_id=user_id))
     db.session.commit()
     return jsonify({"message": "Messages marked as read"}), 200
+
+@app.route("/api/chat/league/summary", methods=["GET"])
+@cross_origin(origin='*')
+@jwt_required()
+def league_chat_summary():
+    user_id = get_jwt_identity()
+    teams = Team.query.filter_by(owner_id=user_id).all()
+    league_ids = [team.league_id for team in teams]
+    result = []
+    for league_id in league_ids:
+        league = League.query.get(league_id)
+        chat = LeagueChat.query.filter_by(league_id=league_id).first()
+        if not chat:
+            continue
+        messages = LeagueMessage.query.filter_by(chat_id=chat.id).order_by(LeagueMessage.timestamp.asc()).all()
+        if not messages:
+            continue
+        last_msg = messages[-1]
+        # Unread count: messages not in LeagueMessageRead for this user
+        unread_count = LeagueMessage.query.filter(
+            LeagueMessage.chat_id == chat.id,
+            ~LeagueMessage.id.in_(
+                db.session.query(LeagueMessageRead.message_id).filter_by(user_id=user_id)
+            ),
+            LeagueMessage.sender_id != user_id  # Don't count your own messages as unread
+        ).count()
+        result.append({
+            "league_id": league_id,
+            "league_name": league.name,
+            "chat_id": chat.id, 
+            "latestMessage": last_msg.content,
+            "latestMeta": {
+                "sender_id": last_msg.sender_id,
+                "timestamp": last_msg.timestamp.isoformat()
+            },
+            "unreadCount": unread_count
+        })
+    return jsonify(result)
 
 @app.route("/api/league/<int:league_id>/messages", methods=["GET"])
 @jwt_required()

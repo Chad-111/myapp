@@ -1,8 +1,6 @@
 // src/components/Chat/DirectMessages.jsx
 
-import React, { useState, useEffect, useRef } from "react";
-import { getAuthToken } from "../utils/auth";
-import socket from "../../socket";
+import React, { useEffect } from "react";
 import "./Chat.css";
 
 function formatMessageMeta(name, timestamp) {
@@ -22,174 +20,47 @@ function formatMessageMeta(name, timestamp) {
     }
 }
 
-const DirectMessages = () => {
-    const [usersList, setUsersList] = useState([]);
-    const [messagesByUser, setMessagesByUser] = useState({});
-    const [selectedUserId, setSelectedUserId] = useState(null);
-    const [currentUserId, setCurrentUserId] = useState(null);
-    const [input, setInput] = useState("");
-    const messagesEndRef = useRef(null);
+const DirectMessages = ({
+    usersList,
+    messagesByUser,
+    selectedUserId,
+    setSelectedUserId,
+    currentUserId,
+    input,
+    setInput,
+    messagesEndRef,
+    handleSend,
+    setSlideDirection
+}) => {
+    // Sort users by latestTimestamp (most recent first)
+    const sortedUsers = [...usersList].sort((a, b) => {
+        if (!b.latestTimestamp) return -1;
+        if (!a.latestTimestamp) return 1;
+        return new Date(b.latestTimestamp) - new Date(a.latestTimestamp);
+    });
 
-    const token = getAuthToken();
-
-    // Fetch current user and users list
+    // Scroll instantly to bottom when opening a chat
     useEffect(() => {
-        if (!token) return;
-
-        fetch("/api/me", {
-            headers: { Authorization: "Bearer " + token },
-        })
-            .then((res) => res.json())
-            .then((data) => setCurrentUserId(data.id));
-
-        fetch("/api/users", {
-            headers: { Authorization: "Bearer " + token },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                const filteredUsers = data.filter(u => u.id !== currentUserId).map(u => ({
-                    ...u,
-                    latestMessage: "",
-                    latestMeta: "",
-                }));
-                setUsersList(filteredUsers);
-
-                // Fetch latest message for each user
-                filteredUsers.forEach((user) => {
-                    fetch("/api/chat/direct/messages", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer " + token,
-                        },
-                        body: JSON.stringify({ other_user_id: user.id })
-                    })
-                        .then((res) => res.json())
-                        .then((messages) => {
-                            if (messages && messages.length > 0) {
-                                const lastMsg = messages[messages.length - 1];
-                                setUsersList(prev =>
-                                    prev.map(u =>
-                                        u.id === user.id
-                                            ? {
-                                                ...u,
-                                                latestMessage: lastMsg.content,
-                                                latestMeta: formatMessageMeta(
-                                                    lastMsg.sender_id === currentUserId
-                                                        ? "You"
-                                                        : user.username,
-                                                    lastMsg.timestamp
-                                                )
-                                            }
-                                            : u
-                                    )
-                                );
-                            }
-                        });
-                });
-            });
-    }, [token, currentUserId]);
-
-    // Load direct messages for the selected user
-    useEffect(() => {
-        if (!token || !selectedUserId) return;
-
-        fetch("/api/chat/direct/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token,
-            },
-            body: JSON.stringify({ other_user_id: selectedUserId })
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setMessagesByUser(prev => ({
-                    ...prev,
-                    [selectedUserId]: Array.isArray(data) ? data : [],
-                }));
-                if (data && data.length > 0) {
-                    const lastMsg = data[data.length - 1];
-                    setUsersList(prev =>
-                        prev.map(u =>
-                            u.id === selectedUserId
-                                ? { ...u, latestMessage: lastMsg.content }
-                                : u
-                        )
-                    );
-                }
-            });
-    }, [token, selectedUserId]);
-
-    useEffect(() => {
-        // Instant scroll when switching chats
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    }, [selectedUserId]);
-
-    useEffect(() => {
-        // Smooth scroll when new messages arrive in the current chat
-        if (messagesByUser[selectedUserId]?.length > 0) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "auto" });
         }
-    }, [messagesByUser, selectedUserId]);
+    }, [selectedUserId, messagesEndRef]);
 
+    // Smooth scroll when new messages arrive
     useEffect(() => {
-        socket.on("receive_direct_message", (msg) => {
-            setMessagesByUser((prev) => ({
-                ...prev,
-                [msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id]: [
-                    ...(prev[msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id] || []),
-                    msg,
-                ],
-            }));
-            setUsersList((prev) =>
-                prev.map((u) =>
-                    u.id === (msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id)
-                        ? {
-                            ...u,
-                            latestMessage: msg.content,
-                            latestMeta: formatMessageMeta(
-                                msg.sender_id === currentUserId ? "You" : u.username,
-                                msg.timestamp
-                            )
-                        }
-                        : u
-                )
-            );
-        });
-        return () => socket.off("receive_direct_message");
-    }, [currentUserId]);
-
-    const handleSend = () => {
-        if (!input.trim() || !selectedUserId) return;
-        const now = new Date();
-        socket.emit("send_direct_message", {
-            receiver_id: selectedUserId,
-            content: input,
-        });
-        // Optimistically update latestMessage and latestMeta for the selected user
-        setUsersList((prev) =>
-            prev.map((u) =>
-                u.id === selectedUserId
-                    ? {
-                        ...u,
-                        latestMessage: input,
-                        latestMeta: formatMessageMeta("You", now)
-                    }
-                    : u
-            )
-        );
-        setInput("");
-    };
+        if (messagesEndRef && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messagesByUser, selectedUserId, messagesEndRef]);
 
     // User List View
     if (!selectedUserId) {
         return (
             <div className="user-list-scrollable">
-                {usersList.map((user) => (
+                {sortedUsers.map((user) => (
                     <div
                         key={user.id}
-                        className="user-list-item"
+                        className={`user-list-item${user.unreadCount > 0 ? " unread" : ""}`}
                         onClick={() => setSelectedUserId(user.id)}
                     >
                         <div className="user-list-row">
@@ -197,6 +68,9 @@ const DirectMessages = () => {
                             <div className="meta">{user.latestMeta}</div>
                         </div>
                         <div className="preview">{user.latestMessage}</div>
+                        {user.unreadCount > 0 && (
+                            <span className="unread-badge">{user.unreadCount}</span>
+                        )}
                     </div>
                 ))}
             </div>
@@ -208,11 +82,14 @@ const DirectMessages = () => {
         <div className="chat-window">
             <div className="chat-header">
                 <button
-                    onClick={() => setSelectedUserId(null)}
+                    onClick={() => {
+                        setSlideDirection("slide-left");
+                        setSelectedUserId(null);
+                    }}
                     className="chat-back-btn"
                     aria-label="Back to user list"
                 >
-                    ←
+                    ↩
                 </button>
                 <span className="chat-title">
                     {usersList.find((u) => u.id === selectedUserId)?.username || "Direct Message"}
