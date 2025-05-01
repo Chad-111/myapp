@@ -85,7 +85,8 @@ def test_matchup_scoring_details(client, user_token):
     leagues = client.post("/api/league/joinable", headers={"Authorization": f"Bearer {token2}"})
     print(leagues.get_json()["leagues"])
     id = leagues.get_json()["leagues"][0]["id"]
-    code = client.post("/api/league/getcode", headers={"Authorization": f"Bearer {token2}"}, json={"url" : id}).get_json()["code"]
+    url = client.post("/api/league/geturl", headers={"Authorization": f"Bearer {token2}"}, json={"league_id" : id}).get_json()["code"]
+    code = client.post("/api/league/getcode", headers={"Authorization": f"Bearer {token2}"}, json={"url" : url}).get_json()["code"]
     client.post("/api/team/create", headers={"Authorization": f"Bearer {token2}"}, json={
         "code": code,
         "team_name": "Team Beta"
