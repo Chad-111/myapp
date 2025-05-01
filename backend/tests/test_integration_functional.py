@@ -97,6 +97,7 @@ def test_matchup_scoring_details(client, user_token):
 
     with app.app_context():
         teams = Team.query.all()
+        print(f"Teams: {len(teams)}")
         home, away = teams[0], teams[1]
         matchup = Matchup(league_id=home.league_id, week_num=1, home_team_id=home.id, away_team_id=away.id,
                           home_team_score=120.5, away_team_score=98.7)
