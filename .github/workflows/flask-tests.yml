@@ -25,5 +25,7 @@ jobs:
       
 
     - name: Run tests
+      env:
+        PYTHONPATH: ../  # Adds ./backend to the import path
       run: |
         pytest --maxfail=1 --disable-warnings -v
