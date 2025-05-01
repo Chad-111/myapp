@@ -104,7 +104,7 @@ def test_matchup_scoring_details(client, user_token):
         db.session.add(matchup)
         db.session.commit()
 
-        player = Player(sport="NFL", position="QB", team_name="Los Angeles Rams", last_name="Player", first_name="Test")
+        player = Player(id="1111", sport="NFL", position="QB", team_name="Los Angeles Rams", last_name="Player", first_name="Test")
         # Add synthetic players + performance to home team
         team_player = TeamPlayer(team_id=home.id, league_id = id, player_id=player.id, starting_position="QB")
         db.session.add(player)
