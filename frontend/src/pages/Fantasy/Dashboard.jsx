@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { RedirectContext } from "../../App";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAuthToken } from "../../components/utils/auth";
+import { useTranslation } from 'react-i18next';
+
 
 const FantasyDashboard = () => {
     const location = useLocation();
@@ -10,7 +12,7 @@ const FantasyDashboard = () => {
     const [showJoinable, setShowJoinable] = useState(false);
     const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
     const navigate = useNavigate();
-
+    const { t } = useTranslation();
     const authToken = getAuthToken();
 
     const createLeague = () => navigate("/fantasy/create");
@@ -83,17 +85,21 @@ const FantasyDashboard = () => {
 
     return (
         <div className="mt-3 container">
-            <h1>Fantasy Dashboard</h1>
+            <h1>{t('fantasy.title')}</h1>
             <div className="mb-4 d-flex gap-2">
-                <button className="btn btn-success" onClick={createLeague}>Create League</button>
-                <button className="btn btn-outline-primary" onClick={fetchJoinableLeagues}>Find a League</button>
+                <button className="btn btn-success" onClick={createLeague}>
+                    {t('fantasy.createLeague')}
+                </button>
+                <button className="btn btn-outline-primary" onClick={fetchJoinableLeagues}>
+                    {t('fantasy.findLeague')}
+                </button>
             </div>
 
             {showJoinable && (
                 <div className="mt-4">
-                    <h3>Available Leagues to Join</h3>
+                    <h3>{t('fantasy.availableLeagues')}</h3>
                     {joinableLeagues.length === 0 ? (
-                        <p className="text-muted">No available leagues.</p>
+                        <p className="text-muted">{t('fantasy.noLeagues')}</p>
                     ) : (
                         <div className="row">
                             {joinableLeagues.map((league) => (
@@ -101,8 +107,12 @@ const FantasyDashboard = () => {
                                     <div className="card h-100 shadow-sm">
                                         <div className="card-body">
                                             <h5 className="card-title">{league.name}</h5>
-                                            <p className="mb-1"><strong>Sport:</strong> {league.sport}</p>
-                                            <p className="mb-0"><strong>Commissioner:</strong> {league.commissioner}</p>
+                                            <p className="mb-1">
+                                                <strong>{t('fantasy.sport')}:</strong> {league.sport}
+                                            </p>
+                                            <p className="mb-0">
+                                                <strong>{t('fantasy.commissioner')}:</strong> {league.commissioner}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -113,7 +123,7 @@ const FantasyDashboard = () => {
             )}
 
             <div className="mt-5">
-                <h3>Your Leagues</h3>
+                <h3>{t('fantasy.yourLeagues')}</h3>
                 <div className="row">
                     {leagues.map((league) => (
                         <div key={league.id} className="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
@@ -125,11 +135,13 @@ const FantasyDashboard = () => {
                                 <div className="card-body d-flex flex-column">
                                     <h5 className="card-title">{league.league_name}</h5>
                                     <h6 className="card-subtitle mb-2 text-muted">{league.name}</h6>
-                                    <p className="mb-1"><strong>Sport:</strong> {league.sport}</p>
+                                    <p className="mb-1">
+                                        <strong>{t('fantasy.sport')}:</strong> {league.sport}
+                                    </p>
                                     <p className="mb-1"><strong>Rank:</strong> {league.league_rank}</p>
                                     {'wins' in league && 'losses' in league && (
                                         <p className="mb-0">
-                                            <strong>Record:</strong> {league.wins}-{league.losses}
+                                            <strong>{t('fantasy.record')}:</strong> {league.wins}-{league.losses}
                                         </p>
                                     )}
                                 </div>

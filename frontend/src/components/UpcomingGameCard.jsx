@@ -1,12 +1,12 @@
-// components/UpcomingGameCard.jsx
 import React, { useEffect, useState } from "react";
-
+import { useTranslation } from 'react-i18next';
 
 export default function UpcomingGameCard({ event, onClick }) {
     const comp = event.competitions?.[0];
     const home = comp?.competitors?.find(c => c.homeAway === 'home');
     const away = comp?.competitors?.find(c => c.homeAway === 'away');
     const gameDate = new Date(event.date);
+    const { t } = useTranslation();
 
     const [startsIn, setStartsIn] = useState("");
     const [countdownColor, setCountdownColor] = useState("text-success");
@@ -16,7 +16,7 @@ export default function UpcomingGameCard({ event, onClick }) {
         const isToday = gameDate.toDateString() === now.toDateString();
 
         if (gameDate <= now) {
-            setStartsIn("Game is starting!");
+            setStartsIn(t("upcoming.gameStarting"));
             setCountdownColor("text-danger");
             return;
         }
@@ -29,13 +29,13 @@ export default function UpcomingGameCard({ event, onClick }) {
             const seconds = Math.floor((diffMs % 60000) / 1000);
 
             if (hours > 1) {
-                setStartsIn(`Starts in: ${hours}h ${minutes}m`);
+                setStartsIn(t("upcoming.startsInHoursMinutes", { hours, minutes }));
             } else if (hours === 1) {
-                setStartsIn(`Starts in: 1h ${minutes}m`);
+                setStartsIn(t("upcoming.startsInOneHour", { minutes }));
             } else if (minutes > 0) {
-                setStartsIn(`Starts in: ${minutes}m ${seconds}s`);
+                setStartsIn(t("upcoming.startsInMinutesSeconds", { minutes, seconds }));
             } else if (minutes === 0 && seconds > 0) {
-                setStartsIn(`Starting in: ${seconds}s`);
+                setStartsIn(t("upcoming.startsInSeconds", { seconds }));
             }
 
             if (diffMins <= 5) setCountdownColor("text-danger");
@@ -61,7 +61,7 @@ export default function UpcomingGameCard({ event, onClick }) {
     });
 
     function getCroppedLogoUrl(logoUrl, size = 104) {
-        const path = new URL(logoUrl).pathname; // extracts /i/teamlogos/... from full URL
+        const path = new URL(logoUrl).pathname;
         return `https://a.espncdn.com/combiner/i?img=${path}&w=${size}&h=${size}`;
     }
 
@@ -72,55 +72,41 @@ export default function UpcomingGameCard({ event, onClick }) {
                 style={{ cursor: "pointer" }}
                 onClick={() => onClick(event)}
             >
-                <div
-                    className="d-flex justify-content-center align-items-center my-1"
-                    style={{ gap: '0.2rem' }}
-                >
+                <div className="d-flex justify-content-center align-items-center my-1" style={{ gap: '0.2rem' }}>
                     {/* Away Team */}
-                    <div
-                        className="d-flex flex-column align-items-center"
-                        style={{ width: '45%' }} // equal fixed width
-                    >
-                        <div className="fs-6">
-                            {away?.team?.displayName}
-                        </div>
+                    <div className="d-flex flex-column align-items-center" style={{ width: '45%' }}>
+                        <div className="fs-6">{away?.team?.displayName}</div>
                         <img
                             src={getCroppedLogoUrl(away?.team?.logo)}
                             alt={away?.team?.displayName}
                             className="img-fluid mt-2"
-                            style={{
-                                width: '50px',
-                            }}
+                            style={{ width: '50px' }}
                         />
-
                     </div>
 
                     {/* @ Symbol */}
-                    <div style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>@</div>
+                    <div style={{ fontSize: 'clamp(1rem, 2vw, 1.3rem)' }}>
+                        {t("symbols.at")}
+                    </div>
 
                     {/* Home Team */}
-                    <div
-                        className="d-flex flex-column align-items-center"
-                        style={{ width: '45%' }} // exact same fixed width
-                    >
-                        <div className="fs-6">
-                            {home?.team?.displayName}
-                        </div>
+                    <div className="d-flex flex-column align-items-center" style={{ width: '45%' }}>
+                        <div className="fs-6">{home?.team?.displayName}</div>
                         <img
                             src={getCroppedLogoUrl(home?.team?.logo)}
                             alt={home?.team?.displayName}
                             className="img-fluid mt-2"
-                            style={{
-                                width: '50px',
-                            }}
+                            style={{ width: '50px' }}
                         />
                     </div>
                 </div>
+
                 {startsIn && (
                     <p className={`text-center fs-6 small my-1 ${countdownColor}`}>
                         {startsIn}
                     </p>
                 )}
+
                 {showDate && (
                     <p className="text-center fs-6 small my-1 text-muted">
                         {formattedDate}

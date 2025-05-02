@@ -1,0 +1,238 @@
+{
+  "tabs": {
+    "games": "Juego",
+    "news": "Noticias"
+  },
+  "badges": {
+    "live": "VIVIR",
+    "final": "FINAL"
+  },
+  "headings": {
+    "upcoming": "Próximos enfrentamientos",
+    "noUpcoming": "No hay juegos futuros",
+    "topStories": "Historias principales",
+    "finalBox": "Puntuación final de la caja"
+  },
+  "messages": {
+    "noUpcomingSub": "Mira los últimos enfrentamientos completados.",
+    "noNews": "No hay artículos de noticias disponibles.",
+    "noDescription": "No hay descripción disponible."
+  },
+  "buttons": {
+    "readMore": "Leer más"
+  },
+  "modals": {
+    "player": "Jugador"
+  },
+  "navbar": {
+    "home": "Hogar",
+    "fantasy": "Fantasía",
+    "logout": "Finalizar la sesión",
+    "getStarted": "Empezar",
+    "menu": "Menú",
+    "loggedInAs": "Iniciado sesión como"
+  },
+  "upcoming": {
+    "gameStarting": "¡El juego está comenzando!",
+    "startsInHoursMinutes": "Comienza en: {{hours}}H {{minutes}}metro",
+    "startsInOneHour": "Comienza en: 1h {{minutes}}metro",
+    "startsInMinutesSeconds": "Comienza en: {{minutes}}metro {{seconds}}s",
+    "startsInSeconds": "Comenzando en: {{seconds}}s"
+  },
+  "symbols": {
+    "at": "@"
+  },
+  "auth": {
+    "403": "¡Se acabó el tiempo! ",
+    "signIn": "Iniciar sesión",
+    "signUp": "Inscribirse",
+    "forgot": "Olvidó",
+    "signInTitle": "Iniciar sesión",
+    "signUpTitle": "Únete al Imperio",
+    "forgotTitle": "¿Olvidaste tu contraseña?",
+    "invalidEmail": "Ingrese un correo electrónico válido.",
+    "invalidUsername": "Por favor ingrese un nombre de usuario.",
+    "invalidPassword": "Ingrese una contraseña.",
+    "confirmPassword": "Confirme su contraseña.",
+    "sendCode": "Enviar código",
+    "verifyCode": "Verificar código",
+    "resetPassword": "Restablecer contraseña",
+    "checkSpam": "¿No puedes encontrar el código?\n",
+    "didntGetIt": "¿No lo entendió?",
+    "resend": "Revender",
+    "strength": {
+      "veryWeak": "Muy débil",
+      "weak": "Débil",
+      "moderate": "Moderado",
+      "strong": "Fuerte",
+      "veryStrong": "Acérrimo"
+    }
+  },
+  "fantasy": {
+    "title": "Tablero de fantasía",
+    "createLeague": "Crear liga",
+    "findLeague": "Encuentra una liga",
+    "availableLeagues": "Ligas disponibles para unirse",
+    "noLeagues": "No hay ligas disponibles.",
+    "yourLeagues": "Tus ligas",
+    "sport": "Deporte",
+    "commissioner": "Notario",
+    "rank": "Rango",
+    "record": "Registro"
+  },
+  "league": {
+    "createTitle": "Crear una liga de fantasía",
+    "sport": "Deporte",
+    "name": "Nombre de la liga",
+    "teamName": "Nombre de tu equipo",
+    "selectSport": "Seleccione un deporte",
+    "selectRuleset": "Seleccione un conjunto de reglas",
+    "createButton": "Crear liga",
+    "errors": {
+      "leagueExists": "La liga ya existe.",
+      "invalidTeam": "Nombre del equipo no válido."
+    }
+  },
+  "sports": {
+    "nhl": "NHL",
+    "ncaaf": "Fútbol americano universitario",
+    "mlb": "MLB",
+    "nba": "NBA",
+    "nfl": "NFL"
+  },
+  "leagueJoin": {
+    "teamLabel": "Nombra tu equipo:",
+    "createButton": "Crear equipo",
+    "error": "La creación de la liga falló. "
+  },
+  "ruleset": {
+    "customizeTitle": "Personalizar {{sport}} Conjunto de reglas",
+    "saveAndContinue": "Guardar las reglas y continuar",
+    "fields": {
+      "points_per_goal": "Puntos por gol",
+      "yards_per_point": "Yardas por punto",
+      "bonus_touchdown": "Bonificación para el touchdown",
+      "interceptions": "Intercepciones",
+      "rebounds": "Rebotes",
+      "assists": "Asistencias"
+    }
+  },
+  "draft": {
+    "available": "Jugadores disponibles",
+    "title": "Borrador",
+    "currentPick": "Selección actual",
+    "onTheClock": "Equipo en el reloj",
+    "type": "Tipo de borrador",
+    "snake": "Serpiente",
+    "standard": "Estándar",
+    "name": "Nombre",
+    "position": "Posición",
+    "team": "Equipo",
+    "action": "Acción",
+    "draft": "Borrador",
+    "results": "Borradores de resultados",
+    "yourTeam": "Tu equipo",
+    "noPlayers": "No hay jugadores reclutados todavía",
+    "debug": "Herramientas de depuración",
+    "endAndSave": "Equipos Final Draft & Save",
+    "search": "Buscar jugadores ..."
+  },
+  "leagueHome": {
+    "navTitle": "Navegación de la liga",
+    "backToTeam": "Volver a la página de inicio del equipo",
+    "invite": "Invitar",
+    "inviteTooltip": "Generar un enlace de invitación",
+    "inviteValidity": "Válido por 2 horas",
+    "inviteCopied": "¡Invite el código copiado al portapapeles!",
+    "settings": "Configuración de la liga",
+    "teams": "Equipos",
+    "membersTitle": "Miembros de la liga",
+    "moreOptions": "Más opciones",
+    "owner": "Dueño",
+    "rank": "Rango",
+    "tabs": {
+      "standings": "Clasificación",
+      "rosters": "Listas",
+      "schedule": "Cronograma",
+      "trades": "Vientos alisios",
+      "draft": "Borrador",
+      "brackets": "Corchetes",
+      "members": "Miembros"
+    }
+  },
+  "leagueSports": {
+    "nhl": "NHL",
+    "nba": "NBA",
+    "nfl": "NFL",
+    "mlb": "MLB",
+    "ncaaf": "Fútbol americano universitario"
+  },
+  "matchup": {
+    "title": "Detalles de enfrentamiento",
+    "week": "Semana {{week}}",
+    "vs": "VS",
+    "score": "Puntaje",
+    "players": "Jugadores",
+    "pts": "pts"
+  },
+  "leagueMembers": {
+    "title": "{{name}} Miembros",
+    "members": "Miembros de la liga",
+    "total": "Total",
+    "team": "Nombre del equipo",
+    "owner": "Dueño",
+    "rank": "Rango",
+    "record": "Registro",
+    "joinDate": "Fecha de unir",
+    "noMembers": "No se encontraron miembros",
+    "commissionerTools": "Herramientas del comisionado",
+    "toolsDesc1": "Las herramientas del comisionado estarán disponibles aquí para administrar a los miembros de la liga.",
+    "toolsDesc2": "Las opciones pueden incluir eliminar miembros, cambiar los permisos, etc."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error"
+  },
+  "roster": {
+    "title": "Listas",
+    "owner": "Dueño",
+    "name": "Nombre",
+    "team": "Equipo",
+    "position": "Posición",
+    "noTeams": "No se encuentran equipos en esta liga.",
+    "empty": "No hay jugadores en la lista. ",
+    "goToDraft": "Ir al draft"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "unauthorized": "No estás autorizado a administrar esta liga.",
+    "infoHeader": "Información de la liga",
+    "leagueName": "Nombre de la liga",
+    "sport": "Deporte",
+    "code": "Código de la liga",
+    "teams": "Equipos",
+    "status": "Estado de temporada",
+    "inProgress": "En curso",
+    "commissioner": "Notario",
+    "scoringTitle": "Reglas de puntuación",
+    "scoringDesc1": "Configure cómo se otorgan puntos en su liga.",
+    "scoringDesc2": "Actualice valores de punto para diferentes acciones basadas en las preferencias de su liga.",
+    "updateScoring": "Actualizar reglas de puntuación",
+    "managementTitle": "Gestión de la liga",
+    "managementDesc": "Administre la configuración y configuración de su liga.",
+    "manageTeams": "Administrar equipos",
+    "schedule": "Configuración de programación",
+    "draft": "Proyecto de configuración",
+    "advanced": "Opciones avanzadas",
+    "visibility": "Visibilidad de la liga",
+    "private": "Privado - Invitar solo",
+    "public": "Público: cualquiera puede solicitar unirse",
+    "tradeDeadline": "Plazo de intercambio",
+    "waivers": "Habilitar alambre de exención",
+    "save": "Guardar cambios",
+    "dangerZone": "Zona de peligro",
+    "dangerWarn": "Estas acciones no se pueden deshacer. ",
+    "reset": "Restablecer la liga",
+    "delete": "Eliminar la liga"
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "badges": {
+    "live": "LIVE",
+    "final": "FINALE"
+  },
+  "headings": {
+    "topStories": "Top -Geschichten",
+    "noUpcoming": "Keine bevorstehenden Spiele",
+    "finalBox": "Final Box Score",
+    "upcoming": "Bevorstehende Matchups"
+  },
+  "tabs": {
+    "news": "Nachricht",
+    "games": "Spiele"
+  },
+  "messages": {
+    "noUpcomingSub": "Schauen Sie sich die neuesten abgeschlossenen Matchups an.",
+    "noDescription": "Keine Beschreibung verfügbar.",
+    "noNews": "Keine Nachrichtenartikel verfügbar."
+  },
+  "modals": {
+    "player": "Spieler"
+  },
+  "navbar": {
+    "logout": "Melden Sie sich aus",
+    "fantasy": "Fantasie",
+    "home": "Heim",
+    "getStarted": "Fangen an",
+    "loggedInAs": "Angemeldet as",
+    "menu": "Speisekarte"
+  },
+  "buttons": {
+    "readMore": "Mehr lesen"
+  },
+  "upcoming": {
+    "gameStarting": "Das Spiel beginnt!",
+    "startsInMinutesSeconds": "Beginnt in: {{muthines}} m {{{Sekunden}} s",
+    "startsInSeconds": "Beginnend in: {{Sekunden}} s",
+    "startsInHoursMinutes": "Startet in: {{Stunden}} h {{muthines}} m",
+    "startsInOneHour": "Beginnt in: 1h {{minute}} m"
+  },
+  "auth": {
+    "signIn": "anmelden",
+    "signUp": "Melden Sie sich an",
+    "forgot": "Vergessen",
+    "signInTitle": "Anmelden",
+    "signUpTitle": "Treten Sie dem Imperium bei",
+    "invalidUsername": "Bitte geben Sie einen Benutzernamen ein.",
+    "invalidEmail": "Bitte geben Sie eine gültige E -Mail ein.",
+    "forgotTitle": "Ihr Passwort vergessen?",
+    "sendCode": "Code senden",
+    "verifyCode": "Code überprüfen",
+    "checkSpam": "Kannst du den Code nicht finden?\nBitte überprüfen Sie Ihren Müll- oder Spamordner.",
+    "resetPassword": "Passwort zurücksetzen",
+    "403": "Time-out! Sie sind nicht autorisiert!",
+    "strength": {
+      "moderate": "Mäßig",
+      "weak": "Schwach",
+      "strong": "Stark",
+      "veryStrong": "Sehr stark",
+      "veryWeak": "Sehr schwach"
+    },
+    "invalidPassword": "Bitte geben Sie ein Passwort ein.",
+    "didntGetIt": "Hat es nicht verstanden?",
+    "confirmPassword": "Bitte bestätigen Sie Ihr Passwort.",
+    "resend": "Wiederholen"
+  },
+  "symbols": {
+    "at": null
+  },
+  "fantasy": {
+    "title": "Fantasy Dashboard",
+    "findLeague": "Finde eine Liga",
+    "availableLeagues": "Verfügbare Ligen zum Beitritt zur",
+    "sport": "Sport",
+    "commissioner": "Kommissar",
+    "createLeague": "Liga schaffen",
+    "rank": "Rang",
+    "record": "Aufzeichnen",
+    "yourLeagues": "Deine Ligen",
+    "noLeagues": "Keine verfügbaren Ligen."
+  },
+  "league": {
+    "createTitle": "Erstellen Sie eine Fantasy -Liga",
+    "sport": "Sport",
+    "selectSport": "Wählen Sie einen Sport",
+    "createButton": "Liga schaffen",
+    "selectRuleset": "Wählen Sie einen Regeln aus",
+    "errors": {
+      "leagueExists": "Liga existiert bereits.",
+      "invalidTeam": "Ungültiger Teamname."
+    },
+    "name": "Liga Name",
+    "teamName": "Dein Teamname"
+  },
+  "sports": {
+    "nhl": "NHL",
+    "mlb": "MLB",
+    "nfl": "NFL",
+    "ncaaf": "College -Fußball",
+    "nba": "NBA"
+  },
+  "leagueJoin": {
+    "teamLabel": "Nennen Sie Ihr Team:",
+    "error": "Die Schöpfung der Liga scheiterte. Bitte versuchen Sie es erneut.",
+    "createButton": "Team erstellen"
+  },
+  "ruleset": {
+    "fields": {
+      "yards_per_point": "Yards pro Punkt",
+      "bonus_touchdown": "Bonus für Touchdown",
+      "interceptions": "Interceptions",
+      "rebounds": "Rebounds",
+      "assists": "Vorlagen",
+      "points_per_goal": "Punkte pro Ziel"
+    },
+    "saveAndContinue": "REGELSET speichern und fortfahren",
+    "customizeTitle": "Passen Sie {{Sport}} Rulset an"
+  },
+  "draft": {
+    "title": "Entwurf",
+    "available": "Verfügbare Spieler",
+    "snake": "Schlange",
+    "name": "Name",
+    "standard": "Standard",
+    "team": "Team",
+    "position": "Position",
+    "action": "Aktion",
+    "draft": "Entwurf",
+    "results": "Entwurfsergebnisse",
+    "debug": "Debug -Tools",
+    "noPlayers": "Noch keine Spieler eingezogen",
+    "endAndSave": "Beenden Sie den Entwurf und speichern Sie Teams",
+    "currentPick": "Aktuelle Auswahl",
+    "onTheClock": "Team auf der Uhr",
+    "yourTeam": "Dein Team",
+    "type": "Entwurfstyp",
+    "search": "Suchspieler ..."
+  },
+  "leagueHome": {
+    "navTitle": "Navigation der Liga",
+    "backToTeam": "Zurück zur Team -Homepage",
+    "invite": "Einladen",
+    "inviteTooltip": "Generieren Sie einladungslink",
+    "settings": "Ligaeinstellungen",
+    "teams": "Teams",
+    "membersTitle": "Ligamitglieder",
+    "moreOptions": "Weitere Optionen",
+    "owner": "Eigentümer",
+    "rank": "Rang",
+    "inviteCopied": "Laden Sie den Code ein, der in die Zwischenablage kopiert wurde!",
+    "tabs": {
+      "schedule": "Zeitplan",
+      "draft": "Entwurf",
+      "brackets": "Klammern",
+      "members": "Mitglieder",
+      "rosters": "Dienstpläne",
+      "standings": "Wertung",
+      "trades": "Geschäfte"
+    },
+    "inviteValidity": "2 Stunden gültig"
+  },
+  "leagueSports": {
+    "nba": "NBA",
+    "nhl": "NHL",
+    "ncaaf": "College -Fußball",
+    "mlb": "MLB",
+    "nfl": "NFL"
+  },
+  "matchup": {
+    "score": "Punktzahl",
+    "pts": "PTS",
+    "players": "Spieler",
+    "week": "Woche {{Woche}}",
+    "title": "Matchup -Details",
+    "vs": "vs"
+  },
+  "leagueMembers": {
+    "members": "Ligamitglieder",
+    "total": "Gesamt",
+    "owner": "Eigentümer",
+    "rank": "Rang",
+    "record": "Aufzeichnen",
+    "title": "{{Name}} Mitglieder",
+    "joinDate": "Datum anschließen",
+    "team": "Teamname",
+    "commissionerTools": "Beauftragte Tools",
+    "noMembers": "Keine Mitglieder gefunden",
+    "toolsDesc1": "Kommissar -Tools finden Sie hier für die Verwaltung von Mitgliedern der Liga.",
+    "toolsDesc2": "Zu den Optionen gehört möglicherweise das Entfernen von Mitgliedern, das Ändern von Berechtigungen usw."
+  },
+  "common": {
+    "error": "Fehler",
+    "loading": "Laden..."
+  },
+  "roster": {
+    "name": "Name",
+    "owner": "Eigentümer",
+    "team": "Team",
+    "position": "Position",
+    "title": "Dienstpläne",
+    "goToDraft": "Gehen Sie zum Entwurf",
+    "empty": "Keine Spieler auf Kader. Vervollständigen Sie den Entwurf, um die Spieler hier zu sehen.",
+    "noTeams": "Keine Teams in dieser Liga gefunden."
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "unauthorized": "Sie sind nicht berechtigt, diese Liga zu verwalten.",
+    "infoHeader": "Ligainformationen",
+    "leagueName": "Liga Name",
+    "inProgress": "Im Gange",
+    "teams": "Teams",
+    "sport": "Sport",
+    "commissioner": "Kommissar",
+    "schedule": "Einstellungen planen",
+    "scoringDesc2": "Aktualisieren Sie die Punktwerte für verschiedene Aktionen, die auf den Vorlieben Ihrer Liga basieren.",
+    "status": "Saisonstatus",
+    "managementDesc": "Verwalten Sie Ihre Ligaeinstellungen und Konfiguration.",
+    "scoringTitle": "Bewertungsregeln",
+    "managementTitle": "Ligamanagement",
+    "scoringDesc1": "Konfigurieren Sie, wie Punkte in Ihrer Liga vergeben werden.",
+    "manageTeams": "Teams verwalten",
+    "updateScoring": "Aktualisieren Sie die Bewertungsregeln",
+    "code": "Ligacode",
+    "save": "Änderungen speichern",
+    "private": "Privat - nur einladen",
+    "waivers": "Aktivieren Sie den Verzichtdraht",
+    "dangerWarn": "Diese Handlungen können nicht rückgängig gemacht werden. Seien Sie sicher, bevor Sie fortfahren.",
+    "dangerZone": "Gefahrenzone",
+    "advanced": "Erweiterte Optionen",
+    "draft": "Entwurfseinstellungen",
+    "tradeDeadline": "Handelsfrist",
+    "reset": "Liga zurücksetzen",
+    "public": "Öffentlich - Jeder kann bitten, sich anzuschließen",
+    "visibility": "Liga -Sichtbarkeit",
+    "delete": "Liga löschen"
+  }
+}

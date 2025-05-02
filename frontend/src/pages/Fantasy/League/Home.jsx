@@ -23,11 +23,12 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline'; // Members
 import SettingsTwoToneIcon from '@mui/icons-material/SettingsTwoTone'; // Settings (already imported)
 import SportsFootballIcon from '@mui/icons-material/SportsFootball'; // Draft
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-
+import { useTranslation } from 'react-i18next';
 
 
 function LeagueHome() {
   const location = useLocation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -159,28 +160,28 @@ function LeagueHome() {
     <div className="container mt-4">
       {/* Navigation section moved to top */}
       <Box mb={4}>
-      <Typography variant="h5" className="text-center mb-3">League Navigation</Typography>
+        <Typography variant="h5" className="text-center mb-3">{t('leagueHome.navTitle')}</Typography>
 
-      {redirectLocation?.includes("team/home") && (
-        <Box textAlign="center" mb={2}>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => navigate(redirectLocation)}
-            startIcon={<GroupsIcon />}
-          >
-            Back to Team Homepage
-          </Button>
-        </Box>
-      )}
+        {redirectLocation?.includes("team/home") && (
+          <Box textAlign="center" mb={2}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => navigate(redirectLocation)}
+              startIcon={<GroupsIcon />}
+            >
+              {t('leagueHome.backToTeam')}
+            </Button>
+          </Box>
+        )}
 
-      <Grid container spacing={2} justifyContent="center">
+        <Grid container spacing={2} justifyContent="center">
           <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%', cursor: 'pointer', transition: '0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 3 } }}
               onClick={() => navigate(`/league/standings/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <EmojiEventsIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Standings</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.standings')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -190,7 +191,7 @@ function LeagueHome() {
               onClick={() => navigate(`/league/rosters/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <GroupsIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Rosters</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.rosters')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -200,7 +201,7 @@ function LeagueHome() {
               onClick={() => navigate(`/league/schedule/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <CalendarMonthIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Schedule</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.schedule')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -210,7 +211,7 @@ function LeagueHome() {
               onClick={() => navigate(`/league/portal/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <SwapHorizIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Trades</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.trades')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -220,7 +221,7 @@ function LeagueHome() {
               onClick={() => navigate(`/league/draft/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <SportsFootballIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Draft</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.draft')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -230,8 +231,7 @@ function LeagueHome() {
       {/* League header section with integrated invite button */}
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <div className="d-flex align-items-center">
-          <h2 className="me-3 mb-0">{league.name} {league.sport}</h2>
-
+          <h2 className="me-3 mb-0">{league.name} {t(`leagueSports.${league.sport}`)}</h2>
           <div className="ms-2">
             <button
               className="btn btn-sm btn-outline-primary"
@@ -265,7 +265,7 @@ function LeagueHome() {
                   </IconButton>
                 </Tooltip>
               </div>
-              <small className="text-muted ms-2 d-none d-md-block">Valid for 2 hours</small>
+              <small className="text-muted ms-2 d-none d-md-block">{t('leagueHome.inviteValidity')}</small>
             </div>
           )}
 
@@ -273,13 +273,13 @@ function LeagueHome() {
             <IconButton
               className="text-secondary"
               onClick={() => navigate(`/league/settings/${leagueCode}`)}
-              title="League Settings"
+              title={t('leagueHome.settings')}
             >
               <SettingsTwoToneIcon fontSize="Small" />
             </IconButton>
           )}
 
-          <div className="ms-2 text-muted">Teams: {teams.length}</div>
+          <div className="ms-2 text-muted">{t('leagueHome.teams')} {teams.length}</div>
         </div>
 
         {/* Notification for copy success */}
@@ -287,13 +287,13 @@ function LeagueHome() {
           open={openSnackbar}
           autoHideDuration={2000}
           onClose={() => setOpenSnackbar(false)}
-          message="Invite code copied to clipboard!"
+          message={t('leagueHome.inviteCopied')}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         />
       </div>
 
       {/* League members section */}
-      <h4 className="mb-3">League Members</h4>
+      <h4 className="mb-3">{t('leagueHome.membersTitle')}</h4>
       <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
         {teams.map((team) => (
           <div key={team.id} className="col">
@@ -304,8 +304,8 @@ function LeagueHome() {
                   -
                   <span className="text-danger">{team.losses}</span>
                   )</h5>
-                <p className="card-text mb-1"><strong>Owner:</strong> {team.owner_id}</p>
-                <p className="card-text mb-0">Rank: #<strong>{team.league_rank}</strong></p>
+                <p className="card-text mb-1"><strong>{t('leagueHome.owner')}:</strong> {team.owner_id}</p>
+                <p className="card-text mb-0">{t('leagueHome.rank')}: #<strong>{team.league_rank}</strong></p>
               </div>
             </div>
           </div>
@@ -314,14 +314,14 @@ function LeagueHome() {
 
       {/* Additional navigation options can go in a "More" section if needed */}
       <Box mt={4}>
-        <Typography variant="h6" gutterBottom>More Options</Typography>
+        <Typography variant="h6" gutterBottom>{t('leagueHome.moreOptions')}</Typography>
         <Grid container spacing={2} justifyContent="center">
           <Grid item xs={6} sm={4} md={2}>
             <Card variant="outlined" sx={{ height: '100%', cursor: 'pointer', transition: '0.3s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 3 } }}
               onClick={() => navigate(`/league/brackets/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <EmojiEventsOutlinedIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Brackets</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.brackets')}</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -331,7 +331,7 @@ function LeagueHome() {
               onClick={() => navigate(`/league/members/${leagueCode}`)}>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <PeopleOutlineIcon sx={{ fontSize: 35, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle2">Members</Typography>
+                <Typography variant="subtitle2">{t('leagueHome.tabs.members')}</Typography>
               </CardContent>
             </Card>
           </Grid>

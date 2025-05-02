@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import LiveGameCard from '../components/LiveGameCard';
 import UpcomingGameCard from '../components/UpcomingGameCard';
 import PostGameCard from '../components/PostGameCard';
+import { useTranslation } from 'react-i18next';
+
 
 import './Dashboard.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -32,6 +34,8 @@ export default function Dashboard() {
     const [selectedFinalGame, setSelectedFinalGame] = useState(null);
     const [finalGameSummary, setFinalGameSummary] = useState(null);
     const [showFinalModal, setShowFinalModal] = useState(false);
+    const { t } = useTranslation();
+
 
     function formatDateForESPN(date) {
         const year = date.getFullYear();
@@ -165,7 +169,7 @@ export default function Dashboard() {
                                     className={`nav-link rounded-pill px-4 ${activeTab === tab ? 'active' : ''}`}
                                     onClick={() => setActiveTab(tab)}
                                 >
-                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                    {t(`tabs.${tab}`)}
                                 </button>
                             </li>
                         ))}
@@ -230,7 +234,7 @@ export default function Dashboard() {
                                     {liveGames.length > 0 && (
                                         <div className="col-lg-2 mb-auto">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
-                                                <span className="live-badge">LIVE</span>
+                                                <span className="live-badge">{t('badges.live')}</span>
                                             </div>
                                             {liveGames.map(event => (
                                                 <LiveGameCard
@@ -247,7 +251,8 @@ export default function Dashboard() {
 
                                     {/* Center for Upcoming Games */}
                                     <div className="col-8 mb-auto">
-                                        <h2 className="pb-3">Upcoming Matchups</h2>
+                                        <h2 className="pb-3">{t('headings.upcoming')}</h2>
+
                                         <div className="row g-2 justify-content-center">
                                             {upcomingGames.length > 0 ? (
                                                 upcomingGames.map(event => (
@@ -264,8 +269,8 @@ export default function Dashboard() {
                                             ) : (
                                                 // If no upcoming games, show this card
                                                 <div className="card p-4 text-center bg-light-subtle shadow-sm border">
-                                                    <h4 className="fw-bold mb-2">No Upcoming Games</h4>
-                                                    <p className="text-muted mb-0">Check out the latest completed matchups.</p>
+                                                    <h4 className='fw-bold mb-2'>{t('headings.noUpcoming')}</h4>
+                                                    <p className="text-muted mb-0">{t('headings.noUpcomingSub')}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -274,7 +279,7 @@ export default function Dashboard() {
                                     {finalGames.length > 0 && (
                                         <div className="col-lg-2 mb-auto">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
-                                                <span className="final-badge">FINAL</span>
+                                                <span className="final-badge">{t('badges.final')}</span>
                                             </div>
                                             {finalGames.map(event => (
                                                 <PostGameCard
@@ -301,7 +306,7 @@ export default function Dashboard() {
                                     {liveGames.length > 0 && (
                                         <div className="col-12 col-md-6">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
-                                                <span className="live-badge">LIVE</span>
+                                                <span className="live-badge">{t('badges.live')}</span>
                                             </div>
                                             {liveGames.map(event => (
                                                 <LiveGameCard
@@ -319,7 +324,7 @@ export default function Dashboard() {
                                     {finalGames.length > 0 && (
                                         <div className="col-12 col-md-6">
                                             <div className="d-flex justify-content-center align-items-center mb-2">
-                                                <span className="final-badge">FINAL</span>
+                                                <span className="final-badge">{t('badges.final')}</span>
                                             </div>
                                             {finalGames.map(event => (
                                                 <PostGameCard
@@ -354,8 +359,8 @@ export default function Dashboard() {
                                         ) : (
                                             // If no upcoming games, show this card
                                             <div className="card p-4 text-center bg-light-subtle shadow-sm border">
-                                                <h4 className="fw-bold mb-2">No Upcoming Games</h4>
-                                                <p className="text-muted mb-0">Check out the latest completed matchups.</p>
+                                                <h4 className='fw-bold mb-2'>{t('headings.noUpcoming')}</h4>
+                                                <p className="text-muted mb-0">{t('headings.noUpcomingSub')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -371,7 +376,7 @@ export default function Dashboard() {
                 {activeTab === 'news' && (
                     <section className="container py-4">
                         {/* Header START */}
-                        <h2 className="pb-3 border-bottom">Top Stories</h2>
+                        <h2 className="pb-3 border-bottom">{t('headings.topStories')}</h2>
                         <div className="row g-4">
                             {/* If At LEAST 1 News Article */}
                             {news.length > 0 ? (
@@ -396,7 +401,7 @@ export default function Dashboard() {
                                                 </p>
                                                 {/* Article Source */}
                                                 <a href={article.links?.web?.href || '#'} className="btn btn-outline-primary mt-auto" target="_blank" rel="noopener noreferrer">
-                                                    Read More
+                                                    {t('buttons.readMore')}
                                                 </a>
                                             </div>
                                         </div>
@@ -404,7 +409,7 @@ export default function Dashboard() {
                                 ))
                             ) : (
                                 // If NO News Articles, show this message
-                                <div className="text-muted">No news articles available.</div>
+                                <div className="text-muted">{t('messages.noNewsAvailable')}</div>
                             )}
                         </div>
                     </section>
@@ -434,8 +439,9 @@ export default function Dashboard() {
                                     <div className="modal-header justify-content-center border-0 pb-0">
                                         <div className="text-center w-100">
                                             <h5 className="modal-title fw-bold">
-                                                {`${sortedTeams[0]?.team?.displayName} at ${sortedTeams[1]?.team?.displayName}`}
+                                                {sortedTeams[0]?.team?.displayName} ${t('modals.vs')} ${sortedTeams[1]?.team?.displayName}
                                             </h5>
+
                                         </div>
                                         <button
                                             type="button"
@@ -592,8 +598,9 @@ export default function Dashboard() {
                                 <div className="modal-content border-0 shadow-lg">
                                     <div className="modal-header border-bottom-0">
                                         <h5 className="modal-title fw-bold w-100 text-center">
-                                            {selectedFinalGame.name} – Final Box Score
+                                            {selectedFinalGame.name} – {t('headings.finalBox')}
                                         </h5>
+
                                         <button
                                             type="button"
                                             className="btn-close position-absolute end-0 me-3"
@@ -625,7 +632,7 @@ export default function Dashboard() {
                                                             <table className="table table-sm table-striped table-hover text-center mb-0">
                                                                 <thead className="table-light sticky-top small">
                                                                     <tr>
-                                                                        <th className="text-start">Player</th>
+                                                                        <th className="text-start">{t('modals.player')}</th>
                                                                         {group.labels.map((label, index) => (
                                                                             <th key={index} className="text-nowrap">{label}</th>
                                                                         ))}

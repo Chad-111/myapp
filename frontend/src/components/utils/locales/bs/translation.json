@@ -1,0 +1,238 @@
+{
+  "tabs": {
+    "news": "Vesti",
+    "games": "Igre"
+  },
+  "badges": {
+    "live": "Živjeti",
+    "final": "Finale"
+  },
+  "messages": {
+    "noUpcomingSub": "Pogledajte najnovije popunjene utakmice.",
+    "noDescription": "Nije dostupan opis.",
+    "noNews": "Nema dostupnih članaka vijesti."
+  },
+  "headings": {
+    "noUpcoming": "Nema nadolazećih igara",
+    "finalBox": "FINAL FINAL BOX",
+    "topStories": "Top priče",
+    "upcoming": "Predstojeće utakmice"
+  },
+  "navbar": {
+    "home": "Dom",
+    "menu": "Meni",
+    "loggedInAs": "Prijavljen kao",
+    "getStarted": "Započnite",
+    "logout": "Odjaviti se",
+    "fantasy": "Fantazija"
+  },
+  "buttons": {
+    "readMore": "Pročitajte više"
+  },
+  "upcoming": {
+    "startsInHoursMinutes": "Počinje u: {{Sati}} H {{Miloin}}",
+    "startsInSeconds": "Počevši od: {{sekundi}} S",
+    "startsInMinutesSeconds": "Počinje u: {{Milonte}} M {{sekundi}} S",
+    "gameStarting": "Igra počinje!",
+    "startsInOneHour": "Počinje u: 1h {Miloy}} M"
+  },
+  "modals": {
+    "player": "Igrač"
+  },
+  "auth": {
+    "signInTitle": "Prijaviti se",
+    "signIn": "Prijaviti se",
+    "invalidPassword": "Unesite lozinku.",
+    "forgotTitle": "Zaboravili ste lozinku?",
+    "invalidUsername": "Unesite korisničko ime.",
+    "forgot": "Zaboravljen",
+    "verifyCode": "Provjerite kod",
+    "invalidEmail": "Molimo unesite valjanu e-poštu.",
+    "confirmPassword": "Potvrdite svoju lozinku.",
+    "signUpTitle": "Pridružite se Carstvu",
+    "signUp": "Prijaviti se",
+    "strength": {
+      "moderate": "Umjeren",
+      "weak": "Slab",
+      "veryStrong": "Vrlo jak",
+      "veryWeak": "Vrlo slab",
+      "strong": "Jak"
+    },
+    "403": "TIMEOUT! Niste ovlašteni!",
+    "checkSpam": "Ne možete pronaći kod?\nProvjerite svoju mapu bezžeća ili neželjene pošte.",
+    "sendCode": "Pošalji kod",
+    "resetPassword": "Poništi lozinku",
+    "resend": "Otkazati",
+    "didntGetIt": "Nisam dobio?"
+  },
+  "symbols": {
+    "at": null
+  },
+  "fantasy": {
+    "title": "Fantastična nadzorna ploča",
+    "rank": "Rang",
+    "commissioner": "Povjerenik",
+    "noLeagues": "Nema dostupnih liga.",
+    "findLeague": "Pronađi ligu",
+    "availableLeagues": "Dostupne lige za pridruživanje",
+    "record": "Zapisati",
+    "createLeague": "Kreirajte ligu",
+    "yourLeagues": "Tvoje lige",
+    "sport": "Sport"
+  },
+  "league": {
+    "selectRuleset": "Odaberite pravila",
+    "sport": "Sport",
+    "name": "Naziv lige",
+    "errors": {
+      "invalidTeam": "Nevažeća ime tima.",
+      "leagueExists": "Liga već postoji."
+    },
+    "selectSport": "Odaberite sport",
+    "createTitle": "Kreirajte fantastičnu ligu",
+    "createButton": "Kreirajte ligu",
+    "teamName": "Ime vašeg tima"
+  },
+  "sports": {
+    "nhl": "Nhl",
+    "mlb": "MLB",
+    "ncaaf": "Fakultetsko fudbal",
+    "nba": "NBA",
+    "nfl": "NFL"
+  },
+  "ruleset": {
+    "customizeTitle": "Prilagodite {{sportov}} prolazniet",
+    "fields": {
+      "points_per_goal": "Bodovi po cilju",
+      "bonus_touchdown": "Bonus za dodir",
+      "interceptions": "Presretanje",
+      "assists": "Pomaže",
+      "rebounds": "Skokovi",
+      "yards_per_point": "Dvorišta po točki"
+    },
+    "saveAndContinue": "Spremite prolazniet i nastavite"
+  },
+  "leagueJoin": {
+    "error": "Stvaranje lige nije uspjelo. Pokušajte ponovo.",
+    "teamLabel": "Navedite svoj tim:",
+    "createButton": "Kreirajte tim"
+  },
+  "draft": {
+    "available": "Dostupni igrači",
+    "title": "Nacrt",
+    "type": "Tip nacrta",
+    "onTheClock": "Tim na satu",
+    "currentPick": "Trenutni izbor",
+    "name": "Ime",
+    "team": "Timu",
+    "position": "Položaj",
+    "draft": "Nacrt",
+    "snake": "Zmija",
+    "action": "Akcija",
+    "endAndSave": "Krajnji nacrt i sačuvanje timova",
+    "noPlayers": "Još nijedan igrač nije sastavljen",
+    "results": "Nacrti rezultata",
+    "debug": "Alati za uklanjanje pogrešaka",
+    "standard": "Standard",
+    "search": "Traži igrači ...",
+    "yourTeam": "Vaš tim"
+  },
+  "leagueHome": {
+    "navTitle": "Liga navigacija",
+    "moreOptions": "Više opcija",
+    "inviteValidity": "Vrijedi 2 sata",
+    "inviteTooltip": "Generirajte pozivnicu",
+    "settings": "Postavke lige",
+    "rank": "Rang",
+    "teams": "Timovi",
+    "inviteCopied": "Pozovite kod kopiran u međuspremnik!",
+    "membersTitle": "Članovi lige",
+    "invite": "Pozvati",
+    "backToTeam": "Povratak na početnu stranicu tima",
+    "tabs": {
+      "draft": "Nacrt",
+      "trades": "Trgovci",
+      "members": "Članovi",
+      "rosters": "Rosters",
+      "schedule": "Raspored",
+      "standings": "Rangiranje",
+      "brackets": "Nosači"
+    },
+    "owner": "Vlasnik"
+  },
+  "leagueSports": {
+    "nhl": "Nhl",
+    "nba": "NBA",
+    "mlb": "MLB",
+    "ncaaf": "Fakultetsko fudbal",
+    "nfl": "NFL"
+  },
+  "matchup": {
+    "vs": "vs",
+    "title": "Detalji meču",
+    "week": "Tjedan {{Week}}",
+    "score": "Ocijeniti",
+    "pts": "bod",
+    "players": "Igrači"
+  },
+  "leagueMembers": {
+    "members": "Članovi lige",
+    "total": "Ukupno",
+    "record": "Zapisati",
+    "owner": "Vlasnik",
+    "team": "Ime tima",
+    "commissionerTools": "Povjerenički alati",
+    "noMembers": "Nije pronađen nijedan članova",
+    "rank": "Rang",
+    "joinDate": "Datum pridruživanja",
+    "title": "{{Ime}} Članovi",
+    "toolsDesc1": "Alat za komesare bit će dostupni ovdje za upravljanje članovima lige.",
+    "toolsDesc2": "Opcije mogu uključivati ​​uklanjanje članova, promjenjive dozvole itd."
+  },
+  "roster": {
+    "owner": "Vlasnik",
+    "name": "Ime",
+    "position": "Položaj",
+    "noTeams": "U ovoj ligi nisu pronađeni timovi.",
+    "empty": "Nema igrača na popisu. Ispunite nacrt za vidjeti igrače ovdje.",
+    "title": "Rosters",
+    "goToDraft": "Idi na nacrt",
+    "team": "Timu"
+  },
+  "settings": {
+    "title": "Postavke",
+    "unauthorized": "Niste ovlašteni za upravljanje ovom ligom.",
+    "sport": "Sport",
+    "leagueName": "Naziv lige",
+    "teams": "Timovi",
+    "commissioner": "Povjerenik",
+    "scoringDesc2": "Vrijednosti ažuriranja za različite akcije na osnovu preferencija vaše lige.",
+    "scoringTitle": "Pravila bodova",
+    "managementTitle": "Upravljanje ligama",
+    "updateScoring": "Ažurirajte pravila bodovanja",
+    "status": "Status sezone",
+    "manageTeams": "Upravljanje timovima",
+    "scoringDesc1": "Konfigurišite kako se bodovi nagrađuju u vašoj ligi.",
+    "infoHeader": "Informacije o ligi",
+    "inProgress": "U toku",
+    "managementDesc": "Upravljajte postavkama i konfiguracijom lige.",
+    "code": "Ligaška kodeksa",
+    "dangerZone": "Opasna zona",
+    "public": "Javno - svako može zatražiti da se pridruži",
+    "schedule": "Raspored postavki",
+    "private": "Privatno - Pozovite samo",
+    "visibility": "Vidljivost lige",
+    "dangerWarn": "Ove akcije se ne mogu poništiti. Biti siguran prije nastavka.",
+    "delete": "Izbriši ligu",
+    "advanced": "Napredne opcije",
+    "waivers": "Omogućite žicu za odvod",
+    "tradeDeadline": "Rok za trgovinu",
+    "save": "Spremite promjene",
+    "reset": "Resetirati ligu",
+    "draft": "Nacrt postavki"
+  },
+  "common": {
+    "error": "Greška",
+    "loading": "Učitavanje ..."
+  }
+}

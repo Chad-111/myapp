@@ -5,6 +5,7 @@ import LightModeTwoToneIcon from '@mui/icons-material/LightModeTwoTone';
 import DarkModeTwoToneIcon from '@mui/icons-material/DarkModeTwoTone';
 import { motion, AnimatePresence } from "framer-motion";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './components/utils/i18n'; // Import i18n configuration
 import "./App.css";
 import socket from "./socket";
 import { getAuthToken } from "./components/utils/auth";

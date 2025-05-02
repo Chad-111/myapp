@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from 'react';
 import { RedirectContext } from "../../App";
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getAuthToken } from "../../components/utils/auth";
+import { useTranslation } from 'react-i18next';
 
 const rulesetOptions = {
     nfl: [
@@ -39,6 +40,7 @@ function LeagueCreation() {
     const [ruleset, setRuleset] = useState("default");
     const navigate = useNavigate();
     const authToken = getAuthToken();
+    const { t } = useTranslation();
 
     useEffect(() => {
         // Reset ruleset when sport changes
@@ -55,11 +57,11 @@ function LeagueCreation() {
             let response;
             if (ruleset == "custom") {
                 setRedirectLocation("/fantasy/dashboard");
-                navigate("/fantasy/create-ruleset", {state: {creation: true, sport : sport, league_name : leagueName, team_name : teamName}}) // need to create
+                navigate("/fantasy/create-ruleset", { state: { creation: true, sport: sport, league_name: leagueName, team_name: teamName } }) // need to create
 
-            } else { 
+            } else {
                 if (ruleset == "half-ppr") {
-                    ruleset_specs = {"points_reception": 0.5}
+                    ruleset_specs = { "points_reception": 0.5 }
                     response = await fetch("/api/league/create", {
                         method: "POST",
                         headers: {
@@ -76,7 +78,7 @@ function LeagueCreation() {
                     });
                 } else {
 
-                
+
                     response = await fetch("/api/league/create", {
                         method: "POST",
                         headers: {
@@ -117,11 +119,10 @@ function LeagueCreation() {
         <div className="container py-5" style={{ maxWidth: "600px" }}>
             <div className="card shadow border-0">
                 <div className="card-body p-4">
-                    <h2 className="text-center mb-4">Create a Fantasy League</h2>
-
+                    <h2 className="text-center mb-4">{t('league.createTitle')}</h2>
                     {error && (
                         <div className="alert alert-danger text-center" role="alert">
-                            {error}
+                            {t(`league.errors.${error}`) || error}
                         </div>
                     )}
 
@@ -134,14 +135,14 @@ function LeagueCreation() {
                                 value={sport}
                                 onChange={(e) => setSport(e.target.value)}
                             >
-                                <option value="" disabled>Select a sport</option>
-                                <option value="nhl">NHL</option>
-                                <option value="ncaaf">College Football</option>
-                                <option value="mlb">MLB</option>
-                                <option value="nba">NBA</option>
-                                <option value="nfl">NFL</option>
+                                <option value="" disabled>{t('league.selectSport')}</option>
+                                <option value="nhl">{t('sports.nhl')}</option>
+                                <option value="ncaaf">{t('sports.ncaaf')}</option>
+                                <option value="mlb">{t('sports.mlb')}</option>
+                                <option value="nba">{t('sports.nba')}</option>
+                                <option value="nfl">{t('sports.nfl')}</option>
                             </select>
-                            <label htmlFor="sport">Sport</label>
+                            <label htmlFor="sport">{t('league.sport')}</label>
                         </div>
 
                         <div className="form-floating mb-3">
@@ -154,7 +155,7 @@ function LeagueCreation() {
                                 value={leagueName}
                                 onChange={(e) => setLeagueName(e.target.value)}
                             />
-                            <label htmlFor="league_name">League Name</label>
+                            <label htmlFor="league_name">{t('league.name')}</label>
                         </div>
 
                         <div className="form-floating mb-4">
@@ -167,18 +168,18 @@ function LeagueCreation() {
                                 value={teamName}
                                 onChange={(e) => setTeamName(e.target.value)}
                             />
-                            <label htmlFor="team_name">Your Team Name</label>
+                            <label htmlFor="team_name">{t('league.teamName')}</label>
                         </div>
 
                         <div className="form-floating mb-5">
-                        <select
+                            <select
                                 className="form-select"
                                 id="sport"
                                 required
                                 value={ruleset}
                                 onChange={(e) => setRuleset(e.target.value)}
                             >
-                                <option value="" disabled>Select a ruleset</option>
+                                <option value="" disabled>{t('league.selectRuleset')}</option>
                                 {sport && rulesetOptions[sport]?.map((option) => (
                                     <option key={option.value} value={option.value}>
                                         {option.label}
@@ -188,8 +189,9 @@ function LeagueCreation() {
                         </div>
 
                         <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold">
-                            Create League
+                            {t('league.createButton')}
                         </button>
+
                     </form>
                 </div>
             </div>

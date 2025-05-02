@@ -3,10 +3,12 @@ import { useParams, useLocation } from "react-router-dom";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
 import useLeagueData from "../../../components/utils/LeagueHook";
 import { useLeagueContext } from "../../../components/utils/LeagueContext";
+import { useTranslation } from 'react-i18next';
 
 function LeagueMembers() {
   // Extract league code from params or query string
   const { code } = useParams();
+  const { t } = useTranslation();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const leagueCode = code || queryParams.get("code");
@@ -29,12 +31,12 @@ function LeagueMembers() {
     return (
       <div className="container-fluid mt-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h1>League Members</h1>
+          <h1>{t('leagueMembers.title')}</h1>
           <FantasyHomeButton leagueCode={leagueCode} />
         </div>
         <div className="text-center mt-5">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
+            <span className="visually-hidden">{t('common.loading')}</span>
           </div>
         </div>
       </div>
@@ -46,10 +48,10 @@ function LeagueMembers() {
     return (
       <div className="container-fluid mt-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h1>League Members</h1>
+          <h1>{t('leagueMembers.title')}</h1>
           <FantasyHomeButton leagueCode={leagueCode} />
         </div>
-        <div className="alert alert-danger">{error}</div>
+        <div className="alert alert-danger">{t('common.error')}: {error}</div>
       </div>
     );
   }
@@ -57,25 +59,25 @@ function LeagueMembers() {
   return (
     <div className="container-fluid mt-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>{league?.name} Members</h1>
+        <h1>{t('leagueMembers.title', { name: league?.name })}</h1>
         <FantasyHomeButton leagueCode={leagueCode} />
       </div>
 
       <div className="card mb-4">
         <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <span>League Members</span>
-          <span>Total: {teams?.length || 0}</span>
+          <span>{t('leagueMembers.members')}</span>
+          <span>{t('leagueMembers.total')}: {teams?.length || 0}</span>
         </div>
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Team Name</th>
-                  <th>Owner</th>
-                  <th>Rank</th>
-                  <th>Record</th>
-                  <th>Join Date</th>
+                  <th>{t('leagueMembers.team')}</th>
+                  <th>{t('leagueMembers.owner')}</th>
+                  <th>{t('leagueMembers.rank')}</th>
+                  <th>{t('leagueMembers.record')}</th>
+                  <th>{t('leagueMembers.joinDate')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,7 +95,7 @@ function LeagueMembers() {
                 ))}
                 {(!teams || teams.length === 0) && (
                   <tr>
-                    <td colSpan="5" className="text-center">No members found</td>
+                    <td colSpan="5" className="text-center">{t('leagueMembers.noMembers')}</td>
                   </tr>
                 )}
               </tbody>
@@ -105,11 +107,11 @@ function LeagueMembers() {
       {league?.commissioner && (
         <div className="card mt-4">
           <div className="card-header bg-light">
-            Commissioner Tools
+            {t('leagueMembers.commissionerTools')}
           </div>
           <div className="card-body">
-            <p className="card-text text-muted">Commissioner tools will be available here for managing league members.</p>
-            <p className="card-text text-muted">Options might include removing members, changing permissions, etc.</p>
+            <p className="card-text text-muted">{t('leagueMembers.toolsDesc1')}</p>
+            <p className="card-text text-muted">{t('leagueMembers.toolsDesc2')}</p>
           </div>
         </div>
       )}

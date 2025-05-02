@@ -5,6 +5,7 @@ import { RedirectContext } from '../App';
 import { setAuthToken } from '../components/utils/auth';
 import { ToastContainer, toast } from 'react-toastify';
 import socket from "../socket";
+import { useTranslation } from 'react-i18next';
 
 function Form({ option }) {
     const [username, setUsername] = useState('');
@@ -21,6 +22,8 @@ function Form({ option }) {
     const [resendTime, setResendTime] = useState(0);
     const COOLDOWN_SECONDS = 60;
     const formRef = useRef();
+    const { t } = useTranslation();
+
 
     useEffect(() => {
         if (formRef.current) {
@@ -119,21 +122,28 @@ function Form({ option }) {
         setPassword(value);
         evaluatePasswordStrength(value);
     };
-    
+
     const evaluatePasswordStrength = (pwd) => {
         let score = 0;
         if (pwd.length >= 8) score++;
         if (/[A-Z]/.test(pwd)) score++;
         if (/[0-9]/.test(pwd)) score++;
         if (/[^A-Za-z0-9]/.test(pwd)) score++;
-    
-        const labels = ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'];
+
+        const labels = [
+            t('auth.strength.veryWeak'),
+            t('auth.strength.weak'),
+            t('auth.strength.moderate'),
+            t('auth.strength.strong'),
+            t('auth.strength.veryStrong')
+        ];
+
         setPasswordStrength({
             score,
             label: labels[score]
         });
     };
-    
+
 
     const handleVerifyCode = async (event) => {
         event.preventDefault();
@@ -188,7 +198,7 @@ function Form({ option }) {
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
                                     />
-                                    <div className="invalid-feedback">Please enter a valid email.</div>
+                                    <div className="invalid-feedback">{t('auth.invalidEmail')}</div>
                                 </div>
                             )}
                             <div className="form-group mb-2 drop-item">
@@ -200,7 +210,7 @@ function Form({ option }) {
                                     onChange={(e) => setUsername(e.target.value)}
                                     required
                                 />
-                                <div className="invalid-feedback">Please enter a username.</div>
+                                <div className="invalid-feedback">{t('auth.invalidUsername')}</div>
                             </div>
                             <div className="form-group mb-2 drop-item">
                                 <input
@@ -211,7 +221,7 @@ function Form({ option }) {
                                     onChange={(e) => handlePasswordChange(e.target.value)}
                                     required={option === 1 || option === 2}
                                 />
-                                <div className="invalid-feedback">Please enter a password.</div>
+                                <div className="invalid-feedback">{t('auth.invalidPassword')}</div>
                             </div>
                             {option === 2 && password && (
                                 <div className="password-strength mt-1">
@@ -232,7 +242,7 @@ function Form({ option }) {
                                 </div>
                             )}
 
-                            
+
                             {option === 2 && (
                                 <div className="form-group mb-2 drop-item">
                                     <input
@@ -243,7 +253,7 @@ function Form({ option }) {
                                         onChange={(e) => setRepeatPassword(e.target.value)}
                                         required
                                     />
-                                    <div className="invalid-feedback">Please confirm your password.</div>
+                                    <div className="invalid-feedback">{t('auth.confirmPassword')}</div>
                                 </div>
                             )}
                         </>
@@ -262,7 +272,8 @@ function Form({ option }) {
                                             required
                                         />
                                     </div>
-                                    <button className="btn btn-outline-danger drop-item" type="button" onClick={handleSendResetCode}>Send Code</button>
+                                    <button className="btn btn-outline-danger drop-item" type="button" onClick={handleSendResetCode}>  {t('auth.sendCode')}
+                                    </button>
                                 </>
                             )}
 
@@ -277,19 +288,17 @@ function Form({ option }) {
                                         required
                                     />
                                     <p className="text-muted mb-2" style={{ fontSize: '0.85rem' }}>
-                                        Can't find the code?
-                                        <br />
-                                        Please check your <strong>junk or spam folder</strong>.
+                                        {t('auth.checkSpam')}
                                     </p>
 
                                     <div className="resend-wrapper">
-                                        <span>Didn’t get it?</span>
-                                        <button className="resend-btn" onClick={handleResendCode} disabled={resendTime > 0}>
-                                            Resend {resendTime > 0 ? `(${resendTime}s)` : ''}
+                                        <span>{t('auth.didntGetIt')}</span>
+                                        <button className="resend-btn" disabled={resendTime > 0}>
+                                            {t('auth.resend')} {resendTime > 0 ? `(${resendTime}s)` : ''}
                                         </button>
                                     </div>
                                     <button className="btn btn-outline-primary drop-item" type="button" onClick={handleVerifyCode}>
-                                        Verify Code
+                                        {t('auth.verifyCode')}
                                     </button>
                                 </>
                             )}
@@ -312,7 +321,9 @@ function Form({ option }) {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         required
                                     />
-                                    <button className="btn btn-outline-success drop-item" type="button" onClick={handlePasswordReset}>Reset Password</button>
+                                    <button className="btn btn-outline-success drop-item" type="button" onClick={handlePasswordReset}>  {t('auth.resetPassword')}
+                                    </button>
+
                                 </>
                             )}
                         </>
@@ -320,7 +331,7 @@ function Form({ option }) {
                 </div>
                 {(option === 1 || option === 2) && (
                     <button className='btn btn-outline-success drop-item' type='submit'>
-                        {option === 1 ? 'Sign in' : 'Sign up'}
+                        {option === 1 ? t('auth.signIn') : t('auth.signUp')}
                     </button>
                 )}
             </form>
@@ -330,21 +341,23 @@ function Form({ option }) {
 }
 
 function Signup() {
+    const { t } = useTranslation();
     const [option, setOption] = useState(1);
     return (
         <div className='Signup'>
             <header>
                 <div className={`header-headings ${option === 1 ? 'sign-in' : option === 2 ? 'sign-up' : 'forgot'}`}>
-                    <span>Sign In</span>
-                    <span>Join The Empire</span>
-                    <span>Forgot Your Password?</span>
+                    <span>{t('auth.signInTitle')}</span>
+                    <span>{t('auth.signUpTitle')}</span>
+                    <span>{t('auth.forgotTitle')}</span>
                 </div>
             </header>
             <ul className='options'>
-                <li className={option === 1 ? 'active' : ''} onClick={() => setOption(1)}>Sign in</li>
-                <li className={option === 2 ? 'active' : ''} onClick={() => setOption(2)}>Sign up</li>
-                <li className={option === 3 ? 'active' : ''} onClick={() => setOption(3)}>Forgot</li>
+                <li className={option === 1 ? 'active' : ''} onClick={() => setOption(1)}>{t('auth.signIn')}</li>
+                <li className={option === 2 ? 'active' : ''} onClick={() => setOption(2)}>{t('auth.signUp')}</li>
+                <li className={option === 3 ? 'active' : ''} onClick={() => setOption(3)}>{t('auth.forgot')}</li>
             </ul>
+
             <Form option={option} />
         </div>
     );

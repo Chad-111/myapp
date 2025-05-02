@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getAuthToken } from '../../../components/utils/auth';
+import { useTranslation } from 'react-i18next';
 
 
 const MatchupDetails = () => {
@@ -11,6 +12,7 @@ const MatchupDetails = () => {
   const [matchup, setMatchup] = useState(null);
   const [homePlayers, setHomePlayers] = useState([]);
   const [awayPlayers, setAwayPlayers] = useState([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchMatchupDetails = async () => {
@@ -48,33 +50,33 @@ const MatchupDetails = () => {
 
   return (
     <>
-    {console.log(matchup)}
-    <div>
-      <h1>Matchup Details</h1>
-      <h2>Week {matchup.week}</h2>
-      <h3>{matchup.home_team} vs {matchup.away_team}</h3>
-      <p><strong>Score:</strong> {matchup.home_score} - {matchup.away_score}</p>
+      {console.log(matchup)}
+      <div>
+        <h1>{t('matchup.title')}</h1>
+        <h2>{t('matchup.week', { week: matchup.week })}</h2>
+        <h3>{matchup.home_team} {t('matchup.vs')} {matchup.away_team}</h3>
+        <p><strong>{t('matchup.score')}:</strong> {matchup.home_score} - {matchup.away_score}</p>
 
-      <div className="row">
-        <div className="col-md-6">
-          <h4>{matchup.home_team} Players</h4>
-          <ul>
-            {homePlayers.map((p, i) => (
-              <li key={i}>{p.name} — {p.points.toFixed(2)} pts</li>
-            ))}
-          </ul>
-        </div>
+        <div className="row">
+          <div className="col-md-6">
+            <h4>{matchup.home_team} {t('matchup.players')}</h4>
+            <ul>
+              {homePlayers.map((p, i) => (
+                <li key={i}>{p.name} — {p.points.toFixed(2)} pts</li>
+              ))}
+            </ul>
+          </div>
 
-        <div className="col-md-6">
-          <h4>{matchup.away_team} Players</h4>
-          <ul>
-            {awayPlayers.map((p, i) => (
-              <li key={i}>{p.name} — {p.points.toFixed(2)} pts</li>
-            ))}
-          </ul>
+          <div className="col-md-6">
+            <h4>{matchup.away_team} {t('matchup.players')}</h4>
+            <ul>
+              {awayPlayers.map((p, i) => (
+                <li>{p.name} — {p.points.toFixed(2)} {t('matchup.pts')}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

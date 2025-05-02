@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { RedirectContext } from "../../App";
 import { getAuthToken } from "../../components/utils/auth";
 import { useContext } from "react";
+import { useTranslation } from 'react-i18next';
+
 const defaultRulesets = {
     nfl: {
         points_passtd: 4.0, points_passyd: 0.04, points_2pt_passtd: 2.0, points_2pt_rushtd: 2.0,
@@ -45,6 +47,7 @@ const ruleOrder = {
 };
 
 function CreateRuleset() {
+    const { t } = useTranslation();
     defaultRulesets.ncaaf = defaultRulesets.nfl;
 
     const location = useLocation();
@@ -60,7 +63,7 @@ function CreateRuleset() {
 
     const [error, setError] = useState("");
 
-    
+
 
     const handleChange = (field, value) => {
         setRulesetSpecs(prev => ({
@@ -71,13 +74,13 @@ function CreateRuleset() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (creation) {
             console.log("Submitting ruleset for:", sport, league_name, team_name);
             console.log("Ruleset specs:", rulesetSpecs);
 
             try {
-                
+
                 const response = await fetch("/api/league/create", {
                     method: "POST",
                     headers: {
@@ -120,7 +123,7 @@ function CreateRuleset() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${authToken}`,
                     },
-                    body: JSON.stringify({access_token: authToken, sport: sport, league_id: league_id, ruleset: rulesetSpecs})
+                    body: JSON.stringify({ access_token: authToken, sport: sport, league_id: league_id, ruleset: rulesetSpecs })
                 })
 
                 const data = await response.json();
@@ -143,7 +146,9 @@ function CreateRuleset() {
         <div className="container py-5" style={{ maxWidth: "700px" }}>
             <div className="card shadow border-0">
                 <div className="card-body p-4">
-                    <h2 className="text-center mb-4">Customize {sport?.toUpperCase()} Ruleset</h2>
+                    <h2 className="text-center mb-4">
+                        {t('ruleset.customizeTitle', { sport: sport?.toUpperCase() })}
+                    </h2>
 
                     <form onSubmit={handleSubmit}>
                         {fields.map((field) => (
@@ -157,13 +162,14 @@ function CreateRuleset() {
                                     value={rulesetSpecs[field] ?? ""}
                                     onChange={(e) => handleChange(field, e.target.value)}
                                 />
-                                <label htmlFor={field}>{field.replace(/_/g, " ")}</label>
+                                <label htmlFor={field}>{t(`ruleset.fields.${field}`, field.replace(/_/g, " "))}</label>
                             </div>
                         ))}
 
                         <button type="submit" className="btn btn-success w-100 fw-semibold">
-                            Save Ruleset & Continue
+                            {t('ruleset.saveAndContinue')}
                         </button>
+
                     </form>
                 </div>
             </div>

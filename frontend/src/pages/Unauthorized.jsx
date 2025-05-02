@@ -1,7 +1,11 @@
 import React, { useEffect } from 'react';
 import './Unauthorized.css';
+import { useTranslation } from 'react-i18next';
+
 
 const Unauthorized = () => {
+    const { t } = useTranslation();
+
     useEffect(() => {
         document.title = "403 - Unauthorized";
     }, []);
@@ -28,7 +32,7 @@ const Unauthorized = () => {
                 </g>
             </svg>
             <h1>403</h1>
-            <h2>Timeout! You are not authorized!</h2>
+            <h2>{t('auth.403')}</h2>
         </div>
     );
 };

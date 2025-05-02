@@ -4,6 +4,7 @@ import "./Login.css"; // Import the CSS for your Login component
 import { RedirectContext } from "../App";
 import { setAuthToken } from "../components/utils/auth";
 import socket from "../socket";
+import { useTranslation } from "react-i18next";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -11,6 +12,8 @@ function Login() {
   const [error, setError] = useState("");
   const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,7 +54,7 @@ function Login() {
 
   return (
     <div className="Login">
-      <h2>Login</h2>
+      <h2>{t("login.title")}</h2>
       {error && <p className="error">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">

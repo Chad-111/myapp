@@ -5,6 +5,7 @@ import { RedirectContext } from "../../../App";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
 import useLeagueData from "../../../components/utils/LeagueHook"
 import { useLeagueContext } from "../../../components/utils/LeagueContext";
+import { useTranslation } from 'react-i18next';
 
 const LeagueSettings = () => {
   // Extract league code from params or query string
@@ -12,6 +13,7 @@ const LeagueSettings = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const leagueCode = code || queryParams.get("code");
+  const { t } = useTranslation();
 
   // Use the context
   const { setCurrentLeagueCode } = useLeagueContext();
@@ -107,7 +109,7 @@ const LeagueSettings = () => {
         </div>
         <div className="text-center mt-5">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
+            <span className="visually-hidden">{t('common.loading')}</span>
           </div>
         </div>
       </div>
@@ -122,9 +124,7 @@ const LeagueSettings = () => {
           <h1>League Settings</h1>
           <FantasyHomeButton leagueCode={leagueCode} />
         </div>
-        <div className="alert alert-danger">
-          {error || leagueError || "You are not authorized to manage this league."}
-        </div>
+        <div className="alert alert-danger">{error || leagueError || t('settings.unauthorized')}</div>
       </div>
     );
   }
@@ -132,24 +132,24 @@ const LeagueSettings = () => {
   return (
     <div className="container-fluid mt-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>{league?.name} Settings</h1>
+        <h1>{league?.name} {t('settings.title')}</h1>
         <FantasyHomeButton leagueCode={leagueCode} />
       </div>
 
       {/* League Info Card */}
       <div className="card mb-4">
-        <div className="card-header bg-primary text-white">League Information</div>
+        <div className="card-header bg-primary text-white">{t('settings.infoHeader')}</div>
         <div className="card-body">
           <div className="row">
             <div className="col-md-6">
-              <p><strong>League Name:</strong> {league?.name}</p>
-              <p><strong>Sport:</strong> {league?.sport}</p>
-              <p><strong>League Code:</strong> {leagueCode}</p>
+              <p><strong>{t('settings.leagueName')}:</strong> {league?.name}</p>
+              <p><strong>{t('settings.sport')}:</strong> {league?.sport}</p>
+              <p><strong>{t('settings.code')}:</strong> {leagueCode}</p>
             </div>
             <div className="col-md-6">
-              <p><strong>Teams:</strong> {teams?.length || 0}</p>
-              <p><strong>Season Status:</strong> {league?.status || "In Progress"}</p>
-              <p><strong>Commissioner:</strong> {league?.commissioner_id}</p>
+              <p><strong>{t('settings.teams')}:</strong> {teams?.length || 0}</p>
+              <p><strong>{t('settings.status')}:</strong> {league?.status || t('settings.inProgress')}</p>
+              <p><strong>{t('settings.commissioner')}:</strong> {league?.commissioner_id}</p>
             </div>
           </div>
         </div>
@@ -160,16 +160,13 @@ const LeagueSettings = () => {
         <div className="col-md-6 mb-4">
           <div className="card h-100">
             <div className="card-header bg-light">
-              <strong>Scoring Rules</strong>
+              <strong>{t('settings.scoringTitle')}</strong>
             </div>
             <div className="card-body">
-              <p>Configure how points are awarded in your league.</p>
-              <p>Update point values for different actions based on your league's preferences.</p>
-              <button
-                className="btn btn-primary"
-                onClick={handleScoringUpdate}
-              >
-                Update Scoring Rules
+              <p>{t('settings.scoringDesc1')}</p>
+              <p>{t('settings.scoringDesc2')}</p>
+              <button className="btn btn-primary" onClick={handleScoringUpdate}>
+                {t('settings.updateScoring')}
               </button>
             </div>
           </div>
@@ -178,14 +175,14 @@ const LeagueSettings = () => {
         <div className="col-md-6 mb-4">
           <div className="card h-100">
             <div className="card-header bg-light">
-              <strong>League Management</strong>
+              <strong>{t('settings.managementTitle')}</strong>
             </div>
             <div className="card-body">
-              <p>Manage your league settings and configuration.</p>
+              <p>{t('settings.managementDesc')}</p>
               <div className="d-grid gap-2">
-                <button className="btn btn-outline-primary">Manage Teams</button>
-                <button className="btn btn-outline-primary">Schedule Settings</button>
-                <button className="btn btn-outline-primary">Draft Settings</button>
+                <button className="btn btn-outline-primary">{t('settings.manageTeams')}</button>
+                <button className="btn btn-outline-primary">{t('settings.schedule')}</button>
+                <button className="btn btn-outline-primary">{t('settings.draft')}</button>
               </div>
             </div>
           </div>
@@ -194,39 +191,39 @@ const LeagueSettings = () => {
 
       {/* Additional Settings */}
       <div className="card mb-4">
-        <div className="card-header bg-light">Advanced Options</div>
+        <div className="card-header bg-light">{t('settings.advanced')}</div>
         <div className="card-body">
           <div className="mb-3">
-            <label className="form-label">League Visibility</label>
+            <label className="form-label">{t('settings.visibility')}</label>
             <select className="form-select">
-              <option>Private - Invite Only</option>
-              <option>Public - Anyone can request to join</option>
+              <option>{t('settings.private')}</option>
+              <option>{t('settings.public')}</option>
             </select>
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Trade Deadline</label>
+            <label className="form-label">{t('settings.tradeDeadline')}</label>
             <input type="date" className="form-control" />
           </div>
 
           <div className="form-check form-switch mb-3">
             <input className="form-check-input" type="checkbox" id="waiversEnabled" />
             <label className="form-check-label" htmlFor="waiversEnabled">
-              Enable Waiver Wire
+              {t('settings.waivers')}
             </label>
           </div>
 
-          <button className="btn btn-success">Save Changes</button>
+          <button className="btn btn-success">{t('settings.save')}</button>
         </div>
       </div>
 
       {/* Danger Zone */}
       <div className="card border-danger mb-4">
-        <div className="card-header bg-danger text-white">Danger Zone</div>
+        <div className="card-header bg-danger text-white">{t('settings.dangerZone')}</div>
         <div className="card-body">
-          <p className="text-danger">These actions cannot be undone. Be certain before proceeding.</p>
-          <button className="btn btn-outline-danger me-2">Reset League</button>
-          <button className="btn btn-danger">Delete League</button>
+          <p className="text-danger">{t('settings.dangerWarn')}</p>
+          <button className="btn btn-outline-danger me-2">{t('settings.reset')}</button>
+          <button className="btn btn-danger">{t('settings.delete')}</button>
         </div>
       </div>
     </div>

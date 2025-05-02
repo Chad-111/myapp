@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useLocation } from "react-router-dom";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
+import { useTranslation } from 'react-i18next';
 
 function Draft() {
   // initial player limits:
@@ -42,6 +43,7 @@ function Draft() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const leagueCode = code || queryParams.get("code");
+  const { t } = useTranslation();
 
   // Add this near the top of your component
   useEffect(() => {
@@ -400,7 +402,7 @@ function Draft() {
   return (
     <div className="container-fluid mt-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="mb-0">{league?.name} Draft</h1>
+        <h1 className="mb-0">{league?.name} {t('draft.title')}</h1>
         <FantasyHomeButton leagueCode={code} />
       </div>
 
@@ -410,13 +412,13 @@ function Draft() {
           <div className="alert alert-info">
             <div className="row">
               <div className="col-md-4">
-                <strong>Current Pick:</strong> #{draftStatus.currentPick}
+                <strong>{t('draft.currentPick')}:</strong> #{draftStatus.currentPick}
               </div>
               <div className="col-md-4">
-                <strong>Team on the Clock:</strong> {teams.find(t => t.id === draftStatus.currentTeam)?.name}
+                <strong>{t('draft.onTheClock')}:</strong> {teams.find(t => t.id === draftStatus.currentTeam)?.name}
               </div>
               <div className="col-md-4">
-                <strong>Draft Type:</strong> {draftStatus.isSnakeDraft ? "Snake" : "Standard"}
+                <strong>{t('draft.type')}:</strong> {draftStatus.isSnakeDraft ? t('draft.snake') : t('draft.standard')}
               </div>
             </div>
           </div>
@@ -427,12 +429,12 @@ function Draft() {
         <div className="col-md-8">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <h3 className="mb-0">Available Players</h3>
+              <h3 className="mb-0">{t('draft.available')}</h3>
               <div className="d-flex">
                 <input
                   type="text"
                   className="form-control me-2"
-                  placeholder="Search players..."
+                  placeholder={t('draft.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -452,10 +454,10 @@ function Draft() {
               <table className="table table-hover">
                 <thead className="sticky-top bg-white">
                   <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Team</th>
-                    <th>Action</th>
+                    <th>{t('draft.name')}</th>
+                    <th>{t('draft.position')}</th>
+                    <th>{t('draft.team')}</th>
+                    <th>{t('draft.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -470,8 +472,7 @@ function Draft() {
                           onClick={() => draftPlayer(player)}
                         // disabled={draftStatus.currentTeam !== userTeam?.id}
                         >
-                          Draft
-                        </button>
+                          {t('draft.draft')}</button>
                       </td>
                     </tr>
                   ))}
@@ -484,7 +485,7 @@ function Draft() {
         <div className="col-md-4">
           <div className="card">
             <div className="card-header">
-              <h3 className="mb-0">Draft Results</h3>
+              <h3 className="mb-0">{t('draft.results')}</h3>
             </div>
             <div className="card-body" style={{ maxHeight: "600px", overflow: "auto" }}>
               <div className="accordion" id="draftResults">
@@ -498,7 +499,7 @@ function Draft() {
                         data-bs-target={`#team${team.id}`}
                         aria-expanded={index === 0 ? 'true' : 'false'}
                       >
-                        {team.name} {team.id === userTeam?.id ? "(Your Team)" : ""}
+                        {team.name} {team.id === userTeam?.id ? `(${t('draft.yourTeam')})` : ""}
                       </button>
                     </h2>
                     <div
@@ -515,7 +516,7 @@ function Draft() {
                               </li>
                             ))
                           ) : (
-                            <li className="list-group-item text-muted">No players drafted yet</li>
+                            <li className="list-group-item text-muted">{t('draft.noPlayers')}</li>
                           )}
                         </ul>
                       </div>

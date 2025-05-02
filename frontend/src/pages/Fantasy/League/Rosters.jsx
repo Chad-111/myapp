@@ -4,6 +4,7 @@ import axios from "axios";
 import FantasyHomeButton from "../../../components/FantasyHomeButton";
 import useLeagueData from "../../../components/utils/LeagueHook"
 import { useLeagueContext } from "../../../components/utils/LeagueContext";
+import { useTranslation } from 'react-i18next';
 
 function LeagueRoster() {
   // Extract league code from params or query string
@@ -11,7 +12,7 @@ function LeagueRoster() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const leagueCode = code || queryParams.get("code");
-
+  const { t } = useTranslation();
   // Use the context
   const { setCurrentLeagueCode } = useLeagueContext();
 
@@ -99,7 +100,7 @@ function LeagueRoster() {
     return (
       <div className="container-fluid mt-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h1>Team Rosters</h1>
+          <h1 className="mb-0">{t('roster.title')}</h1>
           <FantasyHomeButton leagueCode={leagueCode} />
         </div>
         <div className="text-center mt-5">
@@ -114,7 +115,7 @@ function LeagueRoster() {
     return (
       <div className="container-fluid mt-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h1>Team Rosters</h1>
+          <h1 className="mb-0">{t('roster.title')}</h1>
           <FantasyHomeButton leagueCode={leagueCode} />
         </div>
         <div className="alert alert-danger">{leagueError || error}</div>
@@ -125,12 +126,12 @@ function LeagueRoster() {
   return (
     <div className="container-fluid mt-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="mb-0">{league?.name} Rosters</h1>
+        <h1 className="mb-0">{league?.name} {t('roster.title')}</h1>
         <FantasyHomeButton leagueCode={leagueCode} />
       </div>
 
       {teams.length === 0 ? (
-        <div className="alert alert-info">No teams found in this league.</div>
+        <div className="alert alert-info">{t('roster.noTeams')}</div>
       ) : (
         <div className="row">
           {teams.map(team => {
@@ -142,7 +143,7 @@ function LeagueRoster() {
                 <div className="card">
                   <div className="card-header bg-primary text-white">
                     <h3 className="mb-0">{team.name}</h3>
-                    <small>Owner: {team.owner_id}</small>
+                    <small>{t('roster.owner')}: {team.owner_id}</small>
                   </div>
 
                   <div className="card-body">
@@ -154,11 +155,12 @@ function LeagueRoster() {
                             <table className="table table-hover table-sm">
                               <thead className="table-light">
                                 <tr>
-                                  <th>Name</th>
-                                  <th>Team</th>
-                                  <th>Position</th>
+                                  <th>{t('roster.name')}</th>
+                                  <th>{t('roster.team')}</th>
+                                  <th>{t('roster.position')}</th>
                                 </tr>
                               </thead>
+
                               <tbody>
                                 {players.map(player => (
                                   <tr key={player.player_id}>
@@ -174,13 +176,14 @@ function LeagueRoster() {
                       ))
                     ) : (
                       <div className="alert alert-info">
-                        No players on roster. Complete the draft to see players here.
+                        {t('roster.empty')}
                         <div className="mt-2">
                           <a href={`/league/draft/${leagueCode}`} className="btn btn-primary btn-sm">
-                            Go to Draft
+                            {t('roster.goToDraft')}
                           </a>
                         </div>
                       </div>
+
                     )}
                   </div>
                 </div>

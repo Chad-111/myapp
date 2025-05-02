@@ -1,0 +1,243 @@
+{
+  "tabs": {
+    "games": "Games",
+    "news": "News"
+  },
+  "badges": {
+    "live": "LIVE",
+    "final": "FINAL"
+  },
+  "headings": {
+    "upcoming": "Upcoming Matchups",
+    "noUpcoming": "No Upcoming Games",
+    "topStories": "Top Stories",
+    "finalBox": "Final Box Score"
+  },
+  "messages": {
+    "noUpcomingSub": "Check out the latest completed matchups.",
+    "noNews": "No news articles available.",
+    "noDescription": "No description available."
+  },
+  "buttons": {
+    "readMore": "Read More"
+  },
+  "modals": {
+    "player": "Player"
+  },
+  "navbar": {
+    "home": "Home",
+    "fantasy": "Fantasy",
+    "logout": "Log out",
+    "getStarted": "Get Started",
+    "menu": "Menu",
+    "loggedInAs": "Logged in as"
+  },
+  "upcoming": {
+    "gameStarting": "Game is starting!",
+    "startsInHoursMinutes": "Starts in: {{hours}}h {{minutes}}m",
+    "startsInOneHour": "Starts in: 1h {{minutes}}m",
+    "startsInMinutesSeconds": "Starts in: {{minutes}}m {{seconds}}s",
+    "startsInSeconds": "Starting in: {{seconds}}s"
+  },
+  "symbols": {
+    "at": "@"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "forgot": "Forgot",
+    "signInTitle": "Sign In",
+    "signUpTitle": "Join The Empire",
+    "forgotTitle": "Forgot Your Password?",
+    "invalidEmail": "Please enter a valid email.",
+    "invalidUsername": "Please enter a username.",
+    "invalidPassword": "Please enter a password.",
+    "confirmPassword": "Please confirm your password.",
+    "sendCode": "Send Code",
+    "verifyCode": "Verify Code",
+    "resetPassword": "Reset Password",
+    "checkSpam": "Can't find the code?\nPlease check your junk or spam folder.",
+    "didntGetIt": "Didn’t get it?",
+    "resend": "Resend",
+    "403": "Timeout! You are not authorized!",
+    "strength": {
+      "veryWeak": "Very Weak",
+      "weak": "Weak",
+      "moderate": "Moderate",
+      "strong": "Strong",
+      "veryStrong": "Very Strong"
+    }
+  },
+  "fantasy": {
+    "title": "Fantasy Dashboard",
+    "createLeague": "Create League",
+    "findLeague": "Find a League",
+    "availableLeagues": "Available Leagues to Join",
+    "noLeagues": "No available leagues.",
+    "yourLeagues": "Your Leagues",
+    "sport": "Sport",
+    "commissioner": "Commissioner",
+    "rank": "Rank",
+    "record": "Record"
+  },
+  "league": {
+    "createTitle": "Create a Fantasy League",
+    "sport": "Sport",
+    "name": "League Name",
+    "teamName": "Your Team Name",
+    "selectSport": "Select a sport",
+    "selectRuleset": "Select a ruleset",
+    "createButton": "Create League",
+    "errors": {
+      "leagueExists": "League already exists.",
+      "invalidTeam": "Invalid team name."
+    }
+  },
+  "sports": {
+    "nhl": "NHL",
+    "ncaaf": "College Football",
+    "mlb": "MLB",
+    "nba": "NBA",
+    "nfl": "NFL"
+  },
+  "leagueJoin": {
+    "teamLabel": "Name your team:",
+    "createButton": "Create team",
+    "error": "League creation failed. Please try again."
+  },
+  "ruleset": {
+    "customizeTitle": "Customize {{sport}} Ruleset",
+    "saveAndContinue": "Save Ruleset & Continue",
+    "fields": {
+      "points_per_goal": "Points per Goal",
+      "yards_per_point": "Yards per Point",
+      "bonus_touchdown": "Bonus for Touchdown",
+      "interceptions": "Interceptions",
+      "rebounds": "Rebounds",
+      "assists": "Assists"
+    }
+},
+  "draft": {
+    "available": "Available Players",
+    "title": "Draft",
+    "currentPick": "Current Pick",
+    "onTheClock": "Team on the Clock",
+    "type": "Draft Type",
+    "snake": "Snake",
+    "standard": "Standard",
+    "name": "Name",
+    "position": "Position",
+    "team": "Team",
+    "action": "Action",
+    "draft": "Draft",
+    "results": "Draft Results",
+    "yourTeam": "Your Team",
+    "noPlayers": "No players drafted yet",
+    "debug": "Debug Tools",
+    "endAndSave": "End Draft & Save Teams",
+    "search": "Search players..."
+  },
+  "leagueHome": {
+    "navTitle": "League Navigation",
+    "backToTeam": "Back to Team Homepage",
+    "invite": "Invite",
+    "inviteTooltip": "Generate invite link",
+    "inviteValidity": "Valid for 2 hours",
+    "inviteCopied": "Invite code copied to clipboard!",
+    "settings": "League Settings",
+    "teams": "Teams",
+    "membersTitle": "League Members",
+    "moreOptions": "More Options",
+    "owner": "Owner",
+    "rank": "Rank",
+    "tabs": {
+      "standings": "Standings",
+      "rosters": "Rosters",
+      "schedule": "Schedule",
+      "trades": "Trades",
+      "draft": "Draft",
+      "brackets": "Brackets",
+      "members": "Members"
+    }
+  },
+  "leagueSports": {
+    "nhl": "NHL",
+    "nba": "NBA",
+    "nfl": "NFL",
+    "mlb": "MLB",
+    "ncaaf": "College Football"
+  },
+    "matchup": {
+    "title": "Matchup Details",
+    "week": "Week {{week}}",
+    "vs": "vs",
+    "score": "Score",
+    "players": "Players",
+    "pts": "pts"
+  },
+  "leagueMembers": {
+    "title": "{{name}} Members",
+    "members": "League Members",
+    "total": "Total",
+    "team": "Team Name",
+    "owner": "Owner",
+    "rank": "Rank",
+    "record": "Record",
+    "joinDate": "Join Date",
+    "noMembers": "No members found",
+    "commissionerTools": "Commissioner Tools",
+    "toolsDesc1": "Commissioner tools will be available here for managing league members.",
+    "toolsDesc2": "Options might include removing members, changing permissions, etc."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "roster": {
+    "title": "Rosters",
+    "owner": "Owner",
+    "name": "Name",
+    "team": "Team",
+    "position": "Position",
+    "noTeams": "No teams found in this league.",
+    "empty": "No players on roster. Complete the draft to see players here.",
+    "goToDraft": "Go to Draft"
+  },
+  "settings": {
+    "title": "Settings",
+    "unauthorized": "You are not authorized to manage this league.",
+    "infoHeader": "League Information",
+    "leagueName": "League Name",
+    "sport": "Sport",
+    "code": "League Code",
+    "teams": "Teams",
+    "status": "Season Status",
+    "inProgress": "In Progress",
+    "commissioner": "Commissioner",
+
+    "scoringTitle": "Scoring Rules",
+    "scoringDesc1": "Configure how points are awarded in your league.",
+    "scoringDesc2": "Update point values for different actions based on your league's preferences.",
+    "updateScoring": "Update Scoring Rules",
+
+    "managementTitle": "League Management",
+    "managementDesc": "Manage your league settings and configuration.",
+    "manageTeams": "Manage Teams",
+    "schedule": "Schedule Settings",
+    "draft": "Draft Settings",
+
+    "advanced": "Advanced Options",
+    "visibility": "League Visibility",
+    "private": "Private - Invite Only",
+    "public": "Public - Anyone can request to join",
+    "tradeDeadline": "Trade Deadline",
+    "waivers": "Enable Waiver Wire",
+    "save": "Save Changes",
+
+    "dangerZone": "Danger Zone",
+    "dangerWarn": "These actions cannot be undone. Be certain before proceeding.",
+    "reset": "Reset League",
+    "delete": "Delete League"
+  }
+
+}

@@ -1,20 +1,20 @@
-import {React} from 'react'
-import {useContext, useEffect, useState} from 'react';
+import { React } from 'react'
+import { useContext, useEffect, useState } from 'react';
 import { RedirectContext } from "../../App";
-import {useNavigate, useLocation} from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getAuthToken } from "../../components/utils/auth";
-
+import { useTranslation } from 'react-i18next';
 
 function LeagueJoin() {
     const location = useLocation();
     const [name, setName] = useState("");
     const [teamName, setTeamName] = useState("");
     const [error, setError] = useState("");
-    const {redirectLocation, setRedirectLocation} = useContext(RedirectContext);
+    const { redirectLocation, setRedirectLocation } = useContext(RedirectContext);
     const navigate = useNavigate();
     const authToken = getAuthToken();
-    
-    
+    const { t } = useTranslation();
+
 
     const handleJoinLeague = async (e) => {
         e.preventDefault();
@@ -22,21 +22,21 @@ function LeagueJoin() {
         try {
 
             const code = location.pathname.split("/").at(-1);
-        
-        
+
+
             const response = await fetch("/api/league/join", {
                 method: "POST",
                 headers: {
-                "Content-Type": "application/json",
-                "Authorization": 'Bearer ' + authToken
+                    "Content-Type": "application/json",
+                    "Authorization": 'Bearer ' + authToken
                 },
-                body: JSON.stringify({ 
-                    "access_token": authToken, 
-                    "name" : teamName,
-                    "code" : code
+                body: JSON.stringify({
+                    "access_token": authToken,
+                    "name": teamName,
+                    "code": code
                 }),
             });
-    
+
             if (!response.ok) {
                 if (response.status == 422) {
                     setRedirectLocation(location.pathname);
@@ -45,10 +45,10 @@ function LeagueJoin() {
                     throw new Error("League get failed");
                 }
             } else {
-    
+
                 const data = await response.json();
                 console.log("Message", data);
-                
+
                 navigate("/fantasy/dashboard")
             }
 
@@ -60,10 +60,10 @@ function LeagueJoin() {
 
     return (
         <div className="LeagueCreation">
-            {error && <p className="error">{error}</p>}
+            {error && <p className="error">{t('leagueJoin.error') || error}</p>}
             <form onSubmit={handleJoinLeague}>
                 <div className="form-group">
-                    <label htmlFor="team_name">Name your team: </label>
+                    <label htmlFor="team_name">{t('leagueJoin.teamLabel')}</label>
                     <input
                         type="text"
                         id="team_name"
@@ -73,7 +73,9 @@ function LeagueJoin() {
                     />
                 </div>
 
-                <button type="submit" className="create-button">Create team</button>
+                <button type="submit" className="create-button">
+                    {t('leagueJoin.createButton')}
+                </button>
             </form>
         </div>
     );

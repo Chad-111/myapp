@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import "./Navbar.css";
 import { getAuthToken, removeAuthToken, isLoggedIn as checkLogin } from "./utils/auth";
 import socket from "../socket";
+import { useTranslation } from 'react-i18next';
 
 function Navbar() {
   const location = useLocation();
@@ -11,6 +12,8 @@ function Navbar() {
   const authToken = getAuthToken();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
+  const { t, i18n } = useTranslation();
+
 
   useEffect(() => {
     setIsLoggedIn(checkLogin());
@@ -92,28 +95,52 @@ function Navbar() {
     <div className="sticky-top layout-wrapper">
       <nav className={`Navbar ${isFantasyRoute ? "compact" : ""}`}>
         <div className="container-fluid d-flex align-items-center py-2">
-          <div className="navbar-logo w-50 text-start">DraftEmpire</div>
+          <div className="d-flex align-items-center w-50 text-start">
+            <div className="navbar-logo">DraftEmpire</div>
+            <div className="ms-3">
+              <select
+                className="form-select form-select-sm bg-dark text-light border-secondary"
+                style={{ width: '100px' }}
+                value={i18n.language}
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
+              >
+                <option value="en">🇺🇸 EN</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="fr">🇫🇷 FR</option>
+                <option value="de">🇩🇪 DE</option>
+                <option value="ru">🇷🇺 RU</option>
+                <option value="bs">🇧🇦 BS</option>
+
+                {/* ADD MORE LANGUAGES */}
+              </select>
+            </div>
+          </div>
+
+
 
           <div className="d-none d-lg-block ms-auto me-auto">
             <ul className="navbar-links d-flex justify-content-center gap-2 mb-0 list-unstyled">
               {isLoggedIn && (
                 <>
-                  <li><NavLink
-                    to="/dashboard"
-                    className={({ isActive }) =>
-                      `nav-link px-3 py-2 ${isActive ? 'active fw-semibold' : 'text-secondary'}`
-                    }
-                  >
-                    Home
-                  </NavLink></li>
-                  <li><NavLink
-                    to="/fantasy/dashboard"
-                    className={({ isActive }) =>
-                      `nav-link px-3 py-2 ${isActive ? 'active fw-semibold' : 'text-secondary'}`
-                    }
-                  >
-                    Fantasy
-                  </NavLink>
+                  <li>
+                    <NavLink
+                      to="/dashboard"
+                      className={({ isActive }) =>
+                        `nav-link px-3 py-2 ${isActive ? 'active fw-semibold' : 'text-secondary'}`
+                      }
+                    >
+                      {t('navbar.home')}
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/fantasy/dashboard"
+                      className={({ isActive }) =>
+                        `nav-link px-3 py-2 ${isActive ? 'active fw-semibold' : 'text-secondary'}`
+                      }
+                    >
+                      {t('navbar.fantasy')}
+                    </NavLink>
                   </li>
                 </>
               )}
@@ -135,40 +162,56 @@ function Navbar() {
             {isLoggedIn ? (
               <>
                 <span className="me-3 text-light fw-semibold">{username}</span>
-                <button type="button" className="btn btn-outline-light" onClick={handleLogout}>Log out</button>
+                <button type="button" className="btn btn-outline-light" onClick={handleLogout}>
+                  {t('navbar.logout')}
+                </button>
               </>
             ) : (
-              <NavLink to="/" className="btn btn-outline-light">Get Started</NavLink>
+              <NavLink to="/" className="btn btn-outline-light">
+                {t('navbar.getStarted')}
+              </NavLink>
             )}
           </div>
-
         </div>
       </nav>
 
       {/* Offcanvas */}
       <div className="offcanvas offcanvas-end offcanvas-md" tabIndex="-1" id="mobileNav" aria-labelledby="mobileNavLabel">
         <div className="offcanvas-header">
-          <h5 className="offcanvas-title" id="mobileNavLabel">Menu</h5>
+          <h5 className="offcanvas-title" id="mobileNavLabel">{t('navbar.menu')}</h5>
           <button type="button" className="btn-close text-reset" onClick={closeOffcanvas} aria-label="Close"></button>
         </div>
         <div className="offcanvas-body">
           <ul className="list-unstyled">
             {isLoggedIn && (
-              <li className="fw-semibold text-center mb-2">Logged in as <span className="text-primary">{username}</span></li>
+              <li className="fw-semibold text-center mb-2">
+                {t('navbar.loggedInAs')} <span className="text-primary">{username}</span>
+              </li>
             )}
 
-            <li><NavLink to="/dashboard" className="nav-link" onClick={closeOffcanvas}>Home</NavLink></li>
-            <li><NavLink to="/fantasy/dashboard" className="nav-link" onClick={closeOffcanvas}>Fantasy</NavLink></li>
+            <li>
+              <NavLink to="/dashboard" className="nav-link" onClick={closeOffcanvas}>
+                {t('navbar.home')}
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/fantasy/dashboard" className="nav-link" onClick={closeOffcanvas}>
+                {t('navbar.fantasy')}
+              </NavLink>
+            </li>
 
             {isFantasyRoute && (
               <div className="d-lg-none">
                 <hr />
-                <li className="fw-semibold text-uppercase small px-2 text-muted">Fantasy</li>
+                <li className="fw-semibold text-uppercase small px-2 text-muted">
+                  {t('navbar.fantasy')}
+                </li>
               </div>
             )}
+
             <li className="mt-3">
               <button className="btn btn-outline-dark w-100" onClick={() => { closeOffcanvas(); handleLogout(); }}>
-                Log out
+                {t('navbar.logout')}
               </button>
             </li>
           </ul>
